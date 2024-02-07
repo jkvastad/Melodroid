@@ -56,14 +56,7 @@ void WriteMIDIWithTimedObjectManager(string fullWritePath)
     TrackChunk trackChunk = new TrackChunk();
     using (TimedObjectsManager<Melanchall.DryWetMidi.Interaction.Note> notesManager = trackChunk.ManageNotes())
     {
-        TimedObjectsCollection<Melanchall.DryWetMidi.Interaction.Note> notes = notesManager.Objects;
-        //notes.Add(new Melanchall.DryWetMidi.Interaction.Note(
-        //    NoteName.A,
-        //    4,
-        //    LengthConverter.ConvertFrom(
-        //        new MetricTimeSpan(hours: 0, minutes: 0, seconds: 10),
-        //        0,
-        //        tempoMap)));
+        TimedObjectsCollection<Melanchall.DryWetMidi.Interaction.Note> notes = notesManager.Objects;        
 
         notes.Add(new Melanchall.DryWetMidi.Interaction.Note(NoteName.A, 4)
         {
