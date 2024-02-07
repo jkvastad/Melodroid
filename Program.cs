@@ -19,7 +19,7 @@ Time is when something happens, length is for how long:
 This means "create scientific pitch note B4 at 96 ticks into the midi file, make it 192 ticks long".
 **/
 
-//TODO: write two notes with same ticks but differing tempo - thus differing durations. What is meant by time vs length in drywetmidi?
+//TODO: write file with two tempos
 //https://github.com/melanchall/drywetmidi#getting-started
 //https://melanchall.github.io/drywetmidi/
 
@@ -51,12 +51,19 @@ void WriteMIDIWithMidiEvents(string fullWritePath)
 void WriteMIDIWithTimedObjectManager(string fullWritePath)
 {
     MidiFile midiFile = new MidiFile();
-    var tempoMap = TempoMap.Create(Tempo.FromBeatsPerMinute(200));
+
+    using (var tempoManager = new TempoMapManager())
+    {
+        tempoManager.SetTempo(0, Tempo.FromBeatsPerMinute(60));
+        tempoManager.SetTempo(48, Tempo.FromBeatsPerMinute(120));
+        tempoManager.SetTempo(144, Tempo.FromBeatsPerMinute(60));
+        midiFile.ReplaceTempoMap(tempoManager.TempoMap);
+    }
 
     TrackChunk trackChunk = new TrackChunk();
     using (TimedObjectsManager<Melanchall.DryWetMidi.Interaction.Note> notesManager = trackChunk.ManageNotes())
     {
-        TimedObjectsCollection<Melanchall.DryWetMidi.Interaction.Note> notes = notesManager.Objects;        
+        TimedObjectsCollection<Melanchall.DryWetMidi.Interaction.Note> notes = notesManager.Objects;
 
         notes.Add(new Melanchall.DryWetMidi.Interaction.Note(NoteName.A, 4)
         {
@@ -71,6 +78,7 @@ void WriteMIDIWithTimedObjectManager(string fullWritePath)
             Length = 192,
         });
     }
+
     midiFile.Chunks.Add(trackChunk);
-    midiFile.Write(fullWritePath);
+    midiFile.Write(fullWritePath, true);
 }
