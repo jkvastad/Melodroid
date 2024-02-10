@@ -27,23 +27,54 @@ This means "create scientific pitch note B4 at 96 ticks into the midi file, make
 
 string folderPath = @"E:\Documents\Reaper Projects\Melodroid\MIDI_write_testing\";
 
-var measure1 = new Measure(8);
+BeatMeasure measure1 = new(8);
 measure1.NoteVelocities[0] = 64;
 measure1.NoteVelocities[4] = 0;
+HarmonicMeasure harmonicMeasure1 = new(measure1.TimeDivision);
+harmonicMeasure1.NoteValues[0] = new(NoteName.A, 4);
 
-var measure2 = new Measure(8);
+BeatMeasure measure2 = new(8);
 measure2.NoteVelocities[2] = 64;
 measure2.NoteVelocities[6] = 0;
+HarmonicMeasure harmonicMeasure2 = new(measure2.TimeDivision);
+harmonicMeasure2.NoteValues[2] = new(NoteName.C, 4);
 
 Console.Write(measure1);
 Console.Write(measure2);
+Console.WriteLine();
+Console.Write(harmonicMeasure1);
+Console.Write(harmonicMeasure2);
 
 //PrintLengthOf(new MetricTimeSpan(hours: 0, minutes: 0, seconds: 10), 0, tempoMap);
 //WriteMIDIWithTimedObjectManager(Path.Combine(folderPath, "midi test two notes velocity.mid"));
 
-void WriteMeasuresToMidi(List<Measure> measures, string folderPath, string fileName)
+void WriteMeasuresToMidi(List<BeatMeasure> measures, string folderPath, string fileName, bool overWrite = false)
 {
+    MidiFile midiFile = new MidiFile();
 
+    //TODO set tempo
+
+    TrackChunk trackChunk = new TrackChunk();
+    using (TimedObjectsManager<Melanchall.DryWetMidi.Interaction.Note> notesManager = trackChunk.ManageNotes())
+    {
+        TimedObjectsCollection<Melanchall.DryWetMidi.Interaction.Note> notes = notesManager.Objects;
+
+        notes.Add(new Melanchall.DryWetMidi.Interaction.Note(NoteName.A, 4)
+        {
+            Velocity = (SevenBitNumber)64,
+            Time = 0,
+            Length = 192,
+        });
+        notes.Add(new Melanchall.DryWetMidi.Interaction.Note(NoteName.B, 4)
+        {
+            Velocity = (SevenBitNumber)64,
+            Time = 96,
+            Length = 192,
+        });
+    }
+
+    midiFile.Chunks.Add(trackChunk);
+    midiFile.Write(Path.Combine(folderPath, fileName), overWrite);
 }
 
 void PrintLengthOf(ITimeSpan length, long time, TempoMap tempo)
