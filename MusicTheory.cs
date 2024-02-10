@@ -1,5 +1,4 @@
-﻿using System;
-using System.Text;
+﻿using System.Text;
 
 namespace MusicTheory
 {
@@ -11,46 +10,31 @@ namespace MusicTheory
     public class Measure
     {
         public int TimeDivision { get; }
-        public NoteOnOff?[] Notes { get; }
+        //Max velocity 127, min 0
+        public int?[] NoteVelocities { get; }
         public Measure(int timeDivision)
         {
             TimeDivision = timeDivision;
-            Notes = new NoteOnOff[timeDivision];
+            NoteVelocities = new int?[timeDivision];
         }
 
         public override string ToString()
         {
             StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < Notes.Length; i++)
+            for (int i = 0; i < NoteVelocities.Length; i++)
             {
-                NoteOnOff? noteOnOff = Notes[i];
-                if (noteOnOff == null)
+                int? noteVelocity = NoteVelocities[i];
+                if (noteVelocity == null)
                 {
                     sb.Append("-");
                     continue;
                 }
                 else
                 {
-                    if (noteOnOff.IsOn)
-                        sb.Append($"{noteOnOff.Velocity}");
-                    else
-                        sb.Append("0");
+                    sb.Append(noteVelocity);
                 }
             }
             return sb.ToString();
-        }
-    }
-
-    public class NoteOnOff
-    {
-        //On is true, off is false
-        public bool IsOn { get; }
-        public int Velocity { get; }
-        public static NoteOnOff NoteOff { get; } = new(false, 0);
-        public NoteOnOff(bool isOn, int velocity)
-        {
-            IsOn = isOn;
-            Velocity = velocity;
         }
     }
 }

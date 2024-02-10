@@ -27,15 +27,24 @@ This means "create scientific pitch note B4 at 96 ticks into the midi file, make
 
 string folderPath = @"E:\Documents\Reaper Projects\Melodroid\MIDI_write_testing\";
 
-var measure = new Measure(8);
-measure.Notes[0] = new(true, 64);
-measure.Notes[4] = NoteOnOff.NoteOff;
+var measure1 = new Measure(8);
+measure1.NoteVelocities[0] = 64;
+measure1.NoteVelocities[4] = 0;
 
-Console.Write(measure);
-Console.Write(measure);
+var measure2 = new Measure(8);
+measure2.NoteVelocities[2] = 64;
+measure2.NoteVelocities[6] = 0;
+
+Console.Write(measure1);
+Console.Write(measure2);
 
 //PrintLengthOf(new MetricTimeSpan(hours: 0, minutes: 0, seconds: 10), 0, tempoMap);
 //WriteMIDIWithTimedObjectManager(Path.Combine(folderPath, "midi test two notes velocity.mid"));
+
+void WriteMeasuresToMidi(List<Measure> measures, string folderPath, string fileName)
+{
+
+}
 
 void PrintLengthOf(ITimeSpan length, long time, TempoMap tempo)
 {
