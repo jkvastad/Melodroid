@@ -27,28 +27,27 @@ This means "create scientific pitch note B4 at 96 ticks into the midi file, make
 
 string folderPath = @"E:\Documents\Reaper Projects\Melodroid\MIDI_write_testing\";
 
-BeatMeasure measure1 = new(8);
-measure1.NoteVelocities[0] = 64;
-measure1.NoteVelocities[4] = 0;
-HarmonicMeasure harmonicMeasure1 = new(measure1.TimeDivision);
-harmonicMeasure1.NoteValues[0] = new(NoteName.A, 4);
+var noteValues1 = new NoteValue?[8];
+noteValues1[0] = new(NoteName.A, 4, 64);
+noteValues1[4] = NoteValue.SilentNote;
+var noteValues2 = new NoteValue?[8];
+noteValues2[2] = new(NoteName.C, 4, 64);
+noteValues2[6] = NoteValue.SilentNote;
 
-BeatMeasure measure2 = new(8);
-measure2.NoteVelocities[2] = 64;
-measure2.NoteVelocities[6] = 0;
-HarmonicMeasure harmonicMeasure2 = new(measure2.TimeDivision);
-harmonicMeasure2.NoteValues[2] = new(NoteName.C, 4);
+var measure1 = new Measure(noteValues1);
+var measure2 = new Measure(noteValues2);
 
-Console.Write(measure1);
-Console.Write(measure2);
+Console.Write(measure1.NoteVelocitiesString());
+Console.Write(measure2.NoteVelocitiesString());
 Console.WriteLine();
-Console.Write(harmonicMeasure1);
-Console.Write(harmonicMeasure2);
+Console.Write(measure1.NoteValuesString());
+Console.Write(measure2.NoteValuesString());
 
-//PrintLengthOf(new MetricTimeSpan(hours: 0, minutes: 0, seconds: 10), 0, tempoMap);
+WriteMeasuresToMidi(new List<Measure>() { measure1, measure2 }, folderPath, "midi_write_test_1", true);
+
 //WriteMIDIWithTimedObjectManager(Path.Combine(folderPath, "midi test two notes velocity.mid"));
 
-void WriteMeasuresToMidi(List<BeatMeasure> measures, string folderPath, string fileName, bool overWrite = false)
+void WriteMeasuresToMidi(List<Measure> measures, string folderPath, string fileName, bool overWrite = false)
 {
     MidiFile midiFile = new MidiFile();
 
@@ -58,23 +57,16 @@ void WriteMeasuresToMidi(List<BeatMeasure> measures, string folderPath, string f
     using (TimedObjectsManager<Melanchall.DryWetMidi.Interaction.Note> notesManager = trackChunk.ManageNotes())
     {
         TimedObjectsCollection<Melanchall.DryWetMidi.Interaction.Note> notes = notesManager.Objects;
-
-        notes.Add(new Melanchall.DryWetMidi.Interaction.Note(NoteName.A, 4)
+        NoteBuilder nb = new NoteBuilder(measures);
+        midiFile.TimeDivision = new TicksPerQuarterNoteTimeDivision(nb.MidiTimeDivision);
+        foreach (var note in nb.Notes)
         {
-            Velocity = (SevenBitNumber)64,
-            Time = 0,
-            Length = 192,
-        });
-        notes.Add(new Melanchall.DryWetMidi.Interaction.Note(NoteName.B, 4)
-        {
-            Velocity = (SevenBitNumber)64,
-            Time = 96,
-            Length = 192,
-        });
+            notes.Add(note);
+        }
     }
 
     midiFile.Chunks.Add(trackChunk);
-    midiFile.Write(Path.Combine(folderPath, fileName), overWrite);
+    midiFile.Write(Path.Combine(folderPath, fileName + ".mid"), overWrite);
 }
 
 void PrintLengthOf(ITimeSpan length, long time, TempoMap tempo)
