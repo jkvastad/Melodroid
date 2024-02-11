@@ -30,7 +30,7 @@ public class BeatBox
         int?[] velocities = new int?[measureTimeDivision];
         for (int i = 0; i < velocities.Length; i++)
         {
-            //arbitrarily play a note with 1/4 probability
+            //TODO generate better rhythms, perhaps things which the brain can easily chunk (based on cerebullum and rhythm - e.g. learning 2 + 3 count)
             if (random.Next(measureTimeDivision) > measureTimeDivision / 4)
             {
                 if (random.Next(6) > 0)
