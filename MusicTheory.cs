@@ -6,7 +6,11 @@ namespace MusicTheory
 {
     public class Phrase
     {
-        public List<Measure> Measures { get; } = new();
+        public List<Measure> Measures { get; }
+        public Phrase(List<Measure> measures)
+        {
+            Measures = measures;
+        }
     }
 
     public class Measure

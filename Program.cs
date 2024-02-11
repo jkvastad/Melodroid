@@ -27,30 +27,10 @@ This means "create scientific pitch note B4 at 96 ticks into the midi file, make
 
 string folderPath = @"E:\Documents\Reaper Projects\Melodroid\MIDI_write_testing\";
 
-var noteValues1 = new NoteValue?[8];
-noteValues1[0] = new(NoteName.A, 4, 64);
-noteValues1[4] = NoteValue.SilentNote;
-var noteValues2 = new NoteValue?[7];
-noteValues2[2] = new(NoteName.C, 4, 64);
-var noteValues3 = new NoteValue?[12];
-noteValues3[1] = NoteValue.SilentNote;
-noteValues3[3] = new(NoteName.A, 4, 72);
-noteValues3[8] = NoteValue.SilentNote;
+BeatBox beatBox = new BeatBox();
+WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, "beat_box_test_phrase", true);
 
-var measure1 = new Measure(noteValues1);
-var measure2 = new Measure(noteValues2);
-var measure3 = new Measure(noteValues3);
-
-Console.Write(measure1.NoteVelocitiesString());
-Console.Write(measure2.NoteVelocitiesString());
-Console.Write(measure3.NoteVelocitiesString());
-Console.WriteLine();
-Console.Write(measure1.NoteValuesString());
-Console.Write(measure2.NoteValuesString());
-Console.Write(measure3.NoteValuesString());
-
-WriteMeasuresToMidi(new List<Measure>() { measure1, measure2, measure3 }, folderPath, "midi_write_test_2", true);
-
+//TestMidiWrite(folderPath);
 //WriteMIDIWithTimedObjectManager(Path.Combine(folderPath, "midi test two notes velocity.mid"));
 
 void WriteMeasuresToMidi(List<Measure> measures, string folderPath, string fileName, bool overWrite = false)
@@ -125,4 +105,31 @@ void WriteMIDIWithTimedObjectManager(string fullWritePath)
 
     midiFile.Chunks.Add(trackChunk);
     midiFile.Write(fullWritePath, true);
+}
+
+void TestMidiWrite(string folderPath)
+{
+    var noteValues1 = new NoteValue?[8];
+    noteValues1[0] = new(NoteName.A, 4, 64);
+    noteValues1[4] = NoteValue.SilentNote;
+    var noteValues2 = new NoteValue?[7];
+    noteValues2[2] = new(NoteName.C, 4, 64);
+    var noteValues3 = new NoteValue?[12];
+    noteValues3[1] = NoteValue.SilentNote;
+    noteValues3[3] = new(NoteName.A, 4, 72);
+    noteValues3[8] = NoteValue.SilentNote;
+
+    var measure1 = new Measure(noteValues1);
+    var measure2 = new Measure(noteValues2);
+    var measure3 = new Measure(noteValues3);
+
+    Console.Write(measure1.NoteVelocitiesString());
+    Console.Write(measure2.NoteVelocitiesString());
+    Console.Write(measure3.NoteVelocitiesString());
+    Console.WriteLine();
+    Console.Write(measure1.NoteValuesString());
+    Console.Write(measure2.NoteValuesString());
+    Console.Write(measure3.NoteValuesString());
+
+    WriteMeasuresToMidi(new List<Measure>() { measure1, measure2, measure3 }, folderPath, "midi_write_test_2", true);
 }
