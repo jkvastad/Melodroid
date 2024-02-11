@@ -1,4 +1,5 @@
-﻿using Melanchall.DryWetMidi.MusicTheory;
+﻿using Melanchall.DryWetMidi.Common;
+using Melanchall.DryWetMidi.MusicTheory;
 using System.Text;
 
 namespace MusicTheory
@@ -102,7 +103,7 @@ namespace MusicTheory
             short songTimeDivision = (short)LCM(_measures.Select((measure, index) => (long)measure.TimeDivision).ToArray());
             int totalMidiTicks = 0;
             NoteValue currentNoteValue = NoteValue.SilentNote;
-            int currentNoteLength = 0;
+            int currentNoteStart = totalMidiTicks;
 
             foreach (var measure in _measures)
             {
@@ -114,17 +115,23 @@ namespace MusicTheory
                             AddCurrentNote();
                         //Begin building next note
                         currentNoteValue = noteValue.Value;
-                        currentNoteLength = 0;
+                        currentNoteStart = totalMidiTicks;
                     }
                     //midi time division is per quarter note rather than per measure, thus 4 times higher resolution
                     int midiTicks = 4 * (songTimeDivision / measure.TimeDivision);
-                    currentNoteLength += midiTicks;
                     totalMidiTicks += midiTicks;
                 }
             }
             //Add final note
+            AddCurrentNote();
+            //Pad with one division of silence, otherwise drywetmidi clips the last midi tick.
             if (currentNoteValue.Velocity > 0)
-                AddCurrentNote();
+                Notes.Add(new(NoteName.A, 4)
+                {
+                    Time = totalMidiTicks,
+                    Length = songTimeDivision,
+                    Velocity = (SevenBitNumber)0
+                });
 
             return songTimeDivision;
 
@@ -132,8 +139,9 @@ namespace MusicTheory
             {
                 Notes.Add(new(currentNoteValue.Name, currentNoteValue.Octave)
                 {
-                    Time = totalMidiTicks,
-                    Length = currentNoteLength
+                    Time = currentNoteStart,
+                    Length = totalMidiTicks - currentNoteStart,
+                    Velocity = (SevenBitNumber)currentNoteValue.Velocity
                 });
             }
         }
