@@ -33,12 +33,11 @@ public class BeatBox
             //arbitrarily play a note with 1/4 probability
             if (random.Next(measureTimeDivision) > measureTimeDivision / 4)
             {
-                if (random.Next(3) > 0)
+                if (random.Next(6) > 0)
                     velocities[i] = random.Next(64, 97);
                 else
                     velocities[i] = 0;
             }
-
         }
         return velocities;
     }

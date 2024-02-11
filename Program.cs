@@ -28,7 +28,11 @@ This means "create scientific pitch note B4 at 96 ticks into the midi file, make
 string folderPath = @"E:\Documents\Reaper Projects\Melodroid\MIDI_write_testing\";
 
 BeatBox beatBox = new BeatBox();
-WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, "beat_box_test_phrase", true);
+for (int i = 0; i < 4; i++)
+{
+    WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, $"beat_box_test_phrase_{i}", true);
+}
+
 
 //TestMidiWrite(folderPath);
 //WriteMIDIWithTimedObjectManager(Path.Combine(folderPath, "midi test two notes velocity.mid"));
