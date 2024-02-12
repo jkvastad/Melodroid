@@ -1,5 +1,6 @@
 ﻿using Melanchall.DryWetMidi.MusicTheory;
 using MusicTheory;
+using static MusicTheory.MusicTheoryUtils;
 
 public class BeatBox
 {
@@ -50,16 +51,21 @@ public class BeatBox
             if (velocities[i].HasValue)
             {
                 //TODO pick harmonies from sets, based on relative periodicity as in Harmony Perception by Periodicity Detection (e.g. major triad has 4)
-                noteValues[i] = new NoteValue(NoteName.A, 4, velocities[i]!.Value);
+                //noteValues[i] = new NoteValue(NoteName.A, 4, velocities[i]!.Value);
+                noteValues[i] = GetNoteValuePreservingLcm(12, new NoteValue(NoteName.A, 4, velocities[i]!.Value));
             }
         }
         return noteValues;
     }
-    //Midi intervals based on relative periodicity:    
-    // 1/1 : +0
-    // 3/2 : +7
-    // 4/3 : +5, 5/3 : +9
-    // 5/4 : +4, 7/4 : +10
-    // 6/5 : +3, 7/5 : + 6, 8/5 : +8, 9/5 : + 10
-    // 7/6 : 
+
+    private NoteValue GetNoteValuePreservingLcm(int lcm, NoteValue fundamentalNote)
+    {
+        Random random = new();
+
+        var intervals = MidiIntervalsPreservingLcm(lcm);
+        if (intervals.Count == 0)
+            throw new ArgumentException($"No interval can preserve lcm {lcm}");
+        var interval = intervals[random.Next(intervals.Count)];
+        return fundamentalNote + interval;
+    }
 }

@@ -1,7 +1,7 @@
 ﻿using Melanchall.DryWetMidi.Common;
 using Melanchall.DryWetMidi.MusicTheory;
 using System.Text;
-using static MusicTheory.MusicTheoryUtils;
+
 using Fractions;
 
 namespace MusicTheory
@@ -73,14 +73,20 @@ namespace MusicTheory
         public NoteName Name { get; }
         public int Octave { get; }
         public int Velocity { get; }
+
+        public static NoteValue SilentNote = new NoteValue(NoteName.A, 4, 0);
         public NoteValue(NoteName name, int octave, int velocity)
         {
             Name = name;
             Octave = octave;
             Velocity = velocity;
-        }
+        }        
 
-        public static NoteValue SilentNote = new NoteValue(NoteName.A, 4, 0);
+        public static NoteValue operator +(NoteValue a, int midiInterval)
+        {
+            SevenBitNumber noteNumber = (SevenBitNumber)(NoteUtilities.GetNoteNumber(a.Name, a.Octave) + midiInterval);
+            return new(NoteUtilities.GetNoteName(noteNumber), NoteUtilities.GetNoteOctave(noteNumber), a.Velocity);
+        }
 
         public static bool operator ==(NoteValue a, NoteValue b)
         {
@@ -106,7 +112,7 @@ namespace MusicTheory
 
         short ParseNotes()
         {
-            short songTimeDivision = (short)LCM(_measures.Select((measure, index) => (long)measure.TimeDivision).ToArray());
+            short songTimeDivision = (short)MusicTheoryUtils.LCM(_measures.Select((measure, index) => (long)measure.TimeDivision).ToArray());
             int totalMidiTicks = 0;
             NoteValue currentNoteValue = NoteValue.SilentNote;
             int currentNoteStart = totalMidiTicks;
@@ -153,9 +159,31 @@ namespace MusicTheory
         }
     }
 
-    public static class MusicTheoryUtils
+    public class MusicTheoryUtils
     {
+        public static List<int> MidiIntervalsPreservingLcm(int lcm, int maximumPeriodicity = 16)
+        {
+            List<int> intervals = new();
+            var approximations = RatiosClosestTo12TetKeys(maximumPeriodicity);
+            for (int interval = 0; interval < approximations.Count; interval++)
+            {
+                if (approximations[interval].Any(fraction => fraction.Numerator % lcm == 0))
+                    intervals.Add(interval);
+            }
+            return intervals;
+        }
         public static void PrintRelativePeriodicityForOctaveIntervals(int maximumPeriodicity = 16)
+        {
+            List<HashSet<Fraction>> approximations = RatiosClosestTo12TetKeys(maximumPeriodicity);
+            Console.WriteLine("Midi note diff: closest frequency ratio");
+
+            for (int i = 0; i < approximations.Count; i++)
+            {
+                Console.WriteLine($"{i}: " + string.Join(", ", approximations[i]));
+            }
+        }
+
+        private static List<HashSet<Fraction>> RatiosClosestTo12TetKeys(int maximumPeriodicity)
         {
             double[] Tet12 = new double[12];
             for (int i = 0; i < Tet12.Length; i++)
@@ -185,15 +213,11 @@ namespace MusicTheory
                             best12TetKey = k;
                         }
                     }
-                    approximations[best12TetKey].Add(new(i,j));
+                    approximations[best12TetKey].Add(new(i, j));
                 }
             }
-            Console.WriteLine("Midi note diff: closest frequency ratio");
 
-            for (int i = 0; i < approximations.Count; i++)
-            {                
-                Console.WriteLine($"{i}: " + string.Join(", ", approximations[i]));
-            }
+            return approximations;
         }
 
         //Thanks stack overflow https://stackoverflow.com/questions/147515/least-common-multiple-for-3-or-more-numbers/29717490#29717490
