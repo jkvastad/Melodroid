@@ -3,6 +3,7 @@ using Melanchall.DryWetMidi.MusicTheory;
 using System.Text;
 
 using Fractions;
+using Serilog;
 
 namespace MusicTheory
 {
@@ -80,7 +81,7 @@ namespace MusicTheory
             Name = name;
             Octave = octave;
             Velocity = velocity;
-        }        
+        }
 
         public static NoteValue operator +(NoteValue a, int midiInterval)
         {
@@ -165,10 +166,24 @@ namespace MusicTheory
         {
             List<int> intervals = new();
             var approximations = RatiosClosestTo12TetKeys(maximumPeriodicity);
+            Log.Information($"intervals preserving lcm {lcm} using fraction(s)");
             for (int interval = 0; interval < approximations.Count; interval++)
             {
-                if (approximations[interval].Any(fraction => fraction.Numerator % lcm == 0))
+                if (approximations[interval].Any(fraction => lcm % fraction.Denominator == 0))
+                {
+                    //TODO write to log instead of console                    
+                    StringBuilder sb = new();
+                    sb.Append(interval.ToString() + ": ");
+                    foreach (Fraction fraction in approximations[interval])
+                    {
+                        if (lcm % fraction.Denominator == 0)
+                        {
+                            sb.Append(fraction.ToString() + ", ");
+                        }
+                    }
+                    Log.Information(sb.ToString());
                     intervals.Add(interval);
+                }
             }
             return intervals;
         }
@@ -179,7 +194,7 @@ namespace MusicTheory
 
             for (int i = 0; i < approximations.Count; i++)
             {
-                Console.WriteLine($"{i}: " + string.Join(", ", approximations[i]));
+                Log.Information($"{i}: " + string.Join(", ", approximations[i]));
             }
         }
 

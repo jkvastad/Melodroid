@@ -4,6 +4,8 @@ using Melanchall.DryWetMidi.Core;
 using Melanchall.DryWetMidi.Interaction;
 using Melanchall.DryWetMidi.MusicTheory;
 using MusicTheory;
+using Serilog;
+
 using static MusicTheory.MusicTheoryUtils;
 
 //MIDI standard: http://www.music.mcgill.ca/~ich/classes/mumt306/StandardMIDIfileformat.html
@@ -22,17 +24,23 @@ This means "create scientific pitch note B4 at 96 ticks into the midi file, make
 **/
 
 // TODO: Start work on beatbox to calculate rhythms based on "How Beat Perception Co-opts Motor Neurophysiology". This can be used to define rhythmic chunks.
-// Calculate lcm for coprime numerators to get the "resolution" of a rhythmic chunk. Perhaps use prime factorization and put the primes into a set to get the lcm.
-//https://github.com/melanchall/drywetmidi#getting-started
-//https://melanchall.github.io/drywetmidi/
 
 string folderPath = @"E:\Documents\Reaper Projects\Melodroid\MIDI_write_testing\";
+
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.File(@"D:\Projects\Code\Melodroid\logs\log.txt", rollingInterval: RollingInterval.Day)
+    .CreateLogger();
 
 BeatBox beatBox = new BeatBox();
 for (int i = 0; i < 4; i++)
 {
-    WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, $"beat_box_test_phrase_lcm_12_{i}", true);
+    WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, $"beat_box_test_phrase_lcm_15_{i}", true);
 }
+
+//TODO test serilog
+
+
+
 
 
 //TestMidiWrite(folderPath);

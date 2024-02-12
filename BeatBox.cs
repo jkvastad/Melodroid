@@ -49,10 +49,8 @@ public class BeatBox
         for (int i = 0; i < velocities.Length; i++)
         {
             if (velocities[i].HasValue)
-            {
-                //TODO pick harmonies from sets, based on relative periodicity as in Harmony Perception by Periodicity Detection (e.g. major triad has 4)
-                //noteValues[i] = new NoteValue(NoteName.A, 4, velocities[i]!.Value);
-                noteValues[i] = GetNoteValuePreservingLcm(12, new NoteValue(NoteName.A, 4, velocities[i]!.Value));
+            {                
+                noteValues[i] = GetNoteValuePreservingLcm(15, new NoteValue(NoteName.A, 4, velocities[i]!.Value));
             }
         }
         return noteValues;
@@ -61,7 +59,7 @@ public class BeatBox
     private NoteValue GetNoteValuePreservingLcm(int lcm, NoteValue fundamentalNote)
     {
         Random random = new();
-
+        //TODO print which fractions are selected for which intervals
         var intervals = MidiIntervalsPreservingLcm(lcm);
         if (intervals.Count == 0)
             throw new ArgumentException($"No interval can preserve lcm {lcm}");
