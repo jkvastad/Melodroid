@@ -49,9 +49,17 @@ public class BeatBox
         {
             if (velocities[i].HasValue)
             {
-                noteValues[i] = new NoteValue(NoteName.A, 4, velocities[i]!.Value); //TODO pick harmonies from sets
+                //TODO pick harmonies from sets, based on relative periodicity as in Harmony Perception by Periodicity Detection (e.g. major triad has 4)
+                noteValues[i] = new NoteValue(NoteName.A, 4, velocities[i]!.Value);
             }
         }
         return noteValues;
     }
+    //Midi intervals based on relative periodicity:    
+    // 1/1 : +0
+    // 3/2 : +7
+    // 4/3 : +5, 5/3 : +9
+    // 5/4 : +4, 7/4 : +10
+    // 6/5 : +3, 7/5 : + 6, 8/5 : +8, 9/5 : + 10
+    // 7/6 : 
 }

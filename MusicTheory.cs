@@ -1,6 +1,8 @@
 ﻿using Melanchall.DryWetMidi.Common;
 using Melanchall.DryWetMidi.MusicTheory;
 using System.Text;
+using static MusicTheory.MusicTheoryUtils;
+using Fractions;
 
 namespace MusicTheory
 {
@@ -149,19 +151,64 @@ namespace MusicTheory
                 });
             }
         }
+    }
+
+    public static class MusicTheoryUtils
+    {
+        public static void PrintRelativePeriodicityForOctaveIntervals(int maximumPeriodicity = 16)
+        {
+            double[] Tet12 = new double[12];
+            for (int i = 0; i < Tet12.Length; i++)
+            {
+                Tet12[i] = Math.Pow(2, i / (double)12);
+            }
+
+            List<HashSet<Fraction>> approximations = new();
+            for (int i = 0; i < 12; i++)
+            {
+                approximations.Add(new());
+            }
+
+            for (int i = 1; i < maximumPeriodicity + 1; i++)
+            {
+                for (int j = i + 1; j < i * 2; j++)
+                {
+                    double ratio = j / (double)i;
+                    double bestDiff = 1;
+                    int best12TetKey = 0;
+                    for (int k = 0; k < Tet12.Length; k++)
+                    {
+                        var diff = Math.Abs(ratio - Tet12[k]);
+                        if (diff < bestDiff)
+                        {
+                            bestDiff = diff;
+                            best12TetKey = k;
+                        }
+                    }
+                    approximations[best12TetKey].Add(new(i,j));
+                }
+            }
+            Console.WriteLine("Midi note diff: closest frequency ratio");
+
+            for (int i = 0; i < approximations.Count; i++)
+            {                
+                Console.WriteLine($"{i}: " + string.Join(", ", approximations[i]));
+            }
+        }
+
         //Thanks stack overflow https://stackoverflow.com/questions/147515/least-common-multiple-for-3-or-more-numbers/29717490#29717490
-        static long LCM(long[] numbers)
+        public static long LCM(long[] numbers)
         {
             long LcmResult = numbers.Aggregate(lcm);
             if (LcmResult > short.MaxValue)
                 throw new ArgumentException($"Lcm result {LcmResult} is larger than short.MaxValue: This exceeds maximum midi time division");
             return LcmResult;
         }
-        static long lcm(long a, long b)
+        public static long lcm(long a, long b)
         {
             return Math.Abs(a * b) / GCD(a, b);
         }
-        static long GCD(long a, long b)
+        public static long GCD(long a, long b)
         {
             return b == 0 ? a : GCD(b, a % b);
         }

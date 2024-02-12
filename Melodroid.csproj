@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Fractions" Version="7.3.0" />
     <PackageReference Include="Melanchall.DryWetMidi" Version="7.0.1" />
   </ItemGroup>
 
