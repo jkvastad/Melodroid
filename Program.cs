@@ -38,8 +38,11 @@ Log.Logger = new LoggerConfiguration()
 //    WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, $"beat_box_test_phrase_lcm_15_{i}", true);
 //}
 
-//TODO test serilog
-
+//TODO: Check for patterns in complex chords, e.g. in 3/2, 5/4 the 3/2 interval loops twice, cutting 5/4 in "half" and creating a mirrored version -
+// - i.e. look for patterns in the numerator part
+//TODO: Different approximations require different periodicities, which require longer/shorter time in ms to repeat, e.g. m7 with 7/4, 9/5, 25/14, 23/13, 16/9.
+// Preference? Combo with numerator patterns? Does musical context switch which patterns are being screened for when hearing 12TET tones?
+//PrintLcmSets();
 
 //TestMidiWrite(folderPath);
 //WriteMIDIWithTimedObjectManager(Path.Combine(folderPath, "midi test two notes velocity.mid"));

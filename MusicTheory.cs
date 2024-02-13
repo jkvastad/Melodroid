@@ -276,7 +276,7 @@ namespace MusicTheory
         60: 2,2,3,5
         90: 2,3,3,5
      */
-        static void PrintLcmSets()
+        public static void PrintLcmSets()
         {
             List<int> primes = new() { 2, 2, 2, 2, 3, 3, 5 };
             Dictionary<int, IList<int>> lcmSets = new();
