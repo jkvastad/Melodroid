@@ -4,6 +4,7 @@ using System.Text;
 
 using Fractions;
 using Serilog;
+using MoreLinq;
 
 namespace MusicTheory
 {
@@ -251,5 +252,48 @@ namespace MusicTheory
         {
             return b == 0 ? a : GCD(b, a % b);
         }
-    }
+
+        /*    
+     *    lcm vs numerator prime factors
+        2: 2
+        3: 3
+        4: 2,2
+        5: 5
+        6: 2,3
+        8: 2,2,2
+        9: 3,3
+        10: 2,5
+        12: 2,2,3
+        15: 3,5
+        16: 2,2,2,2
+        18: 2,3,3
+        20: 2,2,5
+        24: 2,2,2,3
+        30: 2,3,5
+        36: 2,2,3,3
+        40: 2,2,2,5
+        45: 3,3,5
+        60: 2,2,3,5
+        90: 2,3,3,5
+     */
+        static void PrintLcmSets()
+        {
+            List<int> primes = new() { 2, 2, 2, 2, 3, 3, 5 };
+            Dictionary<int, IList<int>> lcmSets = new();
+            for (int i = 1; i < 5; i++)
+            {
+                IEnumerable<IList<int>> sets = primes.Subsets(i);
+                foreach (var set in sets)
+                {
+                    //int lcm = (int)LCM(set.Select(item => (long)item).ToArray());
+                    int lcm = set.Aggregate((prev, next) => prev * next);
+                    if (!lcmSets.ContainsKey(lcm)) lcmSets[lcm] = set;
+                }
+            }
+            foreach (var lcm in lcmSets.Keys.Order())
+            {
+                Console.WriteLine($"{lcm}: {string.Join(",", lcmSets[lcm])}");
+            }
+        }
+    }    
 }

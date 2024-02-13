@@ -3,9 +3,10 @@ using Melanchall.DryWetMidi.Common;
 using Melanchall.DryWetMidi.Core;
 using Melanchall.DryWetMidi.Interaction;
 using Melanchall.DryWetMidi.MusicTheory;
+using MoreLinq;
 using MusicTheory;
 using Serilog;
-
+using System.Linq;
 using static MusicTheory.MusicTheoryUtils;
 
 //MIDI standard: http://www.music.mcgill.ca/~ich/classes/mumt306/StandardMIDIfileformat.html
@@ -31,16 +32,13 @@ Log.Logger = new LoggerConfiguration()
     .WriteTo.File(@"D:\Projects\Code\Melodroid\logs\log.txt", rollingInterval: RollingInterval.Day)
     .CreateLogger();
 
-BeatBox beatBox = new BeatBox();
-for (int i = 0; i < 4; i++)
-{
-    WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, $"beat_box_test_phrase_lcm_15_{i}", true);
-}
+//BeatBox beatBox = new BeatBox();
+//for (int i = 0; i < 4; i++)
+//{
+//    WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, $"beat_box_test_phrase_lcm_15_{i}", true);
+//}
 
 //TODO test serilog
-
-
-
 
 
 //TestMidiWrite(folderPath);
