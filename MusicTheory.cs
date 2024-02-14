@@ -163,6 +163,28 @@ namespace MusicTheory
 
     public class MusicTheoryUtils
     {
+        /* Rational tuning (see fig 6 https://arxiv.org/pdf/1306.6458.pdf):
+         * Choosing values where both denominator and numerator consist of small (max value 7) primes. Noting if deviation from 12TET is substantially above 1%
+         * TODO Double check procedure for generating the figure
+         * 0 - 1
+         * 1 - 16/15 or 15/14
+         * 2 - 9/8 or 10/9 or 8/7(1.9% out of tune)
+         * 3 - 6/5
+         * 4 - 5/4
+         * 5 - 4/3
+         * 6 - 7/5 or 10/7
+         * 7 - 3/2
+         * 8 - 8/5 or 25/16(1.6%)
+         * 9 - 5/3
+         * 10 - 25/14 or 16/9 or 9/5 or 7/4(1.8%)
+         * 11 - 15/8 
+         * 12 - 2
+         */
+        public static Dictionary<int, List<int>> MidiStepsFromDenominatorValue = new()
+        {
+            { 1, new() {0}},
+            { 2, new() {}},
+        };
         public static List<int> MidiIntervalsPreservingLcm(int lcm, int maximumPeriodicity = 16)
         {
             List<int> intervals = new();
@@ -295,5 +317,5 @@ namespace MusicTheory
                 Console.WriteLine($"{lcm}: {string.Join(",", lcmSets[lcm])}");
             }
         }
-    }    
+    }
 }
