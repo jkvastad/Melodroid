@@ -42,6 +42,11 @@ Log.Logger = new LoggerConfiguration()
 // - i.e. look for patterns in the numerator part
 //TODO: Different approximations require different periodicities, which require longer/shorter time in ms to repeat, e.g. m7 with 7/4, 9/5, 25/14, 23/13, 16/9.
 // Preference? Combo with numerator patterns? Does musical context switch which patterns are being screened for when hearing 12TET tones?
+//TODO: Investigate lcm vs. pattern ms length when octave transposing notes, e.g. 1, 5/4, 3/2 -> 3/4, 1 , 5/4 -> 1, 4/3, 5/3 :lcm changed from 4 to 3, but ms length is the same!
+// is lcm just a proxy for pattern length (via lcm x packet length, where packet length changes when fundamental changes)?
+//TODO: Make a dict for Denominator -> midi step and Numerator -> midi step based on rational tuning 2.
+
+
 //PrintLcmSets();
 
 //TestMidiWrite(folderPath);
