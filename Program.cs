@@ -46,8 +46,13 @@ Log.Logger = new LoggerConfiguration()
 // is lcm just a proxy for pattern length (via lcm x packet length, where packet length changes when fundamental changes)?
 //TODO: Make a dict for Denominator -> midi step and Numerator -> midi step based on rational tuning 2.
 
-
-//PrintLcmSets();
+List<int> primes = new() { 2, 2, 2, 2, 3, 3, 3, 5, 5, 7, 7 };
+var lcmSets = LcmForCombinationsOfPrimes(primes, 4);
+foreach (var lcm in lcmSets.Keys.Order())
+{
+    if (lcm < 100)
+        Console.WriteLine($"{lcm}: {string.Join(",", lcmSets[lcm])}");
+}
 
 //TestMidiWrite(folderPath);
 //WriteMIDIWithTimedObjectManager(Path.Combine(folderPath, "midi test two notes velocity.mid"));

@@ -298,24 +298,27 @@ namespace MusicTheory
         60: 2,2,3,5
         90: 2,3,3,5
      */
-        public static void PrintLcmSets()
+        public static Dictionary<int, IList<int>> LcmForCombinationsOfPrimes(List<int> primes, int maxCombinations)
         {
-            List<int> primes = new() { 2, 2, 2, 2, 3, 3, 5 };
+            //print all lcms for all 4-combinations of primes:
+            //List<int> primes = new() { 2, 2, 2, 2, 3, 3, 3, 5, 5, 7, 7 };
+            //var lcmSets = LcmForCombinationsOfPrimes(primes, 4);
+            //foreach (var lcm in lcmSets.Keys.Order())
+            //{
+            //    Console.WriteLine($"{lcm}: {string.Join(",", lcmSets[lcm])}");
+            //}
             Dictionary<int, IList<int>> lcmSets = new();
-            for (int i = 1; i < 5; i++)
+            for (int i = 1; i < maxCombinations + 1; i++)
             {
                 IEnumerable<IList<int>> sets = primes.Subsets(i);
                 foreach (var set in sets)
-                {
-                    //int lcm = (int)LCM(set.Select(item => (long)item).ToArray());
+                {                    
                     int lcm = set.Aggregate((prev, next) => prev * next);
                     if (!lcmSets.ContainsKey(lcm)) lcmSets[lcm] = set;
                 }
             }
-            foreach (var lcm in lcmSets.Keys.Order())
-            {
-                Console.WriteLine($"{lcm}: {string.Join(",", lcmSets[lcm])}");
-            }
+            return lcmSets;
+            
         }
     }
 }
