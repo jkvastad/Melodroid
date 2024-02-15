@@ -1,4 +1,5 @@
 ﻿// See https://aka.ms/new-console-template for more information
+using Fractions;
 using Melanchall.DryWetMidi.Common;
 using Melanchall.DryWetMidi.Core;
 using Melanchall.DryWetMidi.Interaction;
@@ -47,11 +48,27 @@ Log.Logger = new LoggerConfiguration()
 //TODO: Make a dict for Denominator -> midi step and Numerator -> midi step based on rational tuning 2.
 
 List<int> primes = new() { 2, 2, 2, 2, 3, 3, 3, 5, 5, 7, 7 };
-var lcmSets = LcmForCombinationsOfPrimes(primes, 4);
-foreach (var lcm in lcmSets.Keys.Order())
+var lcmFacotorisations = LcmFactorisationsForCombinationsOfPrimes(primes, 4);
+foreach (var lcm in lcmFacotorisations.Keys.Order())
 {
     if (lcm < 100)
-        Console.WriteLine($"{lcm}: {string.Join(",", lcmSets[lcm])}");
+        Console.WriteLine($"{lcm}: {string.Join(",", lcmFacotorisations[lcm])}");
+}
+var fractions = FractionsFromIntegers(lcmFacotorisations.Keys.ToList()).Order();
+int maxLength = 100;
+List<Fraction> goodFractions = new();
+Console.WriteLine("Number of fractions: " + fractions.Count());
+foreach (var fraction in fractions)
+{
+    if (fraction.Denominator < maxLength && fraction.Denominator < maxLength && fraction < 2)
+        goodFractions.Add(fraction);
+}
+Console.WriteLine("Number of good fractions: " + goodFractions.Count());
+foreach (var fraction in goodFractions)
+{
+    Console.Write($"{fraction.Numerator}/{fraction.Denominator}");
+    Console.Write(" - ");
+    Console.WriteLine($" [{string.Join(",", Factorize((int)fraction.Numerator))}]/[{string.Join(",", Factorize((int)fraction.Denominator))}]");
 }
 
 //TestMidiWrite(folderPath);

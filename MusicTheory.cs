@@ -298,27 +298,64 @@ namespace MusicTheory
         60: 2,2,3,5
         90: 2,3,3,5
      */
-        public static Dictionary<int, IList<int>> LcmForCombinationsOfPrimes(List<int> primes, int maxCombinations)
+        public static Dictionary<int, IList<int>> LcmFactorisationsForCombinationsOfPrimes(List<int> primes, int maxCombinations)
         {
             //print all lcms for all 4-combinations of primes:
             //List<int> primes = new() { 2, 2, 2, 2, 3, 3, 3, 5, 5, 7, 7 };
-            //var lcmSets = LcmForCombinationsOfPrimes(primes, 4);
-            //foreach (var lcm in lcmSets.Keys.Order())
+            //var lcmFacotorisations = LcmFactorisationsForCombinationsOfPrimes(primes, 4);
+            //foreach (var lcm in lcmFacotorisations.Keys.Order())
             //{
-            //    Console.WriteLine($"{lcm}: {string.Join(",", lcmSets[lcm])}");
+            //    if (lcm < 100)
+            //        Console.WriteLine($"{lcm}: {string.Join(",", lcmFacotorisations[lcm])}");
             //}
             Dictionary<int, IList<int>> lcmSets = new();
             for (int i = 1; i < maxCombinations + 1; i++)
             {
                 IEnumerable<IList<int>> sets = primes.Subsets(i);
                 foreach (var set in sets)
-                {                    
+                {
                     int lcm = set.Aggregate((prev, next) => prev * next);
                     if (!lcmSets.ContainsKey(lcm)) lcmSets[lcm] = set;
                 }
             }
             return lcmSets;
-            
+        }
+
+        public static List<Fraction> FractionsFromIntegers(List<int> integers)
+        {
+            HashSet<Fraction> fractions = new();
+            foreach (int i in integers)
+            {
+                foreach (int j in integers)
+                {
+                    Fraction fraction = new(i, j);
+                    if (!fractions.Contains(fraction))
+                        fractions.Add(fraction);
+                }
+            }
+            return fractions.ToList();
+        }
+
+        public static List<int> Factorize(int integer, int maxLoops = 100)
+        {
+            List<int> factors = new();
+            int factor = 2;
+            int loops = 0;
+            while (integer != 1)
+            {
+                if (integer % factor == 0)
+                {
+                    factors.Add(factor);
+                    integer /= factor;
+                }
+                else
+                {
+                    factor += 1;
+                }
+                loops++;
+                if (loops > maxLoops) throw new ArgumentException($"Factorization failed - exceeded maxLoops {maxLoops}");
+            }
+            return factors.Count == 0 ? new() { 1 } : factors;
         }
     }
 }
