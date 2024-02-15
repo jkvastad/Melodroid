@@ -47,28 +47,70 @@ Log.Logger = new LoggerConfiguration()
 // is lcm just a proxy for pattern length (via lcm x packet length, where packet length changes when fundamental changes)?
 //TODO: Make a dict for Denominator -> midi step and Numerator -> midi step based on rational tuning 2.
 
+//Get all interesting numbers - primes n of form n^x < 50
 List<int> primes = new() { 2, 2, 2, 2, 3, 3, 3, 5, 5, 7, 7 };
-var lcmFacotorisations = LcmFactorisationsForCombinationsOfPrimes(primes, 4);
-foreach (var lcm in lcmFacotorisations.Keys.Order())
-{
-    if (lcm < 100)
-        Console.WriteLine($"{lcm}: {string.Join(",", lcmFacotorisations[lcm])}");
-}
+Dictionary<int, IList<int>> lcmFacotorisations = LcmFactorisationsForCombinationsOfPrimes(primes, 4);
+
+//Keep only denominators < 50
+lcmFacotorisations = lcmFacotorisations.Where(entry => entry.Key < 50).ToDictionary();
+
+//Create all fractions from possible lcm combinations
 var fractions = FractionsFromIntegers(lcmFacotorisations.Keys.ToList()).Order();
-int maxLength = 100;
-List<Fraction> goodFractions = new();
-Console.WriteLine("Number of fractions: " + fractions.Count());
+
+//Filter out fractions outside octave
+List<Fraction> fractionsInsideOctave = new();
 foreach (var fraction in fractions)
 {
-    if (fraction.Denominator < maxLength && fraction.Denominator < maxLength && fraction < 2)
-        goodFractions.Add(fraction);
+    if (1 < fraction && fraction < 2)
+        fractionsInsideOctave.Add(fraction);
 }
-Console.WriteLine("Number of good fractions: " + goodFractions.Count());
-foreach (var fraction in goodFractions)
+
+//fractionsInsideOctave = fractionsInsideOctave.Order().ToList();
+//Console.WriteLine("Number of good fractions: " + fractionsInsideOctave.Count());
+//foreach (var fraction in fractionsInsideOctave)
+//{
+//    Console.Write($"{fraction.Numerator}/{fraction.Denominator}");
+//    Console.Write(" - ");
+//    Console.WriteLine($" [{string.Join(",", Factorize((int)fraction.Numerator))}]/[{string.Join(",", Factorize((int)fraction.Denominator))}]");
+//}
+
+//Bin fractions to closest 12 tet key
+var tet12 = Tet12Values();
+Dictionary<int, List<Fraction>> keyApproximations = new();
+for (int i = 0; i < 12; i++)
 {
-    Console.Write($"{fraction.Numerator}/{fraction.Denominator}");
-    Console.Write(" - ");
-    Console.WriteLine($" [{string.Join(",", Factorize((int)fraction.Numerator))}]/[{string.Join(",", Factorize((int)fraction.Denominator))}]");
+    keyApproximations[i] = new();
+}
+
+foreach (var fraction in fractionsInsideOctave)
+{
+    double maxDiff = 1;
+    int bestKey = 0;
+    for (int key = 0; key < tet12.Length; key++)
+    {
+        var keyDiff = Math.Abs(((double)fraction - tet12[key]) / tet12[key]); //diff in percentage of 12tet key
+        if (keyDiff < maxDiff)
+        {
+            maxDiff = keyDiff;
+            bestKey = key;
+        }
+    }
+    keyApproximations[bestKey].Add(fraction);
+}
+
+//print bins
+foreach (var entry in new SortedDictionary<int, List<Fraction>>(keyApproximations))
+{
+    Console.Write($"{entry.Key}: ");
+    Console.WriteLine();
+    foreach (var fraction in entry.Value)
+    {
+        Console.Write($"{fraction.Numerator}/{fraction.Denominator}");
+        Console.Write(" - ");
+        Console.WriteLine($" [{string.Join(",", Factorize((int)fraction.Numerator))}]/[{string.Join(",", Factorize((int)fraction.Denominator))}], ");
+    }
+
+
 }
 
 //TestMidiWrite(folderPath);

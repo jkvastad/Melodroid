@@ -223,11 +223,7 @@ namespace MusicTheory
 
         private static List<HashSet<Fraction>> RatiosClosestTo12TetKeys(int maximumPeriodicity)
         {
-            double[] Tet12 = new double[12];
-            for (int i = 0; i < Tet12.Length; i++)
-            {
-                Tet12[i] = Math.Pow(2, i / (double)12);
-            }
+            double[] tet12 = Tet12Values();
 
             List<HashSet<Fraction>> approximations = new();
             for (int i = 0; i < 12; i++)
@@ -242,9 +238,9 @@ namespace MusicTheory
                     double ratio = j / (double)i;
                     double bestDiff = 1;
                     int best12TetKey = 0;
-                    for (int k = 0; k < Tet12.Length; k++)
+                    for (int k = 0; k < tet12.Length; k++)
                     {
-                        var diff = Math.Abs(ratio - Tet12[k]);
+                        var diff = Math.Abs(ratio - tet12[k]);
                         if (diff < bestDiff)
                         {
                             bestDiff = diff;
@@ -256,6 +252,17 @@ namespace MusicTheory
             }
 
             return approximations;
+        }
+
+        public static double[] Tet12Values()
+        {
+            double[] Tet12 = new double[12];
+            for (int i = 0; i < Tet12.Length; i++)
+            {
+                Tet12[i] = Math.Pow(2, i / (double)12);
+            }
+
+            return Tet12;
         }
 
         //Thanks stack overflow https://stackoverflow.com/questions/147515/least-common-multiple-for-3-or-more-numbers/29717490#29717490
