@@ -442,4 +442,13 @@ namespace MusicTheory
             return factors.Count == 0 ? new() { 1 } : factors;
         }
     }
+
+    public static class MusicTheoryExtensions
+    {
+        static Random random = new Random();
+        public static T TakeRandom<T>(this IEnumerable<T> list)
+        {
+            return list.ElementAt(random.Next(list.Count()));
+        }
+    }
 }

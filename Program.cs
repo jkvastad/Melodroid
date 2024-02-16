@@ -52,9 +52,15 @@ BeatBox beatBox = new BeatBox();
 List<int> primes = new() { 2, 2, 2, 2, 3, 3, 3, 5, 5, 7 };
 PrintTet12FractionApproximations(primes);
 
-//TestMidiWrite(folderPath);
-//WriteMIDIWithTimedObjectManager(Path.Combine(folderPath, "midi test two notes velocity.mid"));
+for (int i = 0; i < 8; i++)
+{
+    WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, $"melodroid denominator testing {i}", true);
+}
 
+
+//e.g.:
+//BeatBox beatBox = new BeatBox();
+//WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, "melodroid testing");
 void WriteMeasuresToMidi(List<Measure> measures, string folderPath, string fileName, bool overWrite = false)
 {
     MidiFile midiFile = new MidiFile();
