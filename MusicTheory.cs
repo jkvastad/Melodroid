@@ -199,7 +199,7 @@ namespace MusicTheory
         {
             //primes chosen so that a power of the prime e.g. 2^4 does not exceed ~50, allowing 7^2 only yields a bad approximation of 2 via 49/25 so is excluded
             //List<int> primes = new() { 2, 2, 2, 2, 3, 3, 3, 5, 5, 7 };
-            Dictionary<int, List<Fraction>> keyApproximations = Caluclate12TetFractionApproximations(primes, maxFactors, maxPatternLength);
+            Dictionary<int, List<Fraction>> keyApproximations = Calculate12TetFractionApproximations(primes, maxFactors, maxPatternLength);
 
             //print bins
             foreach (var entry in new SortedDictionary<int, List<Fraction>>(keyApproximations))
@@ -215,8 +215,8 @@ namespace MusicTheory
                 }
             }
         }
-
-        private static Dictionary<int, List<Fraction>> Caluclate12TetFractionApproximations(List<int> primes, int maxFactors = 4, int maxPatternLength = 50)
+        public static readonly List<int> standardPrimes = new() { 2, 2, 2, 2, 3, 3, 3, 5, 5, 7 };
+        public static Dictionary<int, List<Fraction>> Calculate12TetFractionApproximations(List<int> primes, int maxFactors = 4, int maxPatternLength = 50)
         {
             //Get all interesting numbers - combos of up to maxFactors primes
             Dictionary<int, IList<int>> lcmFacotorisations = LcmFactorisationsForCombinationsOfPrimes(primes, maxFactors);
@@ -258,7 +258,7 @@ namespace MusicTheory
                 }
                 keyApproximations[bestKey].Add(fraction);
             }
-
+            keyApproximations[0].Add(1); // fraction 1/1 approximates itself
             return keyApproximations;
         }
 

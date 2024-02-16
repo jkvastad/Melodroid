@@ -48,6 +48,7 @@ Log.Logger = new LoggerConfiguration()
 //TODO: Make a dict for Denominator -> midi step and Numerator -> midi step based on rational tuning 2.
 
 
+BeatBox beatBox = new BeatBox();
 List<int> primes = new() { 2, 2, 2, 2, 3, 3, 3, 5, 5, 7 };
 PrintTet12FractionApproximations(primes);
 

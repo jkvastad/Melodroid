@@ -1,11 +1,49 @@
-﻿using Melanchall.DryWetMidi.MusicTheory;
+﻿using Fractions;
+using Melanchall.DryWetMidi.MusicTheory;
 using MusicTheory;
 using static MusicTheory.MusicTheoryUtils;
 
 public class BeatBox
 {
+    //Key A is compatible with denominator D if key A has a fraction approximaton whose denominator divides D.
+    Dictionary<int, HashSet<int>> _allKeysCompatibleWithDenominator = new();
+    Dictionary<int, List<Fraction>> _tet12FractionApproximations;
     public BeatBox()
     {
+        _tet12FractionApproximations = Calculate12TetFractionApproximations(standardPrimes);
+
+        //init _allKeys
+        foreach (var entry in _tet12FractionApproximations)
+        {
+            foreach (var fraction in entry.Value)
+            {
+                int denominator = (int)fraction.Denominator;
+                if (!_allKeysCompatibleWithDenominator.ContainsKey(denominator))
+                    _allKeysCompatibleWithDenominator[denominator] = new();
+            }
+        }
+        //populate _allKeys
+        foreach (var approximations in _tet12FractionApproximations)
+        {
+            foreach (var fraction in approximations.Value)
+            {
+                foreach (var denominator in _allKeysCompatibleWithDenominator.Keys)
+                {
+                    if (denominator % fraction.Denominator == 0)
+                        _allKeysCompatibleWithDenominator[denominator].Add(approximations.Key);
+                }
+            }
+        }
+
+        foreach (var entry in new SortedDictionary<int, HashSet<int>>(_allKeysCompatibleWithDenominator))
+        {
+            Console.Write($"Denominator: {entry.Key} - Keys: ");
+            foreach (var tet12Key in entry.Value)
+            {
+                Console.Write($"{tet12Key}, ");
+            }
+            Console.WriteLine();
+        }
     }
 
     public Phrase TestPhrase()
@@ -49,7 +87,7 @@ public class BeatBox
         for (int i = 0; i < velocities.Length; i++)
         {
             if (velocities[i].HasValue)
-            {                
+            {
                 noteValues[i] = GetNoteValuePreservingLcm(15, new NoteValue(NoteName.A, 4, velocities[i]!.Value));
             }
         }
