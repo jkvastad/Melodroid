@@ -48,7 +48,8 @@ Log.Logger = new LoggerConfiguration()
 //TODO: Make a dict for Denominator -> midi step and Numerator -> midi step based on rational tuning 2.
 
 
-PrintTet12FractionApproximations();
+List<int> primes = new() { 2, 2, 2, 2, 3, 3, 3, 5, 5, 7 };
+PrintTet12FractionApproximations(primes);
 
 //TestMidiWrite(folderPath);
 //WriteMIDIWithTimedObjectManager(Path.Combine(folderPath, "midi test two notes velocity.mid"));

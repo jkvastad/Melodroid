@@ -195,9 +195,10 @@ namespace MusicTheory
             1.7817974362806785,
             1.887748625363387];
 
-        public static void PrintTet12FractionApproximations(int maxFactors = 4, int maxPatternLength = 50)
+        public static void PrintTet12FractionApproximations(List<int> primes, int maxFactors = 4, int maxPatternLength = 50)
         {
-            List<int> primes = new() { 2, 2, 2, 2, 3, 3, 3, 5, 5, 7, 7 };
+            //primes chosen so that a power of the prime e.g. 2^4 does not exceed ~50, allowing 7^2 only yields a bad approximation of 2 via 49/25 so is excluded
+            //List<int> primes = new() { 2, 2, 2, 2, 3, 3, 3, 5, 5, 7 };
             Dictionary<int, List<Fraction>> keyApproximations = Caluclate12TetFractionApproximations(primes, maxFactors, maxPatternLength);
 
             //print bins
