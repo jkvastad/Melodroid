@@ -107,10 +107,9 @@ foreach (var entry in new SortedDictionary<int, List<Fraction>>(keyApproximation
     {
         Console.Write($"{fraction.Numerator}/{fraction.Denominator}");
         Console.Write(" - ");
-        Console.WriteLine($" [{string.Join(",", Factorize((int)fraction.Numerator))}]/[{string.Join(",", Factorize((int)fraction.Denominator))}], ");
+        Console.Write($"[{string.Join(",", Factorize((int)fraction.Numerator))}]/[{string.Join(",", Factorize((int)fraction.Denominator))}] - ");
+        Console.WriteLine($"({(Math.Abs(((double)fraction - tet12[entry.Key]) / tet12[entry.Key]) * 100).ToString("0.0")})");
     }
-
-
 }
 
 //TestMidiWrite(folderPath);
