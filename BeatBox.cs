@@ -11,9 +11,9 @@ public class BeatBox
     Dictionary<int, HashSet<int>> _allKeysCompatibleWithDenominator = new();
     Dictionary<int, List<Fraction>> _tet12FractionApproximations;
     Random _random = new Random();
-    public BeatBox()
+    public BeatBox(int maxFactors = 4, int maxPatternLength = 50)
     {
-        _tet12FractionApproximations = Calculate12TetFractionApproximations(standardPrimes);
+        _tet12FractionApproximations = Calculate12TetFractionApproximations(standardPrimes, maxFactors, maxPatternLength);
 
         //init _allKeys
         foreach (var entry in _tet12FractionApproximations)

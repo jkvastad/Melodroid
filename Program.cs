@@ -52,10 +52,10 @@ BeatBox beatBox = new BeatBox();
 List<int> primes = new() { 2, 2, 2, 2, 3, 3, 3, 5, 5, 7 };
 PrintTet12FractionApproximations(primes);
 
-for (int i = 0; i < 8; i++)
-{
-    WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, $"melodroid denominator testing {i}", true);
-}
+//for (int i = 0; i < 8; i++)
+//{
+//    WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, $"melodroid denominator testing {i}", true);
+//}
 
 
 //e.g.:

@@ -204,8 +204,7 @@ namespace MusicTheory
             //print bins
             foreach (var entry in new SortedDictionary<int, List<Fraction>>(keyApproximations))
             {
-                Console.Write($"{entry.Key}: ");
-                Console.WriteLine();
+                Console.WriteLine($"{entry.Key}: ");                
                 foreach (var fraction in entry.Value)
                 {
                     Console.Write($"{fraction.Numerator}/{fraction.Denominator}");
