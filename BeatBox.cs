@@ -38,6 +38,7 @@ public class BeatBox
             }
         }
 
+        Console.WriteLine("Denominators of 12TET fraction approximations with compatible keys:");
         foreach (var entry in new SortedDictionary<int, HashSet<int>>(_allKeysCompatibleWithDenominator))
         {
             Console.Write($"Denominator: {entry.Key} - Keys: ");
