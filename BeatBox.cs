@@ -8,7 +8,7 @@ using static MusicTheory.MusicTheoryUtils;
 public class BeatBox
 {
     //Key A is compatible with denominator D if key A has a fraction approximaton whose denominator divides D.
-    Dictionary<int, HashSet<int>> _allKeysCompatibleWithDenominator = new();
+    Dictionary<int, HashSet<(int key, Fraction approximation)>> _allKeysCompatibleWithDenominator = new();
     Dictionary<int, List<Fraction>> _tet12FractionApproximations;
     Random _random = new Random();
     public BeatBox(int maxFactors = 4, int maxPatternLength = 50)
@@ -33,18 +33,31 @@ public class BeatBox
                 foreach (var denominator in _allKeysCompatibleWithDenominator.Keys)
                 {
                     if (denominator % fraction.Denominator == 0)
-                        _allKeysCompatibleWithDenominator[denominator].Add(approximations.Key);
+                        _allKeysCompatibleWithDenominator[denominator].Add((approximations.Key, fraction));
                 }
             }
         }
 
-        Console.WriteLine($"Denominators of 12TET fraction approximations for pattern length {maxPatternLength} with compatible keys:");
-        foreach (var entry in new SortedDictionary<int, HashSet<int>>(_allKeysCompatibleWithDenominator))
+        Console.WriteLine($"Denominators of 12TET fraction approximations for pattern length {maxPatternLength} and primes {string.Join(",",standardPrimes)} with compatible keys:");
+        foreach (var entry in new SortedDictionary<int, HashSet<(int key, Fraction approximation)>>(_allKeysCompatibleWithDenominator))
         {
             Console.Write($"Denominator: {entry.Key} - Keys: ");
-            foreach (var tet12Key in entry.Value)
+            foreach (var keyAndApproximation in entry.Value)
             {
-                Console.Write($"{tet12Key}, ");
+                //Console.Write($"{keyAndApproximation.key} ({keyAndApproximation.approximation.Numerator}/{keyAndApproximation.approximation.Denominator}), ");
+                Console.Write($"{keyAndApproximation.key}, ");
+            }
+            Console.WriteLine();
+        }
+
+        Console.WriteLine($"Denominators of 12TET fraction approximations for pattern length {maxPatternLength} and primes {string.Join(",", standardPrimes)} with compatible keys:");
+        foreach (var entry in new SortedDictionary<int, HashSet<(int key, Fraction approximation)>>(_allKeysCompatibleWithDenominator))
+        {
+            Console.Write($"Denominator: {entry.Key} - Keys: ");
+            foreach (var keyAndApproximation in entry.Value)
+            {
+                Console.Write($"{keyAndApproximation.key} ({keyAndApproximation.approximation.Numerator}/{keyAndApproximation.approximation.Denominator}), ");
+                //Console.Write($"{keyAndApproximation.key}, ");
             }
             Console.WriteLine();
         }
@@ -95,7 +108,7 @@ public class BeatBox
         {
             if (velocities[i].HasValue)
             {
-                noteValues[i] = fundamentalNote + _allKeysCompatibleWithDenominator[firstDenominator].TakeRandom();
+                noteValues[i] = fundamentalNote + _allKeysCompatibleWithDenominator[firstDenominator].TakeRandom().key;
             }
         }
         return noteValues;
