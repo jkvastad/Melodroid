@@ -102,6 +102,7 @@ void InputKeysGetFractionApproximationPatternLength()
                 compatibleDenominators.Add(entry.Key);
             }
         }
+        //TODO print which fraction approximations matched for each denominator
         Console.WriteLine(string.Join(",", compatibleDenominators));
     }
 }
