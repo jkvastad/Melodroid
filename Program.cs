@@ -53,6 +53,7 @@ List<int> primes = new() { 2, 2, 2, 2, 3, 3, 3, 5, 5, 7 };
 PrintTet12FractionApproximations(primes);
 
 
+InputKeysGetFractionApproximationPatternLength();
 
 //for (int i = 0; i < 8; i++)
 //{
@@ -65,24 +66,44 @@ PrintTet12FractionApproximations(primes);
 //WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, "melodroid testing");
 
 //Prints possible pattern lengths of inputed keys based on fraction approximations
-void InputKeysGetFractionApproximationPatternLength(int[] tet12Keys)
+void InputKeysGetFractionApproximationPatternLength()
 {
-    Dictionary<int, List<Fraction>> tet12FractionApproximations = Calculate12TetFractionApproximations(standardPrimes);    
+    Dictionary<int, HashSet<(int key, Fraction approximation)>> keysCompatibleWithDenominator = CalculateKeysCompatibleWithDenominators();
     while (true)
     {
         Console.WriteLine("Input space separated tet12 keys ([0-11]) for possible pattern lengths. (empty input to exit)");
         string input = Console.ReadLine();
-        if (input == null) return;
-        int[] keys = Array.ConvertAll(input.Split(' '), int.Parse);
-        foreach (var key in keys)
+        
+        if (input.Length == 0) return;
+        int[] inputKeys = Array.ConvertAll(input.Split(' '), int.Parse);
+        List<int> compatibleDenominators = new();
+        foreach (var entry in new SortedDictionary<int, HashSet<(int key, Fraction approximation)>>(keysCompatibleWithDenominator))
         {
-            foreach(var fraction in tet12FractionApproximations[key])
+            bool allKeysCompatibleWithDenominator = true;
+            foreach (var key in inputKeys)
             {
-
+                bool isKeyCompatible = false;
+                foreach (var keyAndFraction in entry.Value)
+                {
+                    if (key == keyAndFraction.key)
+                    {
+                        isKeyCompatible = true;
+                        break;
+                    }
+                }
+                if (!isKeyCompatible)
+                {
+                    allKeysCompatibleWithDenominator = false;
+                    break;
+                }
+            }
+            if (allKeysCompatibleWithDenominator)
+            {
+                compatibleDenominators.Add(entry.Key);
             }
         }
+        Console.WriteLine(string.Join(",", compatibleDenominators));
     }
-
 }
 void WriteMeasuresToMidi(List<Measure> measures, string folderPath, string fileName, bool overWrite = false)
 {
