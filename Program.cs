@@ -52,6 +52,8 @@ BeatBox beatBox = new BeatBox();
 List<int> primes = new() { 2, 2, 2, 2, 3, 3, 3, 5, 5, 7 };
 PrintTet12FractionApproximations(primes);
 
+
+
 //for (int i = 0; i < 8; i++)
 //{
 //    WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, $"melodroid denominator testing {i}", true);
@@ -61,6 +63,27 @@ PrintTet12FractionApproximations(primes);
 //e.g.:
 //BeatBox beatBox = new BeatBox();
 //WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, "melodroid testing");
+
+//Prints possible pattern lengths of inputed keys based on fraction approximations
+void InputKeysGetFractionApproximationPatternLength(int[] tet12Keys)
+{
+    Dictionary<int, List<Fraction>> tet12FractionApproximations = Calculate12TetFractionApproximations(standardPrimes);    
+    while (true)
+    {
+        Console.WriteLine("Input space separated tet12 keys ([0-11]) for possible pattern lengths. (empty input to exit)");
+        string input = Console.ReadLine();
+        if (input == null) return;
+        int[] keys = Array.ConvertAll(input.Split(' '), int.Parse);
+        foreach (var key in keys)
+        {
+            foreach(var fraction in tet12FractionApproximations[key])
+            {
+
+            }
+        }
+    }
+
+}
 void WriteMeasuresToMidi(List<Measure> measures, string folderPath, string fileName, bool overWrite = false)
 {
     MidiFile midiFile = new MidiFile();

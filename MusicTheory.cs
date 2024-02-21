@@ -261,6 +261,35 @@ namespace MusicTheory
             return keyApproximations;
         }
 
+        public static Dictionary<int, HashSet<(int key, Fraction approximation)>> CalculateKeysCompatibleWithDenominators(int maxFactors = 4, int maxPatternLength = 50)
+        {
+            var tet12FractionApproximations = Calculate12TetFractionApproximations(standardPrimes, maxFactors, maxPatternLength);
+            Dictionary<int, HashSet<(int key, Fraction approximation)>> allKeysCompatibleWithDenominator = new();
+            //init _allKeys
+            foreach (var entry in tet12FractionApproximations)
+            {
+                foreach (var fraction in entry.Value)
+                {
+                    int denominator = (int)fraction.Denominator;
+                    if (!allKeysCompatibleWithDenominator.ContainsKey(denominator))
+                        allKeysCompatibleWithDenominator[denominator] = new();
+                }
+            }
+            //populate _allKeys
+            foreach (var approximations in tet12FractionApproximations)
+            {
+                foreach (var fraction in approximations.Value)
+                {
+                    foreach (var denominator in allKeysCompatibleWithDenominator.Keys)
+                    {
+                        if (denominator % fraction.Denominator == 0)
+                            allKeysCompatibleWithDenominator[denominator].Add((approximations.Key, fraction));
+                    }
+                }
+            }
+            return allKeysCompatibleWithDenominator;
+        }
+
         public static List<int> MidiIntervalsPreservingLcm(int lcm, int maximumPeriodicity = 16)
         {
             List<int> intervals = new();

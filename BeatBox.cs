@@ -2,7 +2,6 @@
 using Melanchall.DryWetMidi.MusicTheory;
 using MusicTheory;
 using Serilog;
-using Serilog.Core;
 using static MusicTheory.MusicTheoryUtils;
 
 public class BeatBox
@@ -13,32 +12,10 @@ public class BeatBox
     Random _random = new Random();
     public BeatBox(int maxFactors = 4, int maxPatternLength = 50)
     {
-        _tet12FractionApproximations = Calculate12TetFractionApproximations(standardPrimes, maxFactors, maxPatternLength);
 
-        //init _allKeys
-        foreach (var entry in _tet12FractionApproximations)
-        {
-            foreach (var fraction in entry.Value)
-            {
-                int denominator = (int)fraction.Denominator;
-                if (!_allKeysCompatibleWithDenominator.ContainsKey(denominator))
-                    _allKeysCompatibleWithDenominator[denominator] = new();
-            }
-        }
-        //populate _allKeys
-        foreach (var approximations in _tet12FractionApproximations)
-        {
-            foreach (var fraction in approximations.Value)
-            {
-                foreach (var denominator in _allKeysCompatibleWithDenominator.Keys)
-                {
-                    if (denominator % fraction.Denominator == 0)
-                        _allKeysCompatibleWithDenominator[denominator].Add((approximations.Key, fraction));
-                }
-            }
-        }
+        _allKeysCompatibleWithDenominator = CalculateKeysCompatibleWithDenominators(maxFactors, maxPatternLength);
 
-        Console.WriteLine($"Denominators of 12TET fraction approximations for pattern length {maxPatternLength} and primes {string.Join(",",standardPrimes)} with compatible keys:");
+        Console.WriteLine($"Denominators of 12TET fraction approximations for pattern length {maxPatternLength} and primes {string.Join(",", standardPrimes)} with compatible keys:");
         foreach (var entry in new SortedDictionary<int, HashSet<(int key, Fraction approximation)>>(_allKeysCompatibleWithDenominator))
         {
             Console.Write($"Denominator: {entry.Key} - Keys: ");
