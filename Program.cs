@@ -68,7 +68,7 @@ InputKeysGetFractionApproximationPatternLength();
 //Prints possible pattern lengths of inputed keys based on fraction approximations
 void InputKeysGetFractionApproximationPatternLength()
 {    
-    Dictionary<int, HashSet<(int key, Fraction approximation)>> keysCompatibleWithDenominator = CalculateKeysCompatibleWithPatternLength();
+    Dictionary<int, HashSet<(int key, Fraction approximation)>> keysCompatibleWithPatternLength = CalculateKeysCompatibleWithPatternLength();
     while (true)
     {
         Console.WriteLine("Input space separated tet12 keys ([0-11]) for possible pattern lengths. (empty input to exit)");
@@ -76,10 +76,10 @@ void InputKeysGetFractionApproximationPatternLength()
         
         if (input.Length == 0) return;
         int[] inputKeys = Array.ConvertAll(input.Split(' '), int.Parse);
-        List<int> compatibleDenominators = new();
-        foreach (var entry in new SortedDictionary<int, HashSet<(int key, Fraction approximation)>>(keysCompatibleWithDenominator))
+        List<int> compatiblePatternLengths = new();
+        foreach (var entry in new SortedDictionary<int, HashSet<(int key, Fraction approximation)>>(keysCompatibleWithPatternLength))
         {
-            bool allKeysCompatibleWithDenominator = true;
+            bool allKeysCompatibleWithPatternLength = true;
             foreach (var key in inputKeys)
             {
                 bool isKeyCompatible = false;
@@ -93,17 +93,17 @@ void InputKeysGetFractionApproximationPatternLength()
                 }
                 if (!isKeyCompatible)
                 {
-                    allKeysCompatibleWithDenominator = false;
+                    allKeysCompatibleWithPatternLength = false;
                     break;
                 }
             }
-            if (allKeysCompatibleWithDenominator)
+            if (allKeysCompatibleWithPatternLength)
             {
-                compatibleDenominators.Add(entry.Key);
+                compatiblePatternLengths.Add(entry.Key);
             }
         }
         //TODO print which fraction approximations matched for each denominator
-        Console.WriteLine(string.Join(",", compatibleDenominators));
+        Console.WriteLine(string.Join(",", compatiblePatternLengths));
     }
 }
 void WriteMeasuresToMidi(List<Measure> measures, string folderPath, string fileName, bool overWrite = false)
