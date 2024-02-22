@@ -53,33 +53,33 @@ List<int> primes = new() { 2, 2, 2, 2, 3, 3, 3, 5, 5, 7 };
 PrintTet12FractionApproximations(primes);
 
 
-InputKeysGetFractionApproximationPatternLength();
+QueryKeysToPatternLengthsFractionApproximations();
 
 //for (int i = 0; i < 8; i++)
 //{
 //    WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, $"melodroid denominator testing {i}", true);
 //}
 
-
 //e.g.:
 //BeatBox beatBox = new BeatBox();
 //WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, "melodroid testing");
 
 //Prints possible pattern lengths of inputed keys based on fraction approximations
-void InputKeysGetFractionApproximationPatternLength()
-{    
+void QueryKeysToPatternLengthsFractionApproximations()
+{
     Dictionary<int, HashSet<(int key, Fraction approximation)>> keysCompatibleWithPatternLength = CalculateKeysCompatibleWithPatternLength();
     while (true)
     {
         Console.WriteLine("Input space separated tet12 keys ([0-11]) for possible pattern lengths. (empty input to exit)");
         string input = Console.ReadLine();
-        
+
         if (input.Length == 0) return;
         int[] inputKeys = Array.ConvertAll(input.Split(' '), int.Parse);
-        List<int> compatiblePatternLengths = new();
+        List<(int patternLength, List<(int key, Fraction approximation)> keysAndApproximations)> compatiblePatternLengths = new();
         foreach (var entry in new SortedDictionary<int, HashSet<(int key, Fraction approximation)>>(keysCompatibleWithPatternLength))
         {
             bool allKeysCompatibleWithPatternLength = true;
+            List<(int key, Fraction approximation)> keysAndApproximations = new();
             foreach (var key in inputKeys)
             {
                 bool isKeyCompatible = false;
@@ -88,6 +88,7 @@ void InputKeysGetFractionApproximationPatternLength()
                     if (key == keyAndFraction.key)
                     {
                         isKeyCompatible = true;
+                        keysAndApproximations.Add(keyAndFraction);
                         break;
                     }
                 }
@@ -99,11 +100,24 @@ void InputKeysGetFractionApproximationPatternLength()
             }
             if (allKeysCompatibleWithPatternLength)
             {
-                compatiblePatternLengths.Add(entry.Key);
+                compatiblePatternLengths.Add((entry.Key, keysAndApproximations));
             }
         }
         //TODO print which fraction approximations matched for each denominator
-        Console.WriteLine(string.Join(",", compatiblePatternLengths));
+        foreach (var entry in compatiblePatternLengths)
+        {
+            Console.Write($"{entry.patternLength}: ");
+            foreach (var keyAndApproximation in entry.keysAndApproximations)
+            {
+                Console.Write($"{keyAndApproximation.key} ");
+            }
+            Console.Write("- ");
+            foreach (var keyAndApproximation in entry.keysAndApproximations)
+            {
+                Console.Write($"{keyAndApproximation.approximation} ");
+            }
+            Console.WriteLine();
+        }
     }
 }
 void WriteMeasuresToMidi(List<Measure> measures, string folderPath, string fileName, bool overWrite = false)
