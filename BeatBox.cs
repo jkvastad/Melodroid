@@ -6,16 +6,15 @@ using static MusicTheory.MusicTheoryUtils;
 
 public class BeatBox
 {
-    //Key A is compatible with denominator D if key A has a fraction approximaton whose denominator divides D.
     Dictionary<int, HashSet<(int key, Fraction approximation)>> _allKeysCompatibleWithDenominator = new();
     Dictionary<int, List<Fraction>> _tet12FractionApproximations;
     Random _random = new Random();
     public BeatBox(int maxFactors = 4, int maxPatternLength = 50)
     {
-
-        _allKeysCompatibleWithDenominator = CalculateKeysCompatibleWithDenominators(maxFactors, maxPatternLength);
+        _allKeysCompatibleWithDenominator = CalculateKeysCompatibleWithPatternLength(maxFactors, maxPatternLength);
 
         Console.WriteLine($"Denominators of 12TET fraction approximations for pattern length {maxPatternLength} and primes {string.Join(",", standardPrimes)} with compatible keys:");
+        Console.WriteLine();
         foreach (var entry in new SortedDictionary<int, HashSet<(int key, Fraction approximation)>>(_allKeysCompatibleWithDenominator))
         {
             Console.Write($"Denominator: {entry.Key} - Keys: ");

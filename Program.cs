@@ -67,8 +67,8 @@ InputKeysGetFractionApproximationPatternLength();
 
 //Prints possible pattern lengths of inputed keys based on fraction approximations
 void InputKeysGetFractionApproximationPatternLength()
-{
-    Dictionary<int, HashSet<(int key, Fraction approximation)>> keysCompatibleWithDenominator = CalculateKeysCompatibleWithDenominators();
+{    
+    Dictionary<int, HashSet<(int key, Fraction approximation)>> keysCompatibleWithDenominator = CalculateKeysCompatibleWithPatternLength();
     while (true)
     {
         Console.WriteLine("Input space separated tet12 keys ([0-11]) for possible pattern lengths. (empty input to exit)");

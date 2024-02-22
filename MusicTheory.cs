@@ -201,10 +201,11 @@ namespace MusicTheory
             //List<int> primes = new() { 2, 2, 2, 2, 3, 3, 3, 5, 5, 7 };
             Dictionary<int, List<Fraction>> keyApproximations = Calculate12TetFractionApproximations(primes, maxFactors, maxPatternLength);
 
+            Console.WriteLine($"12TET fraction approximations for primes {string.Join(",",primes)}, max factors {maxFactors} and max pattern length {maxPatternLength}");
             //print bins
             foreach (var entry in new SortedDictionary<int, List<Fraction>>(keyApproximations))
             {
-                Console.WriteLine($"{entry.Key}: ");                
+                Console.WriteLine($"{entry.Key}: ");
                 foreach (var fraction in entry.Value)
                 {
                     Console.Write($"{fraction.Numerator}/{fraction.Denominator}");
@@ -218,14 +219,14 @@ namespace MusicTheory
         public static Dictionary<int, List<Fraction>> Calculate12TetFractionApproximations(List<int> primes, int maxFactors = 4, int maxPatternLength = 50)
         {
             //Get all interesting numbers - combos of up to maxFactors primes
-            Dictionary<int, IList<int>> lcmFacotorisations = LcmFactorisationsForCombinationsOfPrimes(primes, maxFactors);
+            Dictionary<int, IList<int>> lcmFactorisations = LcmFactorisationsForCombinationsOfPrimes(primes, maxFactors);
 
             //Keep only fractions < maxPatternLength, since this decides pattern length.
-            //I conjecture that max pattern length arises from mechanisms similar to how a beat turns into a sound around 20hz.
-            lcmFacotorisations = lcmFacotorisations.Where(entry => entry.Key < maxPatternLength).ToDictionary();
+            //I conjecture that max pattern length is constrained by mechanisms similar to how a beat turns into a sound around 20hz.
+            lcmFactorisations = lcmFactorisations.Where(entry => entry.Key < maxPatternLength).ToDictionary();
 
             //Create all fractions from possible lcm combinations
-            var fractions = FractionsFromIntegers(lcmFacotorisations.Keys.ToList()).Order();
+            var fractions = FractionsFromIntegers(lcmFactorisations.Keys.ToList()).Order();
 
             //Filter out fractions outside octave -
             //Since proximity is calculated as percentage, approximations are as close to a 12Tet tone in one octave as their octave transposed counterpart in another
@@ -257,37 +258,28 @@ namespace MusicTheory
                 }
                 keyApproximations[bestKey].Add(fraction);
             }
-            keyApproximations[0].Add(1); // fraction 1/1 approximates itself
+            keyApproximations[0].Add(1); // fraction 1/1 approximates key 0 but is not a prime so must be added manually
             return keyApproximations;
         }
 
-        public static Dictionary<int, HashSet<(int key, Fraction approximation)>> CalculateKeysCompatibleWithDenominators(int maxFactors = 4, int maxPatternLength = 50)
-        {
-            var tet12FractionApproximations = Calculate12TetFractionApproximations(standardPrimes, maxFactors, maxPatternLength);
-            Dictionary<int, HashSet<(int key, Fraction approximation)>> allKeysCompatibleWithDenominator = new();
-            //init _allKeys
-            foreach (var entry in tet12FractionApproximations)
+        public static Dictionary<int, HashSet<(int key, Fraction approximation)>> CalculateKeysCompatibleWithPatternLength(int maxFactors = 4, int maxPatternLength = 50)
+        {            
+            Dictionary<int, List<Fraction>> tet12FractionApproximations = Calculate12TetFractionApproximations(standardPrimes, maxFactors, maxPatternLength);
+            Dictionary<int, HashSet<(int key, Fraction approximation)>> allKeysCompatibleWithPatternLength = new();            
+            
+            for (int patternLength = 1; patternLength < maxPatternLength + 1; patternLength++)
             {
-                foreach (var fraction in entry.Value)
+                allKeysCompatibleWithPatternLength[patternLength] = new();
+                foreach (var approximations in tet12FractionApproximations)
                 {
-                    int denominator = (int)fraction.Denominator;
-                    if (!allKeysCompatibleWithDenominator.ContainsKey(denominator))
-                        allKeysCompatibleWithDenominator[denominator] = new();
-                }
-            }
-            //populate _allKeys
-            foreach (var approximations in tet12FractionApproximations)
-            {
-                foreach (var fraction in approximations.Value)
-                {
-                    foreach (var denominator in allKeysCompatibleWithDenominator.Keys)
+                    foreach (var fraction in approximations.Value)
                     {
-                        if (denominator % fraction.Denominator == 0)
-                            allKeysCompatibleWithDenominator[denominator].Add((approximations.Key, fraction));
+                        if (patternLength % fraction.Denominator == 0)
+                            allKeysCompatibleWithPatternLength[patternLength].Add((approximations.Key, fraction));
                     }
                 }
             }
-            return allKeysCompatibleWithDenominator;
+            return allKeysCompatibleWithPatternLength;
         }
 
         public static List<int> MidiIntervalsPreservingLcm(int lcm, int maximumPeriodicity = 16)
