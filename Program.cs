@@ -75,36 +75,10 @@ void QueryKeysToPatternLengthsFractionApproximations()
 
         if (input.Length == 0) return;
         int[] inputKeys = Array.ConvertAll(input.Split(' '), int.Parse);
-        List<(int patternLength, List<(int key, Fraction approximation)> keysAndApproximations)> compatiblePatternLengths = new();
-        foreach (var entry in new SortedDictionary<int, HashSet<(int key, Fraction approximation)>>(keysCompatibleWithPatternLength))
-        {
-            bool allKeysCompatibleWithPatternLength = true;
-            List<(int key, Fraction approximation)> keysAndApproximations = new();
-            foreach (var key in inputKeys)
-            {
-                bool isKeyCompatible = false;
-                foreach (var keyAndFraction in entry.Value)
-                {
-                    if (key == keyAndFraction.key)
-                    {
-                        isKeyCompatible = true;
-                        keysAndApproximations.Add(keyAndFraction);
-                        break;
-                    }
-                }
-                if (!isKeyCompatible)
-                {
-                    allKeysCompatibleWithPatternLength = false;
-                    break;
-                }
-            }
-            if (allKeysCompatibleWithPatternLength)
-            {
-                compatiblePatternLengths.Add((entry.Key, keysAndApproximations));
-            }
-        }
+        List<(int patternLength, List<(int key, Fraction approximation)> keysAndApproximations)> patternLengthKeysCompatibleWithInput =
+            CalculatePatternLengthsCompatibleWithInputKeys(keysCompatibleWithPatternLength, inputKeys);
         //TODO print which fraction approximations matched for each denominator
-        foreach (var entry in compatiblePatternLengths)
+        foreach (var entry in patternLengthKeysCompatibleWithInput)
         {
             Console.Write($"{entry.patternLength}: ");
             foreach (var keyAndApproximation in entry.keysAndApproximations)
@@ -221,3 +195,37 @@ void TestMidiWrite(string folderPath)
     WriteMeasuresToMidi(new List<Measure>() { measure1, measure2, measure3 }, folderPath, "midi_write_test_2", true);
 }
 
+static List<(int patternLength, List<(int key, Fraction approximation)> keysAndApproximations)> CalculatePatternLengthsCompatibleWithInputKeys(
+    Dictionary<int, HashSet<(int key, Fraction approximation)>> keysCompatibleWithPatternLength, int[] inputKeys)
+{
+    List<(int patternLength, List<(int key, Fraction approximation)> keysAndApproximations)> compatiblePatternLengths = new();
+    foreach (var entry in new SortedDictionary<int, HashSet<(int key, Fraction approximation)>>(keysCompatibleWithPatternLength))
+    {
+        bool allKeysCompatibleWithPatternLength = true;
+        List<(int key, Fraction approximation)> keysAndApproximations = new();
+        foreach (var key in inputKeys)
+        {
+            bool isKeyCompatible = false;
+            foreach (var keyAndFraction in entry.Value)
+            {
+                if (key == keyAndFraction.key)
+                {
+                    isKeyCompatible = true;
+                    keysAndApproximations.Add(keyAndFraction);
+                    break;
+                }
+            }
+            if (!isKeyCompatible)
+            {
+                allKeysCompatibleWithPatternLength = false;
+                break;
+            }
+        }
+        if (allKeysCompatibleWithPatternLength)
+        {
+            compatiblePatternLengths.Add((entry.Key, keysAndApproximations));
+        }
+    }
+
+    return compatiblePatternLengths;
+}
