@@ -10,6 +10,7 @@ using Serilog;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Text;
 using static MusicTheory.MusicTheoryUtils;
 
 //MIDI standard: http://www.music.mcgill.ca/~ich/classes/mumt306/StandardMIDIfileformat.html
@@ -67,7 +68,7 @@ QueryKeySetCompatiblePatternLengths();
 //WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, "melodroid testing");
 
 //Prints possible pattern lengths of inputed keys based on fraction approximations
-void QueryKeySetCompatiblePatternLengths(bool rotateFundamental = true)
+void QueryKeySetCompatiblePatternLengths()
 {
     Dictionary<int, HashSet<(int key, Fraction approximation)>> keysCompatibleWithPatternLength = CalculateKeysCompatibleWithPatternLength();
     while (true)
@@ -77,44 +78,45 @@ void QueryKeySetCompatiblePatternLengths(bool rotateFundamental = true)
 
         if (input.Length == 0) return;
         int[] inputKeys = Array.ConvertAll(input.Split(' '), int.Parse);
-        if (rotateFundamental)
-        {
-            List<int[]> allRotatedKeys = new();
-            foreach (int key in inputKeys)
-            {
-                allRotatedKeys.Add(inputKeys.Select(inputKey => inputKey - key).ToArray());
-            }
-            List<List<(int patternLength, List<(int key, Fraction approximation)> keysAndApproximations)>> allPatternsAllRotations = new();
-            foreach (int[] rotatedKeySet in allRotatedKeys)
-            {
-                allPatternsAllRotations.Add(CalculatePatternLengthsCompatibleWithInputKeys(keysCompatibleWithPatternLength, rotatedKeySet));
-            }
-            int columnWidth = 30;
-            foreach (int[] rotatedKeySet in allRotatedKeys)
-            {
-                Console.Write($"{string.Join(" ", rotatedKeySet)} ({string.Join(" ", rotatedKeySet.OctaveTransposed())})".PadRight(columnWidth));
-            }
-            Console.WriteLine();
-        }
-        else
-        {
-            List<(int patternLength, List<(int key, Fraction approximation)> keysAndApproximations)> patternLengthsCompatibleWithInputKeys =
-                    CalculatePatternLengthsCompatibleWithInputKeys(keysCompatibleWithPatternLength, inputKeys);
 
-            foreach (var entry in patternLengthsCompatibleWithInputKeys)
+        List<int[]> allRotatedKeys = new();
+        foreach (int key in inputKeys)
+        {
+            allRotatedKeys.Add(inputKeys.Select(inputKey => inputKey - key).ToArray());
+        }
+        List<List<(int patternLength, List<(int key, Fraction approximation)> keysAndApproximations)>> allPatternsAllRotations = new();
+        foreach (int[] rotatedKeySet in allRotatedKeys)
+        {
+            allPatternsAllRotations.Add(CalculatePatternLengthsCompatibleWithInputKeys(keysCompatibleWithPatternLength, rotatedKeySet));
+        }
+        int columnWidth = 30;
+        foreach (int[] rotatedKeySet in allRotatedKeys)
+        {
+            Console.Write($"{string.Join(" ", rotatedKeySet)} ({string.Join(" ", rotatedKeySet.OctaveTransposed())})".PadRight(columnWidth));
+        }
+        Console.WriteLine();
+        bool isSomethingPrinted = true; //white lie to start the loop
+        int row = 0;
+        while (isSomethingPrinted)
+        {
+            isSomethingPrinted = false;
+            for (int column = 0; column < allPatternsAllRotations.Count; column++)
             {
-                Console.Write($"{entry.patternLength}: ");
-                foreach (var keyAndApproximation in entry.keysAndApproximations)
+                //more rows to print for pattern
+                if (allPatternsAllRotations[column].Count > row)
                 {
-                    Console.Write($"{keyAndApproximation.key} ");
+                    StringBuilder sb = new StringBuilder();
+                    sb.Append($"{allPatternsAllRotations[column][row].patternLength}: ");
+                    foreach (var keyAndApproximation in allPatternsAllRotations[column][row].keysAndApproximations)
+                    {
+                        sb.Append($"{keyAndApproximation.approximation} ");
+                    }
+                    Console.Write(sb.ToString().PadRight(columnWidth));
+                    isSomethingPrinted = true;
                 }
-                Console.Write("- ");
-                foreach (var keyAndApproximation in entry.keysAndApproximations)
-                {
-                    Console.Write($"{keyAndApproximation.approximation} ");
-                }
-                Console.WriteLine();
             }
+            row++;
+            Console.WriteLine();
         }
     }
 }
