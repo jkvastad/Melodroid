@@ -7,6 +7,7 @@ using Melanchall.DryWetMidi.MusicTheory;
 using MoreLinq;
 using MusicTheory;
 using Serilog;
+using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using static MusicTheory.MusicTheoryUtils;
@@ -66,7 +67,7 @@ QueryKeySetCompatiblePatternLengths();
 //WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, "melodroid testing");
 
 //Prints possible pattern lengths of inputed keys based on fraction approximations
-void QueryKeySetCompatiblePatternLengths()
+void QueryKeySetCompatiblePatternLengths(bool rotateFundamental = true)
 {
     Dictionary<int, HashSet<(int key, Fraction approximation)>> keysCompatibleWithPatternLength = CalculateKeysCompatibleWithPatternLength();
     while (true)
@@ -76,22 +77,44 @@ void QueryKeySetCompatiblePatternLengths()
 
         if (input.Length == 0) return;
         int[] inputKeys = Array.ConvertAll(input.Split(' '), int.Parse);
-        List<(int patternLength, List<(int key, Fraction approximation)> keysAndApproximations)> patternLengthKeysCompatibleWithInput =
-            CalculatePatternLengthsCompatibleWithInputKeys(keysCompatibleWithPatternLength, inputKeys);
-
-        foreach (var entry in patternLengthKeysCompatibleWithInput)
+        if (rotateFundamental)
         {
-            Console.Write($"{entry.patternLength}: ");
-            foreach (var keyAndApproximation in entry.keysAndApproximations)
+            List<int[]> allRotatedKeys = new();
+            foreach (int key in inputKeys)
             {
-                Console.Write($"{keyAndApproximation.key} ");
+                allRotatedKeys.Add(inputKeys.Select(inputKey => inputKey - key).ToArray());
             }
-            Console.Write("- ");
-            foreach (var keyAndApproximation in entry.keysAndApproximations)
+            List<List<(int patternLength, List<(int key, Fraction approximation)> keysAndApproximations)>> allPatternsAllRotations = new();
+            foreach (int[] rotatedKeySet in allRotatedKeys)
             {
-                Console.Write($"{keyAndApproximation.approximation} ");
+                allPatternsAllRotations.Add(CalculatePatternLengthsCompatibleWithInputKeys(keysCompatibleWithPatternLength, rotatedKeySet));
+            }
+            int columnWidth = 30;
+            foreach (int[] rotatedKeySet in allRotatedKeys)
+            {
+                Console.Write($"{string.Join(" ", rotatedKeySet)} ({string.Join(" ", rotatedKeySet.OctaveTransposed())})".PadRight(columnWidth));
             }
             Console.WriteLine();
+        }
+        else
+        {
+            List<(int patternLength, List<(int key, Fraction approximation)> keysAndApproximations)> patternLengthsCompatibleWithInputKeys =
+                    CalculatePatternLengthsCompatibleWithInputKeys(keysCompatibleWithPatternLength, inputKeys);
+
+            foreach (var entry in patternLengthsCompatibleWithInputKeys)
+            {
+                Console.Write($"{entry.patternLength}: ");
+                foreach (var keyAndApproximation in entry.keysAndApproximations)
+                {
+                    Console.Write($"{keyAndApproximation.key} ");
+                }
+                Console.Write("- ");
+                foreach (var keyAndApproximation in entry.keysAndApproximations)
+                {
+                    Console.Write($"{keyAndApproximation.approximation} ");
+                }
+                Console.WriteLine();
+            }
         }
     }
 }

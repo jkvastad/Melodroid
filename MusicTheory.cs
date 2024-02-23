@@ -201,7 +201,7 @@ namespace MusicTheory
             //List<int> primes = new() { 2, 2, 2, 2, 3, 3, 3, 5, 5, 7 };
             Dictionary<int, List<Fraction>> keyApproximations = Calculate12TetFractionApproximations(primes, maxFactors, maxPatternLength);
 
-            Console.WriteLine($"12TET fraction approximations for primes {string.Join(",",primes)}, max factors {maxFactors} and max pattern length {maxPatternLength}");
+            Console.WriteLine($"12TET fraction approximations for primes {string.Join(",", primes)}, max factors {maxFactors} and max pattern length {maxPatternLength}");
             //print bins
             foreach (var entry in new SortedDictionary<int, List<Fraction>>(keyApproximations))
             {
@@ -263,11 +263,12 @@ namespace MusicTheory
         }
 
         public static Dictionary<int, HashSet<(int key, Fraction approximation)>> CalculateKeysCompatibleWithPatternLength(int maxFactors = 4, int maxPatternLength = 50)
-        {            
+        {
             //Key A is compatible with pattern length L if A has a fraction approximation F whose denominator D divides L.
+            //Conversely, a pattern length L is compatible with key A if A has a fraction approximation F whose denominator D divides L.
             Dictionary<int, List<Fraction>> tet12FractionApproximations = Calculate12TetFractionApproximations(standardPrimes, maxFactors, maxPatternLength);
-            Dictionary<int, HashSet<(int key, Fraction approximation)>> allKeysCompatibleWithPatternLength = new();            
-            
+            Dictionary<int, HashSet<(int key, Fraction approximation)>> allKeysCompatibleWithPatternLength = new();
+
             for (int patternLength = 1; patternLength < maxPatternLength + 1; patternLength++)
             {
                 allKeysCompatibleWithPatternLength[patternLength] = new();
@@ -470,6 +471,21 @@ namespace MusicTheory
         public static T TakeRandom<T>(this IEnumerable<T> list)
         {
             return list.ElementAt(random.Next(list.Count()));
+        }
+
+        public static int[] OctaveTransposed(this int[] tet12Keys)
+        {
+            List<int> transposed12TetKeys = new();
+            foreach (int key in tet12Keys)
+            {
+                int transposedKey = key;
+                while (transposedKey < 0)
+                    transposedKey += 12;
+                while (transposedKey >= 12)
+                    transposedKey -= 12;
+                transposed12TetKeys.Add(transposedKey);
+            }
+            return transposed12TetKeys.ToArray();
         }
     }
 }
