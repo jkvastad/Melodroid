@@ -264,6 +264,7 @@ namespace MusicTheory
 
         public static Dictionary<int, HashSet<(int key, Fraction approximation)>> CalculateKeysCompatibleWithPatternLength(int maxFactors = 4, int maxPatternLength = 50)
         {            
+            //Key A is compatible with pattern length L if A has a fraction approximation F whose denominator D divides L.
             Dictionary<int, List<Fraction>> tet12FractionApproximations = Calculate12TetFractionApproximations(standardPrimes, maxFactors, maxPatternLength);
             Dictionary<int, HashSet<(int key, Fraction approximation)>> allKeysCompatibleWithPatternLength = new();            
             

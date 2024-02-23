@@ -8,6 +8,7 @@ using MoreLinq;
 using MusicTheory;
 using Serilog;
 using System.Linq;
+using System.Numerics;
 using static MusicTheory.MusicTheoryUtils;
 
 //MIDI standard: http://www.music.mcgill.ca/~ich/classes/mumt306/StandardMIDIfileformat.html
@@ -53,7 +54,7 @@ List<int> primes = new() { 2, 2, 2, 2, 3, 3, 3, 5, 5, 7 };
 PrintTet12FractionApproximations(primes);
 
 
-QueryKeysToPatternLengthsFractionApproximations();
+QueryKeySetCompatiblePatternLengths();
 
 //for (int i = 0; i < 8; i++)
 //{
@@ -65,7 +66,7 @@ QueryKeysToPatternLengthsFractionApproximations();
 //WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, "melodroid testing");
 
 //Prints possible pattern lengths of inputed keys based on fraction approximations
-void QueryKeysToPatternLengthsFractionApproximations()
+void QueryKeySetCompatiblePatternLengths()
 {
     Dictionary<int, HashSet<(int key, Fraction approximation)>> keysCompatibleWithPatternLength = CalculateKeysCompatibleWithPatternLength();
     while (true)
@@ -77,7 +78,7 @@ void QueryKeysToPatternLengthsFractionApproximations()
         int[] inputKeys = Array.ConvertAll(input.Split(' '), int.Parse);
         List<(int patternLength, List<(int key, Fraction approximation)> keysAndApproximations)> patternLengthKeysCompatibleWithInput =
             CalculatePatternLengthsCompatibleWithInputKeys(keysCompatibleWithPatternLength, inputKeys);
-        //TODO print which fraction approximations matched for each denominator
+
         foreach (var entry in patternLengthKeysCompatibleWithInput)
         {
             Console.Write($"{entry.patternLength}: ");
@@ -203,15 +204,37 @@ static List<(int patternLength, List<(int key, Fraction approximation)> keysAndA
     {
         bool allKeysCompatibleWithPatternLength = true;
         List<(int key, Fraction approximation)> keysAndApproximations = new();
-        foreach (var key in inputKeys)
+        foreach (int key in inputKeys)
         {
+            int octaveTransposedKey = key;
+            int transpositions = 0;
+            while (octaveTransposedKey < 0)
+            {
+                octaveTransposedKey += 12;
+                transpositions++;
+            }
+            while (octaveTransposedKey >= 12)
+            {
+                octaveTransposedKey -= 12;
+                transpositions--;
+            }
             bool isKeyCompatible = false;
             foreach (var keyAndFraction in entry.Value)
             {
-                if (key == keyAndFraction.key)
+                if (octaveTransposedKey == keyAndFraction.key)
                 {
                     isKeyCompatible = true;
-                    keysAndApproximations.Add(keyAndFraction);
+                    Fraction transposedApproximation = keyAndFraction.approximation;
+                    if (transpositions > 0)
+                        transposedApproximation = new Fraction(
+                            keyAndFraction.approximation.Numerator,
+                            keyAndFraction.approximation.Denominator * BigInteger.Pow(2, Math.Abs(transpositions)));
+                    if (transpositions < 0)
+                        transposedApproximation = new Fraction(
+                            keyAndFraction.approximation.Numerator * BigInteger.Pow(2, Math.Abs(transpositions)),
+                            keyAndFraction.approximation.Denominator);
+
+                    keysAndApproximations.Add((key, transposedApproximation));
                     break;
                 }
             }
