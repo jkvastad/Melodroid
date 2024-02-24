@@ -70,8 +70,8 @@ QueryKeySetCompatiblePatternLengths();
 //Prints possible pattern lengths of inputed keys based on fraction approximations
 void QueryKeySetCompatiblePatternLengths()
 {
-    //TODO when inputing 0 2 4 5 7 9 an output for 24 uses 35/24 instead of the simpler 3/2 - should prioritize small numbers.
-    //TODO when inputing 0 1 4 5 7 8 10 the third result is -4 -3 0 1 3 4 6 with first pattern 18: 3/4 7/9 35/36 1 10/9 7/6 4/3 - looks very bugged. Fix! 
+    //Note that transposed keys can display approximations with larger denominators than the pattern length
+    // - this is because the key is matched to a fraction approximation inside the octave which is then scaled based on number of transpositions    
     Dictionary<int, HashSet<(int key, Fraction approximation)>> keysCompatibleWithPatternLength = CalculateKeysCompatibleWithPatternLength();
     while (true)
     {
@@ -91,35 +91,46 @@ void QueryKeySetCompatiblePatternLengths()
         {
             allPatternsAllRotations.Add(CalculatePatternLengthsCompatibleWithInputKeys(keysCompatibleWithPatternLength, rotatedKeySet));
         }
-        int columnWidth = 3 + 5 * inputKeys.Length;
-        foreach (int[] rotatedKeySet in allRotatedKeys)
+
+        for (int rotationIndex = 0; rotationIndex < allPatternsAllRotations.Count; rotationIndex++)
         {
-            Console.Write($"{string.Join(" ", rotatedKeySet)} ({string.Join(" ", rotatedKeySet.OctaveTransposed())})".PadRight(columnWidth));
-        }
-        Console.WriteLine();
-        bool isSomethingPrinted = true; //white lie to start the loop
-        int patternLengthIndex = 0;
-        while (isSomethingPrinted)
-        {
-            isSomethingPrinted = false;
-            for (int rotationIndex = 0; rotationIndex < allPatternsAllRotations.Count; rotationIndex++)
+            Console.WriteLine($"{string.Join(" ", allRotatedKeys[rotationIndex])} ({string.Join(" ", allRotatedKeys[rotationIndex].OctaveTransposed())})");
+            foreach (var pattern in allPatternsAllRotations[rotationIndex])
             {
-                //more rows to print for pattern
-                if (allPatternsAllRotations[rotationIndex].Count > patternLengthIndex)
-                {
-                    StringBuilder sb = new StringBuilder();
-                    sb.Append($"{allPatternsAllRotations[rotationIndex][patternLengthIndex].patternLength}: ");
-                    foreach (var keyAndApproximation in allPatternsAllRotations[rotationIndex][patternLengthIndex].keysAndApproximations)
-                    {
-                        sb.Append($"{keyAndApproximation.approximation} ");
-                    }
-                    Console.Write(sb.ToString().PadRight(columnWidth));
-                    isSomethingPrinted = true;
-                }
+                Console.WriteLine($"\t{pattern.patternLength}: {string.Join(" ", pattern.keysAndApproximations.Select(keyAndApproximation => keyAndApproximation.approximation))}");
             }
-            patternLengthIndex++;
-            Console.WriteLine();
         }
+
+        //int columnWidth = 3 + 5 * inputKeys.Length;
+        //foreach (int[] rotatedKeySet in allRotatedKeys)
+        //{
+        //    Console.Write($"{string.Join(" ", rotatedKeySet)} ({string.Join(" ", rotatedKeySet.OctaveTransposed())})".PadRight(columnWidth));
+        //}
+        //Console.WriteLine();
+        //bool isSomethingPrinted = true; //white lie to start the loop
+        //int patternLengthIndex = 0;
+        //while (isSomethingPrinted)
+        //{
+        //    isSomethingPrinted = false;
+        //    for (int rotationIndex = 0; rotationIndex < allPatternsAllRotations.Count; rotationIndex++)
+        //    {
+        //        //more rows to print for pattern
+        //        StringBuilder sb = new StringBuilder();
+        //        if (allPatternsAllRotations[rotationIndex].Count > patternLengthIndex)
+        //        {                    
+        //            sb.Append($"{allPatternsAllRotations[rotationIndex][patternLengthIndex].patternLength}: ");
+        //            foreach (var keyAndApproximation in allPatternsAllRotations[rotationIndex][patternLengthIndex].keysAndApproximations)
+        //            {
+        //                sb.Append($"{keyAndApproximation.approximation} ");
+        //            }                    
+        //            isSomethingPrinted = true;
+        //        }
+        //        //Allways print to keep formatting 
+        //        Console.Write(sb.ToString().PadRight(columnWidth));
+        //    }
+        //    patternLengthIndex++;
+        //    Console.WriteLine();
+        //}
     }
 }
 void WriteMeasuresToMidi(List<Measure> measures, string folderPath, string fileName, bool overWrite = false)
@@ -246,13 +257,12 @@ static List<(int patternLength, List<(int key, Fraction approximation)> keysAndA
                 transpositions--;
             }
 
-            //Gets first matching approximation, might be better to get the approximation with smallest denominator
-            bool isKeyCompatible = false;
+            //get lowest denominator match for transposed key
+            List<(int key, Fraction approximation)> candidates = new();
             foreach (var keyAndFraction in entry.Value)
             {
                 if (octaveTransposedKey == keyAndFraction.key)
                 {
-                    isKeyCompatible = true;
                     Fraction transposedApproximation = keyAndFraction.approximation;
                     if (transpositions > 0)
                         transposedApproximation = new Fraction(
@@ -263,14 +273,25 @@ static List<(int patternLength, List<(int key, Fraction approximation)> keysAndA
                             keyAndFraction.approximation.Numerator * BigInteger.Pow(2, Math.Abs(transpositions)),
                             keyAndFraction.approximation.Denominator);
 
-                    keysAndApproximations.Add((key, transposedApproximation));
-                    break;
+                    candidates.Add((key, transposedApproximation));
                 }
             }
-            if (!isKeyCompatible)
+            if (candidates.Count > 0)
+            {
+                (int key, Fraction approximation) bestCandidate = candidates[0];
+                foreach (var candidate in candidates)
+                {
+                    if (bestCandidate.approximation.Denominator > candidate.approximation.Denominator)
+                    {
+                        bestCandidate = candidate;
+                    }
+                }
+                keysAndApproximations.Add(bestCandidate);
+            }
+            else
             {
                 allKeysCompatibleWithPatternLength = false;
-                break;
+                break; //all keys must be compatible, no need to check the others.
             }
         }
         if (allKeysCompatibleWithPatternLength)
@@ -278,6 +299,5 @@ static List<(int patternLength, List<(int key, Fraction approximation)> keysAndA
             compatiblePatternLengths.Add((entry.Key, keysAndApproximations));
         }
     }
-
     return compatiblePatternLengths;
 }
