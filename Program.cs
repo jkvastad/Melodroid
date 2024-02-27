@@ -55,8 +55,11 @@ BeatBox beatBox = new BeatBox();
 List<int> primes = new() { 2, 2, 2, 2, 3, 3, 3, 5, 5, 7 };
 PrintTet12FractionApproximations(primes);
 
-
-QueryKeySetCompatiblePatternLengths();
+//TODO:
+// look at 0 1 3 6 8 10 vs. 0 1 3 6 8 9 10 and 0 1 3 5 6 8 10
+// - 5/3 sounds very harsh and leaves only 1 compatible interpretation for pax pattern length 24
+// - 4/3 "only" removes only 4 interpretations, and only "blacks out" the base 7 scale (and also itself)
+QueryKeySetCompatiblePatternLengths(24);
 
 //for (int i = 0; i < 8; i++)
 //{
@@ -68,14 +71,14 @@ QueryKeySetCompatiblePatternLengths();
 //WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, "melodroid testing");
 
 //Prints possible pattern lengths of inputed keys based on fraction approximations
-void QueryKeySetCompatiblePatternLengths()
+void QueryKeySetCompatiblePatternLengths(int maxPatternLength = 50)
 {
     //Note that transposed keys can display approximations with larger denominators than the pattern length
     // - this is because the key is matched to a fraction approximation inside the octave which is then scaled based on number of transpositions    
-    Dictionary<int, HashSet<(int key, Fraction approximation)>> keysCompatibleWithPatternLength = CalculateKeysCompatibleWithPatternLength();
+    Dictionary<int, HashSet<(int key, Fraction approximation)>> keysCompatibleWithPatternLength = CalculateKeysCompatibleWithPatternLength(maxPatternLength: maxPatternLength);
     while (true)
     {
-        Console.WriteLine("Input space separated tet12 keys ([0-11]) for possible pattern lengths. (empty input to exit)");
+        Console.WriteLine($"Input space separated tet12 keys for possible pattern lengths of max {maxPatternLength}. (empty input to exit)");
         string input = Console.ReadLine();
 
         if (input.Length == 0) return;
