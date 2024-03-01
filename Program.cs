@@ -56,9 +56,20 @@ List<int> primes = new() { 2, 2, 2, 2, 3, 3, 3, 5, 5, 7 };
 PrintTet12FractionApproximations(primes);
 
 //TODO:
-// look at 0 1 3 6 8 10 vs. 0 1 3 6 8 9 10 and 0 1 3 5 6 8 10
+// look at base15: 0 1 3 6 8 10 vs. 0 1 3 6 8 9 10 and 0 1 3 5 6 8 10
 // - 5/3 sounds very harsh and leaves only 1 compatible interpretation for pax pattern length 24
-// - 4/3 "only" removes only 4 interpretations, and only "blacks out" the base 7 scale (and also itself)
+// - 4/3 "only" removes 4 interpretations, and only "blacks out" the base 7 scale (and also itself)
+//TODO: Check translation + rotation - e.g. rotate scale from base 15 to 12, then translate 12 back to 15 using 12/15=4/5.
+// - something interesting happens when the base of the rotation (e.g. base 5 for key 4 in 0 4 7) is rotated to match the fundamental (e.g. multiply with 5/4 for 0 4 7) but the rotated pattern is kept
+//TODO: - also interesting results if the rotated pattern is translted to match other keys in the original pattern? e.g. in 0 4 7 base 6 moves to 5 using 6/5? (e.g. C -> A)
+//TODO: look into progression 0 2 4 6 7 9 11 -> 0 2 4 5 7 9 10 -> 0 2 4 5 7 9 11 -> 0 1 4 5 7 8 10 (e.g. C -> D -> G -> B -> C)
+//TODO: something about subsets in larger sets? e.g. base 15: 0 1 3 5 6 9 10 contains a base 4 subset of 5 9 0
+//TODO: In C D G B the B with scale 0 1 4 5 7 8 10 rotates to 7 with base 15: 0 1 3 5 6 9 10 but in the B key 3 sounds bad, even though it should be 6/5 and compatible with 15.
+//  - Why? In isolation 0 1 3 4 5 7 8 10 sounds ok(? kinda bad at key 4) and indeed still has base 15, but when coming from G -> B it sounds bad.
+//  - - Is it because 0 1 3 4 5 7 8 10 is almost isomorphic with 0 2 4 6 7 9 11 (lacks 3)? 0 2 3 4 6 7 9 11 rotates at 6 to base 15: 0 1 3 5 6 8 9 10 which sounds bad at key 9.
+//  - - - Same problem as 0 1 3 6 8 10 - can add key 5 (4/3) but not key 9 (5/3)
+
+
 QueryKeySetCompatiblePatternLengths(24);
 
 //for (int i = 0; i < 8; i++)
@@ -100,7 +111,9 @@ void QueryKeySetCompatiblePatternLengths(int maxPatternLength = 50)
             Console.WriteLine($"{string.Join(" ", allRotatedKeys[rotationIndex])} ({string.Join(" ", allRotatedKeys[rotationIndex].OctaveTransposed())})");
             foreach (var pattern in allPatternsAllRotations[rotationIndex])
             {
-                Console.WriteLine($"\t{pattern.patternLength}: {string.Join(" ", pattern.keysAndApproximations.Select(keyAndApproximation => keyAndApproximation.approximation))}");
+                Console.WriteLine($"\t{pattern.patternLength}: " +
+                    $"{string.Join(" ", pattern.keysAndApproximations.Select(keyAndApproximation => keyAndApproximation.approximation))} " +
+                    $"({string.Join(" ", pattern.keysAndApproximations.Select(keyAndApproximation => keyAndApproximation.approximation.OctaveTransposed()))})");
             }
         }
 

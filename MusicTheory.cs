@@ -487,5 +487,14 @@ namespace MusicTheory
             }
             return transposed12TetKeys.ToArray();
         }
+
+        public static Fraction OctaveTransposed(this Fraction fraction)
+        {
+            while (fraction < 1)
+                fraction *= 2;
+            while (fraction >= 2)
+                fraction /= 2;
+            return fraction;
+        }
     }
 }
