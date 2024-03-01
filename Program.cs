@@ -64,10 +64,16 @@ PrintTet12FractionApproximations(primes);
 //TODO: - also interesting results if the rotated pattern is translted to match other keys in the original pattern? e.g. in 0 4 7 base 6 moves to 5 using 6/5? (e.g. C -> A)
 //TODO: look into progression 0 2 4 6 7 9 11 -> 0 2 4 5 7 9 10 -> 0 2 4 5 7 9 11 -> 0 1 4 5 7 8 10 (e.g. C -> D -> G -> B -> C)
 //TODO: something about subsets in larger sets? e.g. base 15: 0 1 3 5 6 9 10 contains a base 4 subset of 5 9 0
-//TODO: In C D G B the B with scale 0 1 4 5 7 8 10 rotates to 7 with base 15: 0 1 3 5 6 9 10 but in the B key 3 sounds bad, even though it should be 6/5 and compatible with 15.
+//TODO: In C D G B the B with scale 0 1 4 5 7 8 10 rotates to 7 with base 15: 0 1 3 5 6 9 10 but in the B adding key 3 or 6 sounds bad, even though it should be 6/5 or 7/5 and compatible with 15.
 //  - Why? In isolation 0 1 3 4 5 7 8 10 sounds ok(? kinda bad at key 4) and indeed still has base 15, but when coming from G -> B it sounds bad.
 //  - - Is it because 0 1 3 4 5 7 8 10 is almost isomorphic with 0 2 4 6 7 9 11 (lacks 3)? 0 2 3 4 6 7 9 11 rotates at 6 to base 15: 0 1 3 5 6 8 9 10 which sounds bad at key 9.
-//  - - - Same problem as 0 1 3 6 8 10 - can add key 5 (4/3) but not key 9 (5/3)
+//  - - - Same problem as 15: 0 1 3 6 8 10 - can add key 5 (4/3 - sounds a bit weak) but not key 9 (5/3) even though compatible with 15
+//  - - - Can alternatively play 15: 0 1 3 5 6 9 10 but not add key 8 - seems 8/5 interferes with 5 and specially 9.
+//  - - - Can not add any of 2, 4 or 7 - as expected, would increase pattern length to 30+
+//TODO: When a note seems like it can be added but cannot, perhaps the current scale is simply assumed incorrectly and instead a rotation is the correct scale?
+//  - This would cause a compatible tone to actually be incompatible e.g. in 15: 0 1 3 6 8 10 key 9 cannot be added
+//  - - It is perhaps in fact 24: 0 2 4 5 7 10 and adding key "9" (5/3 compatible with 15) actually adds key 1 (16/15 incompatible with 24; it would cause pattern length 120)
+//  - - - TODO: How to calculate the correct scale?
 
 
 QueryKeySetCompatiblePatternLengths(24);
