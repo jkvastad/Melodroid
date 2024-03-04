@@ -74,6 +74,13 @@ PrintTet12FractionApproximations(primes);
 //  - This would cause a compatible tone to actually be incompatible e.g. in 15: 0 1 3 6 8 10 key 9 cannot be added
 //  - - It is perhaps in fact 24: 0 2 4 5 7 10 and adding key "9" (5/3 compatible with 15) actually adds key 1 (16/15 incompatible with 24; it would cause pattern length 120)
 //  - - - TODO: How to calculate the correct scale?
+//  - - - - Rotation 0 with 15: 0 1 3 6 8 10 explains 4/6; external bad notes 2 (9/8 -> 120), 4 (5/4 -> 60), 7 (3/2 -> 30), 9 (5/3), 11 (15/8 -> 120) - good notes 5 (4/3).
+//  - - - - Rotation 1 with 24: 0 2 5 7 9 11 explains 6/6; external bad notes 1 (16/15 -> 120), 3 (6/5 -> 120), 6 (7/5 -> 120), 8 (8/5 -> 120), 10 (9/5 -> 120) - good notes 4 (5/4).
+//  - - - - Rotation 2 with 24: 0 3 5 7 9 10 explains 3/6; external bad notes 11 (15/8), 1 (16/15 -> 120), 4 (5/4), 6 (7/5 -> 120), 8 (8/5 -> 120) - good notes 2 (9/8).
+//  - - - - Rotation 3 with 14: 0 3 5 7 9 10 explains 5/6; external bad notes 8 (8/5 -> 70), 10 (9/5 -> 70), 1 (16/15 -> 105), 3 (6/5 -> 70), 5 (4/3 -> 21) - good notes 11 (15/8 -> 56).
+//  - - - - Rotation 4 with 24: 0 2 4 5 7 10 explains 5/6; external bad notes 6 (7/5 -> 120), 8 (8/5 -> 120), 11 (15/8), 1 (16/15 -> 120), 3 (6/5 -> 120) - good notes 9 (5/3).
+//  - - - - Rotation 5 with 18: 0 2 3 5 8 10 explains 4/6; external bad notes 4 (5/4), 6 (7/5 -> 90), 9 (5/3), 11 (15/8 -> 72), 1 (6/5 -> 90) - good notes 7 (3/2).
+
 
 
 QueryKeySetCompatiblePatternLengths(24);
