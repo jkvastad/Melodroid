@@ -215,7 +215,7 @@ namespace MusicTheory
                 }
             }
         }
-        public static readonly List<int> standardPrimes = new() { 2, 2, 2, 2, 3, 3, 5, 7 };
+        public static readonly List<int> standardPrimes = new() { 2, 2, 2, 2, 3, 3, 3, 5, 5, 7 };
         public static Dictionary<int, List<Fraction>> Calculate12TetFractionApproximations(List<int> primes, int maxFactors = 4, int maxPatternLength = 50)
         {
             //Get all interesting numbers - combos of up to maxFactors primes

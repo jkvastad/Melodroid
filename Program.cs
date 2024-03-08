@@ -88,7 +88,7 @@ PrintTet12FractionApproximations(primes);
 
 
 
-QueryKeySetCompatiblePatternLengths(24);
+QueryKeySetCompatiblePatternLengths(40);
 
 //for (int i = 0; i < 8; i++)
 //{
