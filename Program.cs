@@ -72,7 +72,7 @@ PrintTet12FractionApproximations(primes);
 //  - - - Can not add any of 2, 4 or 7 - as expected, would increase pattern length to 30+
 //TODO: When a note seems like it can be added but cannot, perhaps the current scale is simply assumed incorrectly and instead a rotation is the correct scale?
 //  - This would cause a compatible tone to actually be incompatible e.g. in 15: 0 1 3 6 8 10 key 9 cannot be added
-//  - - It is perhaps in fact 24: 0 2 4 5 7 10 and adding key "9" (5/3 compatible with 15) actually adds key 1 (16/15 incompatible with 24; it would cause pattern length 120)
+//  - - It is perhaps in fact 24: 0 2 5 7 9 11 and adding key "9" (5/3 compatible with 15) actually adds key 1 (16/15 incompatible with 24; it would cause pattern length 120)
 //  - - - TODO: How to calculate the correct scale?
 //  - - - - Rotation 0 with 15: 0 1 3 6 8 10 explains 4/6; external bad notes 2 (9/8 -> 120), 4 (5/4 -> 60), 7 (3/2 -> 30), 9 (5/3), 11 (15/8 -> 120) - good notes 5 (4/3).
 //  - - - - Rotation 1 with 24: 0 2 5 7 9 11 explains 6/6; external bad notes 1 (16/15 -> 120), 3 (6/5 -> 120), 6 (7/5 -> 120), 8 (8/5 -> 120), 10 (9/5 -> 120) - good notes 4 (5/4).
@@ -88,7 +88,7 @@ PrintTet12FractionApproximations(primes);
 
 
 
-QueryKeySetCompatiblePatternLengths(40);
+QueryKeySetCompatiblePatternLengths(24);
 
 //for (int i = 0; i < 8; i++)
 //{
