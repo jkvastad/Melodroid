@@ -81,6 +81,10 @@ PrintTet12FractionApproximations(primes);
 //  - - - - Rotation 4 with 24: 0 2 4 5 7 10 explains 5/6; external bad notes 6 (7/5 -> 120), 8 (8/5 -> 120), 11 (15/8), 1 (16/15 -> 120), 3 (6/5 -> 120) - good notes 9 (5/3).
 //  - - - - Rotation 5 with 18: 0 2 3 5 8 10 explains 4/6; external bad notes 4 (5/4), 6 (7/5 -> 90), 9 (5/3), 11 (15/8 -> 72), 1 (6/5 -> 90) - good notes 7 (3/2).
 //  - - - TODO: Only 1 valid rotation. Why? When adding keys to a set of keys, at what point does it become a specific base 24 scale? What about base 15 scales? (or 7s?)
+//  - - - - Major scale is base 24: 0 2 4 5 7 9 11, what base is minor scale? 0 2 3 5 7 8 10 rotates to major.
+//  - - - - 15: 0 1 3 5 6 9 10 has only the one rotation (dim 7 with all base 5 and 3 notes). dim7 is rotationally symmetrical, should have interesting properties
+//  - - - - 20: 0 3 4 6 7 8 10 - Aug chord. Rotationally symmetrical. Gives a characterstic bluesy sound with 0 2 3 4 6 7 10 when a major chord is sounded
+//  - - - - - for some reason 8 sounds wrong when voiced with major chord. Voicing seems to matter a lot (e.g. minor vs major vs aug vs dim).
 
 
 
