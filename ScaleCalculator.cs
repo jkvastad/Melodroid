@@ -76,6 +76,21 @@ namespace MusicTheory
         {
             return !(left == right);
         }
+
+        public override bool Equals(object obj)
+        {
+            return obj is Scale other && Equals(other);
+        }
+
+        public bool Equals(Scale other)
+        {
+            return Tet12Keys.SequenceEqual(other.Tet12Keys);
+        }
+
+        public override int GetHashCode()
+        {            
+            return Tet12Keys.GetHashCode();            
+        }
     }
 }
 
