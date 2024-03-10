@@ -129,6 +129,21 @@ void QueryKeySetCompatiblePatternLengths(int maxPatternLength = 50)
             Console.WriteLine($"{string.Join(" ", allRotatedKeys[rotationIndex])} ({string.Join(" ", allRotatedKeys[rotationIndex].OctaveTransposed())})");
             foreach (var pattern in allPatternsAllRotations[rotationIndex])
             {
+                if (pattern.keysAndApproximations.Any(keyAndApproximation =>
+                {
+                    var octaveTransposedApproximation = keyAndApproximation.approximation.OctaveTransposed();
+                    if (
+                    octaveTransposedApproximation.Numerator == 21 ||
+                    octaveTransposedApproximation.Numerator == 14 ||
+                    octaveTransposedApproximation.Numerator == 25 ||
+                    octaveTransposedApproximation.Numerator == 28 ||
+                    octaveTransposedApproximation.Numerator == 35 ||
+                    octaveTransposedApproximation.Numerator == 27)
+                        return true;
+                    return false;
+
+                }))
+                    continue;
                 Console.WriteLine($"\t{pattern.patternLength}: " +
                     $"{string.Join(" ", pattern.keysAndApproximations.Select(keyAndApproximation => keyAndApproximation.approximation))} " +
                     $"({string.Join(" ", pattern.keysAndApproximations.Select(keyAndApproximation => keyAndApproximation.approximation.OctaveTransposed()))})");
