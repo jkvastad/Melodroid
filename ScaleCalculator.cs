@@ -1,4 +1,5 @@
 ﻿using Fractions;
+using Melanchall.DryWetMidi.MusicTheory;
 using System.Numerics;
 using static MusicTheory.MusicTheoryUtils;
 
@@ -60,6 +61,22 @@ namespace MusicTheory
                     }
                 }
             }
+        }
+
+        public static NoteValue?[] ScaleToNoteValues(Scale scale)
+        {
+            int timeDivision = 12;
+            NoteValue?[] noteValues = new NoteValue?[timeDivision];
+            for (int i = 0; i < timeDivision; i++)
+            {
+                if ((scale.KeySet.binaryRepresentation.RotateRight(i) & 1) == 1)
+                {
+                    noteValues[i] = new(NoteName.A, 4, 64);
+                    if (i + 1 < timeDivision)
+                        noteValues[i + 1] = NoteValue.SilentNote;
+                }
+            }
+            return noteValues;
         }
     }
 
@@ -127,15 +144,15 @@ namespace MusicTheory
     {
         public Bit12Int binaryRepresentation;
 
-        public Tet12KeySet(string scaleAsBinary)
+        public Tet12KeySet(string keySetAsBinaryString)
         {
-            if (scaleAsBinary.Length < 12)
-                scaleAsBinary = scaleAsBinary.PadLeft(12, '0');
+            if (keySetAsBinaryString.Length < 12)
+                keySetAsBinaryString = keySetAsBinaryString.PadLeft(12, '0');
 
-            if (scaleAsBinary.Length != 12) throw new ArgumentException("12TET key set must consist of exactly 12 keys");
-            if (scaleAsBinary.Any(key => key != '0' && key != '1')) throw new ArgumentException("12TET key set keys must be either 1 (included in scale) or 0 (excluded from scale)");
+            if (keySetAsBinaryString.Length != 12) throw new ArgumentException("12TET key set must consist of exactly 12 keys");
+            if (keySetAsBinaryString.Any(key => key != '0' && key != '1')) throw new ArgumentException("12TET key set keys must be either 1 (included in scale) or 0 (excluded from scale)");
 
-            binaryRepresentation = (Bit12Int)Convert.ToInt32(scaleAsBinary, 2);
+            binaryRepresentation = (Bit12Int)Convert.ToInt32(keySetAsBinaryString, 2);
         }
 
         public Tet12KeySet(Bit12Int keySet)
@@ -223,6 +240,11 @@ namespace MusicTheory
             KeySet = keySet;
         }
 
+        public Scale(string keySetAsBinaryString)
+        {
+            KeySet = new Tet12KeySet(keySetAsBinaryString);
+        }
+
         public int GetBase()
         {
             return GetBase(TET12_STANDARD_FRACTION_APPROXIMATIONS);
@@ -238,6 +260,11 @@ namespace MusicTheory
                     denominators.Add((long)keyFractionApproximations[i].Denominator);
             }
             return (int)LCM(denominators.ToArray());
+        }
+
+        public int NumberOfKeys()
+        {
+            return KeySet.NumberOfKeys();
         }
 
         public override string ToString()

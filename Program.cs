@@ -4,15 +4,12 @@ using Melanchall.DryWetMidi.Common;
 using Melanchall.DryWetMidi.Core;
 using Melanchall.DryWetMidi.Interaction;
 using Melanchall.DryWetMidi.MusicTheory;
-using MoreLinq;
 using MusicTheory;
 using Serilog;
-using System.Collections.Generic;
-using System.Linq;
+using Serilog.Core;
 using System.Numerics;
-using System.Text;
 using static MusicTheory.MusicTheoryUtils;
-using Scale = MusicTheory.Tet12KeySet;
+using Scale = MusicTheory.Scale;
 
 //MIDI standard: http://www.music.mcgill.ca/~ich/classes/mumt306/StandardMIDIfileformat.html
 //Note time in MIDI is defined in header chunk as number of divisions of quarter beat, e.g. setting "division" to 12 means a quarter beat has 12 divisions.
@@ -31,7 +28,7 @@ This means "create scientific pitch note B4 at 96 ticks into the midi file, make
 
 // TODO: Start work on beatbox to calculate rhythms based on "How Beat Perception Co-opts Motor Neurophysiology". This can be used to define rhythmic chunks.
 
-string folderPath = @"E:\Documents\Reaper Projects\Melodroid\MIDI_write_testing\";
+string folderPath = @"E:\Documents\Reaper Projects\Melodroid\MIDI_write_testing\ScaleClasses";
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.File(@"D:\Projects\Code\Melodroid\logs\log.txt", rollingInterval: RollingInterval.Day)
@@ -95,21 +92,29 @@ foreach (var length in scaleCalculator.ScaleClassesOfLength.Keys)
 foreach (var length in scaleCalculator.ScaleClassesOfLength.Keys)
 {
     int scaleClassIndex = 0;
-    foreach (var rotationClass in scaleCalculator.ScaleClassesOfLength[length])
+    foreach (var scaleClass in scaleCalculator.ScaleClassesOfLength[length])
     {
+        int scaleIndex = 0;
         Console.WriteLine($"Scales in scale class {length}:{scaleClassIndex}");
-        foreach (var rotation in rotationClass)
+        Log.Information($"Scales in scale class {length}:{scaleClassIndex}");
+        foreach (var scale in scaleClass)
         {
-            Console.WriteLine($"{rotation}");
+            Console.WriteLine($"{scale} : {length}_{scaleClassIndex}_{scaleIndex}");
+            Log.Information($"{scale} : {length}_{scaleClassIndex}_{scaleIndex}");
+
+            NoteValue?[] noteValues = ScaleCalculator.ScaleToNoteValues(scale);
+            Measure measure = new(noteValues);
+            List<Measure> measureList = [measure];
+            WriteMeasuresToMidi(measureList, folderPath, $"{length}_{scaleClassIndex}_{scaleIndex}", true);
+            scaleIndex++;
         }
         scaleClassIndex++;
     }
 }
 
 
-
-
 //QueryKeySetCompatiblePatternLengths(24);
+
 
 //for (int i = 0; i < 8; i++)
 //{
@@ -170,41 +175,22 @@ void QueryKeySetCompatiblePatternLengths(int maxPatternLength = 50)
                     $"({string.Join(" ", pattern.keysAndApproximations.Select(keyAndApproximation => keyAndApproximation.approximation.OctaveTransposed()))})");
             }
         }
-
-        //int columnWidth = 3 + 5 * inputKeys.Length;
-        //foreach (int[] rotatedKeySet in allRotatedKeys)
-        //{
-        //    Console.Write($"{string.Join(" ", rotatedKeySet)} ({string.Join(" ", rotatedKeySet.OctaveTransposed())})".PadRight(columnWidth));
-        //}
-        //Console.WriteLine();
-        //bool isSomethingPrinted = true; //white lie to start the loop
-        //int patternLengthIndex = 0;
-        //while (isSomethingPrinted)
-        //{
-        //    isSomethingPrinted = false;
-        //    for (int rotationIndex = 0; rotationIndex < allPatternsAllRotations.Count; rotationIndex++)
-        //    {
-        //        //more rows to print for pattern
-        //        StringBuilder sb = new StringBuilder();
-        //        if (allPatternsAllRotations[rotationIndex].Count > patternLengthIndex)
-        //        {                    
-        //            sb.Append($"{allPatternsAllRotations[rotationIndex][patternLengthIndex].patternLength}: ");
-        //            foreach (var keyAndApproximation in allPatternsAllRotations[rotationIndex][patternLengthIndex].keysAndApproximations)
-        //            {
-        //                sb.Append($"{keyAndApproximation.approximation} ");
-        //            }                    
-        //            isSomethingPrinted = true;
-        //        }
-        //        //Allways print to keep formatting 
-        //        Console.Write(sb.ToString().PadRight(columnWidth));
-        //    }
-        //    patternLengthIndex++;
-        //    Console.WriteLine();
-        //}
     }
 }
 void WriteMeasuresToMidi(List<Measure> measures, string folderPath, string fileName, bool overWrite = false)
 {
+
+    /** Example Usage
+        string folderPath = @"E:\Documents\Reaper Projects\Melodroid\MIDI_write_testing\";
+        int timeDivision = 8;
+        NoteValue?[] noteValues = new NoteValue?[timeDivision];
+        noteValues[3] = new(NoteName.A, 4, 64);
+        Measure measure = new(noteValues);
+        List<Measure> measureList = new();
+        measureList.Add(measure);
+        WriteMeasuresToMidi(measureList, folderPath, "test", true);
+    **/
+
     MidiFile midiFile = new MidiFile();
 
     //TODO set tempo
