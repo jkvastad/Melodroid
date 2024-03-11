@@ -88,11 +88,22 @@ Log.Logger = new LoggerConfiguration()
 //  - - - - - for some reason 8 sounds wrong when voiced with major chord. Voicing seems to matter a lot (e.g. minor vs major vs aug vs dim).
 
 ScaleCalculator scaleCalculator = new ScaleCalculator();
-Console.WriteLine($"Number of scales: {scaleCalculator.RotationClassForScale.Keys.Count}");
-Console.WriteLine($"Number of rotation classes: {scaleCalculator.RotationClasses.Count}");
-foreach (var length in scaleCalculator.RotationClassesOfLength.Keys)
+Console.WriteLine($"Number of scales: {scaleCalculator.ScaleClassForScale.Keys.Count}");
+Console.WriteLine($"Number of scale classes: {scaleCalculator.ScaleClasses.Count}");
+foreach (var length in scaleCalculator.ScaleClassesOfLength.Keys)
+    Console.WriteLine($"Scale classes of length {length}: {scaleCalculator.ScaleClassesOfLength[length].Count}");
+foreach (var length in scaleCalculator.ScaleClassesOfLength.Keys)
 {
-    Console.WriteLine($"Rotation classes of length {length}: {scaleCalculator.RotationClassesOfLength[length].Count}");
+    int scaleClassIndex = 0;
+    foreach (var rotationClass in scaleCalculator.ScaleClassesOfLength[length])
+    {
+        Console.WriteLine($"Scales in scale class {length}:{scaleClassIndex}");
+        foreach (var rotation in rotationClass)
+        {
+            Console.WriteLine($"{rotation}");
+        }
+        scaleClassIndex++;
+    }
 }
 
 

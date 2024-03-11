@@ -6,39 +6,39 @@ namespace MusicTheory
 {
     public class ScaleCalculator
     {
-        public HashSet<List<Scale>> RotationClasses = new();
-        public Dictionary<Scale, List<Scale>> RotationClassForScale = new();
-        public Dictionary<int, List<List<Scale>>> RotationClassesOfLength = new();
+        public HashSet<List<Scale>> ScaleClasses = new();
+        public Dictionary<Scale, List<Scale>> ScaleClassForScale = new();
+        public Dictionary<int, List<List<Scale>>> ScaleClassesOfLength = new();
 
         public ScaleCalculator()
         {
-            InitRotationClassForScale();
-            InitRotationClasses();
-            InitRotationClassesOfLength();
+            InitScaleClassForScale();
+            InitScaleClasses();
+            InitScaleClassesOfLength();
         }
 
-        private void InitRotationClassesOfLength()
+        private void InitScaleClassesOfLength()
         {
-            foreach (var rotationClass in RotationClasses)
+            foreach (var rotationClass in ScaleClasses)
             {
                 int length = rotationClass[0].KeySet.NumberOfKeys();
 
-                if (!RotationClassesOfLength.ContainsKey(length))
-                    RotationClassesOfLength[length] = new();
+                if (!ScaleClassesOfLength.ContainsKey(length))
+                    ScaleClassesOfLength[length] = new();
 
-                RotationClassesOfLength[length].Add(rotationClass);
+                ScaleClassesOfLength[length].Add(rotationClass);
             }
         }
 
-        private void InitRotationClasses()
+        private void InitScaleClasses()
         {
-            foreach (var rotationClass in RotationClassForScale.Values)
+            foreach (var rotationClass in ScaleClassForScale.Values)
             {
-                RotationClasses.Add(rotationClass);
+                ScaleClasses.Add(rotationClass);
             }
         }
 
-        private void InitRotationClassForScale()
+        private void InitScaleClassForScale()
         {
             for (int combination = 1; combination < BigInteger.Pow(2, 12); combination++)
             {
@@ -51,12 +51,12 @@ namespace MusicTheory
                     if ((keySet.binaryRepresentation & 1) == 0) continue; //only keep scales (key sets with fundamentals - i.e. first bit set)
 
                     Scale scale = new(keySet);
-                    if (RotationClassForScale.ContainsKey(scale)) //Try next combination - rotation class already registered
+                    if (ScaleClassForScale.ContainsKey(scale)) //Try next combination - rotation class already registered
                         break;
                     else //implies no rotation of the scale has yet been registered
                     {
                         rotationClass.Add(scale);
-                        RotationClassForScale[scale] = rotationClass;
+                        ScaleClassForScale[scale] = rotationClass;
                     }
                 }
             }
@@ -191,6 +191,11 @@ namespace MusicTheory
         {
             return (int)binaryRepresentation;
         }
+
+        public override string ToString()
+        {
+            return binaryRepresentation.ToString();
+        }
     }
 
     public struct Scale
@@ -233,6 +238,11 @@ namespace MusicTheory
                     denominators.Add((long)keyFractionApproximations[i].Denominator);
             }
             return (int)LCM(denominators.ToArray());
+        }
+
+        public override string ToString()
+        {
+            return KeySet.ToString();
         }
     }
 }
