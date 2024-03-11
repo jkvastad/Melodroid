@@ -6,10 +6,39 @@ namespace MusicTheory
 {
     public class ScaleCalculator
     {
+        public HashSet<List<Scale>> RotationClasses = new();
         public Dictionary<Scale, List<Scale>> RotationClassForScale = new();
         public Dictionary<int, List<List<Scale>>> RotationClassesOfLength = new();
 
-        public void InitRotationClassForScale()
+        public ScaleCalculator()
+        {
+            InitRotationClassForScale();
+            InitRotationClasses();
+            InitRotationClassesOfLength();
+        }
+
+        private void InitRotationClassesOfLength()
+        {
+            foreach (var rotationClass in RotationClasses)
+            {
+                int length = rotationClass[0].KeySet.NumberOfKeys();
+
+                if (!RotationClassesOfLength.ContainsKey(length))
+                    RotationClassesOfLength[length] = new();
+
+                RotationClassesOfLength[length].Add(rotationClass);
+            }
+        }
+
+        private void InitRotationClasses()
+        {
+            foreach (var rotationClass in RotationClassForScale.Values)
+            {
+                RotationClasses.Add(rotationClass);
+            }
+        }
+
+        private void InitRotationClassForScale()
         {
             for (int combination = 1; combination < BigInteger.Pow(2, 12); combination++)
             {
@@ -124,7 +153,18 @@ namespace MusicTheory
             return new Tet12KeySet(binaryRepresentation.RotateLeft(1));
         }
 
-
+        public int NumberOfKeys()
+        {
+            int keys = 0;
+            int value = (int)binaryRepresentation;
+            while (value > 0)
+            {
+                if ((value & 1) == 1)
+                    keys++;
+                value >>= 1;
+            }
+            return keys;
+        }
 
         public static bool operator ==(Tet12KeySet left, Tet12KeySet right)
         {
