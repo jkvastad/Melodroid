@@ -12,7 +12,7 @@ using System.Linq;
 using System.Numerics;
 using System.Text;
 using static MusicTheory.MusicTheoryUtils;
-using Scale = MusicTheory.Scale;
+using Scale = MusicTheory.Tet12KeySet;
 
 //MIDI standard: http://www.music.mcgill.ca/~ich/classes/mumt306/StandardMIDIfileformat.html
 //Note time in MIDI is defined in header chunk as number of divisions of quarter beat, e.g. setting "division" to 12 means a quarter beat has 12 divisions.
@@ -87,13 +87,9 @@ Log.Logger = new LoggerConfiguration()
 //  - - - - 20: 0 3 4 6 7 8 10 - Aug chord. Rotationally symmetrical. Gives a characterstic bluesy sound with 0 2 3 4 6 7 10 when a major chord is sounded
 //  - - - - - for some reason 8 sounds wrong when voiced with major chord. Voicing seems to matter a lot (e.g. minor vs major vs aug vs dim).
 
-string scaleString = "10001001";
-Scale scale = new Scale("10001001");
-for (int i = 0; i < scaleString.Length; i++)
-{
-    Console.WriteLine(string.Join(",", scale.binaryScale.ToString()));
-    scale = scale.Rotated();
-}
+ScaleCalculator scaleCalculator = new ScaleCalculator();
+scaleCalculator.InitRotationClassForScale();
+Console.WriteLine($"Number of scales: {scaleCalculator.RotationClassForScale.Keys.Count}");
 
 
 

@@ -9,32 +9,27 @@ namespace MusicTheory
         public Dictionary<Scale, List<Scale>> RotationClassForScale = new();
         public Dictionary<int, List<List<Scale>>> RotationClassesOfLength = new();
 
-        public void CalculateAllRotationClasses()
+        public void InitRotationClassForScale()
         {
-            List<Scale> allScales = new();
-            foreach (Scale scale in allScales)
+            for (int combination = 1; combination < BigInteger.Pow(2, 12); combination++)
             {
-                if (RotationClassForScale.ContainsKey(scale))
-                    continue;
-            }
-        }
-
-        //Binary Counter method - the binary representation of a number is the scale.
-        //  E.g. major chord is 2^0 + 2^4 + 2^7 = 145 = 10010001
-        public void CalculateAllScales(int length)
-        {
-            List<int[]> scales = new();
-
-            int combinations = (int)BigInteger.Pow(2, length);
-
-            for (int i = 0; i < combinations; i++)
-            {
-                int[] scale = new int[length];
-                for (int j = 0; j < length; j++)
+                Tet12KeySet keySet = new(combination);
+                List<Scale> rotationClass = new();
+                for (int i = 0; i < 12; i++)
                 {
-                    scale[j] = (i >> j) & 1;
+                    keySet = keySet.RotateBinaryLeft();
+
+                    if ((keySet.binaryRepresentation & 1) == 0) continue; //only keep scales (key sets with fundamentals - i.e. first bit set)
+
+                    Scale scale = new(keySet);
+                    if (RotationClassForScale.ContainsKey(scale)) //Try next combination - rotation class already registered
+                        break;
+                    else //implies no rotation of the scale has yet been registered
+                    {
+                        rotationClass.Add(scale);
+                        RotationClassForScale[scale] = rotationClass;
+                    }
                 }
-                scales[i] = scale;
             }
         }
     }
@@ -68,6 +63,11 @@ namespace MusicTheory
             return _value;
         }
 
+        public static int operator &(Bit12Int left, int right)
+        {
+            return left._value & right;
+        }
+
         public static explicit operator Bit12Int(int value)
         {
             return new Bit12Int(value);
@@ -94,9 +94,68 @@ namespace MusicTheory
         }
     }
 
+    public struct Tet12KeySet
+    {
+        public Bit12Int binaryRepresentation;
+
+        public Tet12KeySet(string scaleAsBinary)
+        {
+            if (scaleAsBinary.Length < 12)
+                scaleAsBinary = scaleAsBinary.PadLeft(12, '0');
+
+            if (scaleAsBinary.Length != 12) throw new ArgumentException("12TET key set must consist of exactly 12 keys");
+            if (scaleAsBinary.Any(key => key != '0' && key != '1')) throw new ArgumentException("12TET key set keys must be either 1 (included in scale) or 0 (excluded from scale)");
+
+            binaryRepresentation = (Bit12Int)Convert.ToInt32(scaleAsBinary, 2);
+        }
+
+        public Tet12KeySet(Bit12Int keySet)
+        {
+            binaryRepresentation = keySet;
+        }
+
+        public Tet12KeySet(int keySetAsInt)
+        {
+            binaryRepresentation = new(keySetAsInt);
+        }
+
+        public Tet12KeySet RotateBinaryLeft()
+        {
+            return new Tet12KeySet(binaryRepresentation.RotateLeft(1));
+        }
+
+
+
+        public static bool operator ==(Tet12KeySet left, Tet12KeySet right)
+        {
+
+            return left.binaryRepresentation == right.binaryRepresentation;
+        }
+
+        public static bool operator !=(Tet12KeySet left, Tet12KeySet right)
+        {
+            return !(left == right);
+        }
+
+        public override bool Equals(object? obj)
+        {
+            return obj is Tet12KeySet other && Equals(other);
+        }
+
+        public bool Equals(Tet12KeySet other)
+        {
+            return binaryRepresentation == other.binaryRepresentation;
+        }
+
+        public override int GetHashCode()
+        {
+            return (int)binaryRepresentation;
+        }
+    }
+
     public struct Scale
     {
-        public Bit12Int binaryScale;
+        public Tet12KeySet KeySet;
         public static Fraction[] TET12_STANDARD_FRACTION_APPROXIMATIONS =
             [
                 new(1),
@@ -113,25 +172,10 @@ namespace MusicTheory
                 new(15, 8)
             ];
 
-        public Scale(string scaleAsBinary)
+        public Scale(Tet12KeySet keySet)
         {
-            if (scaleAsBinary.Length < 12)
-                scaleAsBinary = scaleAsBinary.PadLeft(12, '0');
-
-            if (scaleAsBinary.Length != 12) throw new ArgumentException("12TET Scale must consist of exactly 12 keys");
-            if (scaleAsBinary.Any(key => key != '0' && key != '1')) throw new ArgumentException("12TET Scale keys must be either 1 (included in scale) or 0 (excluded from scale)");
-
-            binaryScale = (Bit12Int)Convert.ToInt32(scaleAsBinary, 2);
-        }
-
-        public Scale(Bit12Int scale)
-        {
-            binaryScale = scale;
-        }
-
-        public Scale Rotated()
-        {
-            return new Scale(binaryScale.RotateLeft(1));
+            if ((keySet.binaryRepresentation & 1) != 1) throw new ArgumentException($"A scale must have a fundamental - {nameof(Tet12KeySet)} did not set first bit ");
+            KeySet = keySet;
         }
 
         public int GetBase()
@@ -145,36 +189,10 @@ namespace MusicTheory
             List<long> denominators = new();
             for (int i = 0; i < 12; i++)
             {
-                if ((binaryScale.RotateRight(i).GetValue() & 1) == 1)
+                if ((KeySet.binaryRepresentation.RotateRight(i).GetValue() & 1) == 1)
                     denominators.Add((long)keyFractionApproximations[i].Denominator);
             }
             return (int)LCM(denominators.ToArray());
-        }
-
-        public static bool operator ==(Scale left, Scale right)
-        {
-
-            return left.binaryScale == right.binaryScale;
-        }
-
-        public static bool operator !=(Scale left, Scale right)
-        {
-            return !(left == right);
-        }
-
-        public override bool Equals(object? obj)
-        {
-            return obj is Scale other && Equals(other);
-        }
-
-        public bool Equals(Scale other)
-        {
-            return binaryScale == other.binaryScale;
-        }
-
-        public override int GetHashCode()
-        {
-            return (int)binaryScale;
         }
     }
 }
