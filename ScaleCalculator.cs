@@ -71,7 +71,9 @@ namespace MusicTheory
             {
                 if ((scale.KeySet.binaryRepresentation.RotateRight(i) & 1) == 1)
                 {
-                    noteValues[i] = new(NoteName.A, 4, 64);
+                    NoteValue value = new(NoteName.C, 4, 64);
+                    value += i;
+                    noteValues[i] = value;
                     if (i + 1 < timeDivision)
                         noteValues[i + 1] = NoteValue.SilentNote;
                 }
