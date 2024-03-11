@@ -85,33 +85,42 @@ Log.Logger = new LoggerConfiguration()
 //  - - - - - for some reason 8 sounds wrong when voiced with major chord. Voicing seems to matter a lot (e.g. minor vs major vs aug vs dim).
 
 ScaleCalculator scaleCalculator = new ScaleCalculator();
-Console.WriteLine($"Number of scales: {scaleCalculator.ScaleClassForScale.Keys.Count}");
-Console.WriteLine($"Number of scale classes: {scaleCalculator.ScaleClasses.Count}");
-foreach (var length in scaleCalculator.ScaleClassesOfLength.Keys)
-    Console.WriteLine($"Scale classes of length {length}: {scaleCalculator.ScaleClassesOfLength[length].Count}");
+List<List<Scale>> scaleClassesWithDesiredBases = new();
+int maxBaseValue = 24;
 foreach (var length in scaleCalculator.ScaleClassesOfLength.Keys)
 {
     int scaleClassIndex = 0;
     foreach (var scaleClass in scaleCalculator.ScaleClassesOfLength[length])
     {
         int scaleIndex = 0;
-        Console.WriteLine($"Scales in scale class {length}:{scaleClassIndex}");
-        Log.Information($"Scales in scale class {length}:{scaleClassIndex}");
+        bool scaleClassGood = true;
         foreach (var scale in scaleClass)
         {
-            Console.WriteLine($"{scale} : {length}_{scaleClassIndex}_{scaleIndex}");
-            Log.Information($"{scale} : {length}_{scaleClassIndex}_{scaleIndex}");
-
-            NoteValue?[] noteValues = ScaleCalculator.ScaleToNoteValues(scale);
-            Measure measure = new(noteValues);
-            List<Measure> measureList = [measure];
-            WriteMeasuresToMidi(measureList, folderPath, $"{length}_{scaleClassIndex}_{scaleIndex}", true);
+            int baseValue = scale.GetBase();
+            Console.WriteLine($"{length}_{scaleClassIndex}_{scaleIndex}: {baseValue}");
+            if (baseValue > maxBaseValue)
+                scaleClassGood = false;
             scaleIndex++;
         }
+        if (scaleClassGood)
+            scaleClassesWithDesiredBases.Add(scaleClass);
+        Console.WriteLine();
         scaleClassIndex++;
     }
 }
+Console.WriteLine($"Scale classes with bases less than {maxBaseValue}: {scaleClassesWithDesiredBases.Count}");
+scaleClassesWithDesiredBases.Sort((scaleClass1, scaleClass2) => scaleClass1[0].NumberOfKeys().CompareTo(scaleClass2[0].NumberOfKeys()));
+foreach (var scaleClass in scaleClassesWithDesiredBases)
+{
+    foreach (var scale in scaleClass)
+    {
+        Console.WriteLine($"{scale}:{scale.GetBase()}");
+    }
+    Console.WriteLine();
+}
 
+
+//WriteAllScaleClassesToMidi(folderPath);
 
 //QueryKeySetCompatiblePatternLengths(24);
 
@@ -356,4 +365,35 @@ static List<(int patternLength, List<(int key, Fraction approximation)> keysAndA
         }
     }
     return compatiblePatternLengths;
+}
+
+void WriteAllScaleClassesToMidi(string folderPath)
+{
+    ScaleCalculator scaleCalculator = new ScaleCalculator();
+    Console.WriteLine($"Number of scales: {scaleCalculator.ScaleClassForScale.Keys.Count}");
+    Console.WriteLine($"Number of scale classes: {scaleCalculator.ScaleClasses.Count}");
+    foreach (var length in scaleCalculator.ScaleClassesOfLength.Keys)
+        Console.WriteLine($"Scale classes of length {length}: {scaleCalculator.ScaleClassesOfLength[length].Count}");
+    foreach (var length in scaleCalculator.ScaleClassesOfLength.Keys)
+    {
+        int scaleClassIndex = 0;
+        foreach (var scaleClass in scaleCalculator.ScaleClassesOfLength[length])
+        {
+            int scaleIndex = 0;
+            Console.WriteLine($"Scales in scale class {length}:{scaleClassIndex}");
+            Log.Information($"Scales in scale class {length}:{scaleClassIndex}");
+            foreach (var scale in scaleClass)
+            {
+                Console.WriteLine($"{scale} : {length}_{scaleClassIndex}_{scaleIndex}");
+                Log.Information($"{scale} : {length}_{scaleClassIndex}_{scaleIndex}");
+
+                NoteValue?[] noteValues = ScaleCalculator.ScaleToNoteValues(scale);
+                Measure measure = new(noteValues);
+                List<Measure> measureList = [measure];
+                WriteMeasuresToMidi(measureList, folderPath, $"{length}_{scaleClassIndex}_{scaleIndex}", true);
+                scaleIndex++;
+            }
+            scaleClassIndex++;
+        }
+    }
 }
