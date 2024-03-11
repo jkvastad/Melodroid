@@ -12,6 +12,7 @@ using System.Linq;
 using System.Numerics;
 using System.Text;
 using static MusicTheory.MusicTheoryUtils;
+using Scale = MusicTheory.Scale;
 
 //MIDI standard: http://www.music.mcgill.ca/~ich/classes/mumt306/StandardMIDIfileformat.html
 //Note time in MIDI is defined in header chunk as number of divisions of quarter beat, e.g. setting "division" to 12 means a quarter beat has 12 divisions.
@@ -51,9 +52,9 @@ Log.Logger = new LoggerConfiguration()
 //TODO: Make a dict for Denominator -> midi step and Numerator -> midi step based on rational tuning 2.
 
 
-BeatBox beatBox = new BeatBox();
-List<int> primes = new() { 2, 2, 2, 2, 3, 3, 3, 5, 5, 7 };
-PrintTet12FractionApproximations(primes);
+//BeatBox beatBox = new BeatBox();
+//List<int> primes = new() { 2, 2, 2, 2, 3, 3, 3, 5, 5, 7 };
+//PrintTet12FractionApproximations(primes);
 
 //TODO:
 // look at base15: 0 1 3 6 8 10 vs. 0 1 3 6 8 9 10 and 0 1 3 5 6 8 10
@@ -86,9 +87,18 @@ PrintTet12FractionApproximations(primes);
 //  - - - - 20: 0 3 4 6 7 8 10 - Aug chord. Rotationally symmetrical. Gives a characterstic bluesy sound with 0 2 3 4 6 7 10 when a major chord is sounded
 //  - - - - - for some reason 8 sounds wrong when voiced with major chord. Voicing seems to matter a lot (e.g. minor vs major vs aug vs dim).
 
+string scaleString = "10001001";
+Scale scale = new Scale("10001001");
+for (int i = 0; i < scaleString.Length; i++)
+{
+    Console.WriteLine(string.Join(",", scale.binaryScale.ToString()));
+    scale = scale.Rotated();
+}
 
 
-QueryKeySetCompatiblePatternLengths(24);
+
+
+//QueryKeySetCompatiblePatternLengths(24);
 
 //for (int i = 0; i < 8; i++)
 //{
