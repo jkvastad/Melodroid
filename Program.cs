@@ -29,7 +29,7 @@ This means "create scientific pitch note B4 at 96 ticks into the midi file, make
 
 // TODO: Start work on beatbox to calculate rhythms based on "How Beat Perception Co-opts Motor Neurophysiology". This can be used to define rhythmic chunks.
 
-string folderPath = @"E:\Documents\Reaper Projects\Melodroid\MIDI_write_testing\ScaleClasses";
+string folderPath = @"E:\Documents\Reaper Projects\Melodroid\MIDI_write_testing\ScalesByBase";
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.File(@"D:\Projects\Code\Melodroid\logs\log.txt", rollingInterval: RollingInterval.Day)
@@ -88,11 +88,12 @@ Log.Logger = new LoggerConfiguration()
 //WriteAllScaleClassesToMidi(folderPath);
 
 ScaleCalculator scaleCalculator = new();
-foreach (var baseValue in scaleCalculator.ScalesWithBase.Keys)
+foreach (var baseValue in scaleCalculator.ScalesWithBase.Keys.Order())
 {
     Console.WriteLine($"Base: {baseValue}");
-    WriteScalesToMidi(scaleCalculator.ScalesWithBase[baseValue].OrderBy(scale => scale.NumberOfKeys()).ToList(), folderPath);
-    foreach (var scale in scaleCalculator.ScalesWithBase[baseValue].OrderBy(scale => scale.NumberOfKeys()))
+    var scales = scaleCalculator.ScalesWithBase[baseValue].OrderBy(scale => scale.NumberOfKeys());
+    WriteScalesOfBaseToMidi(scales.ToList(), folderPath);
+    foreach (var scale in scales)
     {
         Console.WriteLine($"{scale}");
     }
@@ -344,14 +345,15 @@ static List<(int patternLength, List<(int key, Fraction approximation)> keysAndA
     return compatiblePatternLengths;
 }
 
-void WriteScalesToMidi(List<Scale> scales, string folderPath)
+void WriteScalesOfBaseToMidi(List<Scale> scales, string folderPath)
 {
-    foreach (var scale in scales)
+    for (int i = 0; i < scales.Count; i++)
     {
+        Scale scale = scales[i];
         NoteValue?[] noteValues = ScaleCalculator.ScaleToNoteValues(scale);
         Measure measure = new(noteValues);
         List<Measure> measureList = [measure];
-        WriteMeasuresToMidi(measureList, folderPath, $"base_{scale.GetBase()}_keys_{scale.NumberOfKeys()}", true);
+        WriteMeasuresToMidi(measureList, folderPath, $"base_{scale.GetBase()}_keys_{scale.NumberOfKeys()}_number_{i}", true);
     }
 }
 void WriteAllScaleClassesToMidi(string folderPath)
