@@ -9,6 +9,7 @@ using Serilog;
 using Serilog.Core;
 using System.Numerics;
 using static MusicTheory.MusicTheoryUtils;
+using static System.Formats.Asn1.AsnWriter;
 using Scale = MusicTheory.Scale;
 
 //MIDI standard: http://www.music.mcgill.ca/~ich/classes/mumt306/StandardMIDIfileformat.html
@@ -90,11 +91,13 @@ ScaleCalculator scaleCalculator = new();
 foreach (var baseValue in scaleCalculator.ScalesWithBase.Keys)
 {
     Console.WriteLine($"Base: {baseValue}");
+    WriteScalesToMidi(scaleCalculator.ScalesWithBase[baseValue].OrderBy(scale => scale.NumberOfKeys()).ToList(), folderPath);
     foreach (var scale in scaleCalculator.ScalesWithBase[baseValue].OrderBy(scale => scale.NumberOfKeys()))
     {
         Console.WriteLine($"{scale}");
     }
 }
+
 
 //QueryKeySetCompatiblePatternLengths(24);
 
@@ -341,6 +344,16 @@ static List<(int patternLength, List<(int key, Fraction approximation)> keysAndA
     return compatiblePatternLengths;
 }
 
+void WriteScalesToMidi(List<Scale> scales, string folderPath)
+{
+    foreach (var scale in scales)
+    {
+        NoteValue?[] noteValues = ScaleCalculator.ScaleToNoteValues(scale);
+        Measure measure = new(noteValues);
+        List<Measure> measureList = [measure];
+        WriteMeasuresToMidi(measureList, folderPath, $"base_{scale.GetBase()}_keys_{scale.NumberOfKeys()}", true);
+    }
+}
 void WriteAllScaleClassesToMidi(string folderPath)
 {
     ScaleCalculator scaleCalculator = new ScaleCalculator();

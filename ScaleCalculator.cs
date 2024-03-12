@@ -81,6 +81,12 @@ namespace MusicTheory
 
         public static NoteValue?[] ScaleToNoteValues(Scale scale)
         {
+            /** Example usage
+                NoteValue?[] noteValues = ScaleCalculator.ScaleToNoteValues(scale);
+                Measure measure = new(noteValues);
+                List<Measure> measureList = [measure];
+                WriteMeasuresToMidi(measureList, folderPath, $"file_name", true); 
+             **/
             int timeDivision = 12;
             NoteValue?[] noteValues = new NoteValue?[timeDivision];
             for (int i = 0; i < timeDivision; i++)
