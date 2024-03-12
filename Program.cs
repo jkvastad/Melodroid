@@ -48,7 +48,6 @@ Log.Logger = new LoggerConfiguration()
 // is lcm just a proxy for pattern length (via lcm x packet length, where packet length changes when fundamental changes)?
 //TODO: Make a dict for Denominator -> midi step and Numerator -> midi step based on rational tuning 2.
 
-
 //BeatBox beatBox = new BeatBox();
 //List<int> primes = new() { 2, 2, 2, 2, 3, 3, 3, 5, 5, 7 };
 //PrintTet12FractionApproximations(primes);
@@ -84,43 +83,18 @@ Log.Logger = new LoggerConfiguration()
 //  - - - - 20: 0 3 4 6 7 8 10 - Aug chord. Rotationally symmetrical. Gives a characterstic bluesy sound with 0 2 3 4 6 7 10 when a major chord is sounded
 //  - - - - - for some reason 8 sounds wrong when voiced with major chord. Voicing seems to matter a lot (e.g. minor vs major vs aug vs dim).
 
-ScaleCalculator scaleCalculator = new ScaleCalculator();
-List<List<Scale>> scaleClassesWithDesiredBases = new();
-int maxBaseValue = 24;
-foreach (var length in scaleCalculator.ScaleClassesOfLength.Keys)
-{
-    int scaleClassIndex = 0;
-    foreach (var scaleClass in scaleCalculator.ScaleClassesOfLength[length])
-    {
-        int scaleIndex = 0;
-        bool scaleClassGood = true;
-        foreach (var scale in scaleClass)
-        {
-            int baseValue = scale.GetBase();
-            Console.WriteLine($"{length}_{scaleClassIndex}_{scaleIndex}: {baseValue}");
-            if (baseValue > maxBaseValue)
-                scaleClassGood = false;
-            scaleIndex++;
-        }
-        if (scaleClassGood)
-            scaleClassesWithDesiredBases.Add(scaleClass);
-        Console.WriteLine();
-        scaleClassIndex++;
-    }
-}
-Console.WriteLine($"Scale classes with bases less than {maxBaseValue}: {scaleClassesWithDesiredBases.Count}");
-scaleClassesWithDesiredBases.Sort((scaleClass1, scaleClass2) => scaleClass1[0].NumberOfKeys().CompareTo(scaleClass2[0].NumberOfKeys()));
-foreach (var scaleClass in scaleClassesWithDesiredBases)
-{
-    foreach (var scale in scaleClass)
-    {
-        Console.WriteLine($"{scale}:{scale.GetBase()}");
-    }
-    Console.WriteLine();
-}
-
-
+//PrintScalesWithDesiredBase();
 //WriteAllScaleClassesToMidi(folderPath);
+
+ScaleCalculator scaleCalculator = new();
+foreach (var baseValue in scaleCalculator.ScalesWithBase.Keys)
+{
+    Console.WriteLine($"Base: {baseValue}");
+    foreach (var scale in scaleCalculator.ScalesWithBase[baseValue].OrderBy(scale => scale.NumberOfKeys()))
+    {
+        Console.WriteLine($"{scale}");
+    }
+}
 
 //QueryKeySetCompatiblePatternLengths(24);
 
@@ -395,5 +369,43 @@ void WriteAllScaleClassesToMidi(string folderPath)
             }
             scaleClassIndex++;
         }
+    }
+}
+
+static void PrintScalesWithDesiredBase()
+{
+    ScaleCalculator scaleCalculator = new ScaleCalculator();
+    List<List<Scale>> scaleClassesWithDesiredBases = new();
+    int maxBaseValue = 24;
+    foreach (var length in scaleCalculator.ScaleClassesOfLength.Keys)
+    {
+        int scaleClassIndex = 0;
+        foreach (var scaleClass in scaleCalculator.ScaleClassesOfLength[length])
+        {
+            int scaleIndex = 0;
+            bool scaleClassGood = true;
+            foreach (var scale in scaleClass)
+            {
+                int baseValue = scale.GetBase();
+                Console.WriteLine($"{length}_{scaleClassIndex}_{scaleIndex}: {baseValue}");
+                if (baseValue > maxBaseValue)
+                    scaleClassGood = false;
+                scaleIndex++;
+            }
+            if (scaleClassGood)
+                scaleClassesWithDesiredBases.Add(scaleClass);
+            Console.WriteLine();
+            scaleClassIndex++;
+        }
+    }
+    Console.WriteLine($"Scale classes with bases less than {maxBaseValue}: {scaleClassesWithDesiredBases.Count}");
+    scaleClassesWithDesiredBases.Sort((scaleClass1, scaleClass2) => scaleClass1[0].NumberOfKeys().CompareTo(scaleClass2[0].NumberOfKeys()));
+    foreach (var scaleClass in scaleClassesWithDesiredBases)
+    {
+        foreach (var scale in scaleClass)
+        {
+            Console.WriteLine($"{scale}:{scale.GetBase()}");
+        }
+        Console.WriteLine();
     }
 }

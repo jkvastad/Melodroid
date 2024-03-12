@@ -10,12 +10,28 @@ namespace MusicTheory
         public HashSet<List<Scale>> ScaleClasses = new();
         public Dictionary<Scale, List<Scale>> ScaleClassForScale = new();
         public Dictionary<int, List<List<Scale>>> ScaleClassesOfLength = new();
+        public Dictionary<int, List<Scale>> ScalesWithBase = new();
 
         public ScaleCalculator()
         {
             InitScaleClassForScale();
             InitScaleClasses();
             InitScaleClassesOfLength();
+            InitScalesWithBase();
+        }
+
+        private void InitScalesWithBase()
+        {
+            foreach (var scaleClass in ScaleClasses)
+            {
+                foreach (var scale in scaleClass)
+                {
+                    int baseValue = scale.GetBase();
+                    if (!ScalesWithBase.ContainsKey(baseValue))
+                        ScalesWithBase[baseValue] = new();
+                    ScalesWithBase[baseValue].Add(scale);
+                }
+            }
         }
 
         private void InitScaleClassesOfLength()
