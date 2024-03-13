@@ -87,20 +87,8 @@ Log.Logger = new LoggerConfiguration()
 //PrintScalesWithDesiredBase();
 //WriteAllScaleClassesToMidi(folderPath);
 
-ScaleCalculator scaleCalculator = new();
-foreach (var baseValue in scaleCalculator.ScalesWithBase.Keys.Order())
-{
-    Console.WriteLine($"Base: {baseValue}");
-    var scales = scaleCalculator.ScalesWithBase[baseValue].OrderBy(scale => scale.NumberOfKeys());
-    WriteScalesOfBaseToMidi(scales.ToList(), folderPath);
-    foreach (var scale in scales)
-    {
-        Console.WriteLine($"{scale}");
-    }
-}
 
-
-//QueryKeySetCompatiblePatternLengths(24);
+QueryKeySetCompatiblePatternLengths(24);
 
 
 //for (int i = 0; i < 8; i++)
@@ -347,6 +335,20 @@ static List<(int patternLength, List<(int key, Fraction approximation)> keysAndA
 
 void WriteScalesOfBaseToMidi(List<Scale> scales, string folderPath)
 {
+    /** Example usage
+    ScaleCalculator scaleCalculator = new();
+    foreach (var baseValue in scaleCalculator.ScalesWithBase.Keys.Order())
+    {
+        Console.WriteLine($"Base: {baseValue}");
+        var scales = scaleCalculator.ScalesWithBase[baseValue].OrderBy(scale => scale.NumberOfKeys());
+        WriteScalesOfBaseToMidi(scales.ToList(), folderPath);
+        foreach (var scale in scales)
+        {
+            Console.WriteLine($"{scale}");
+        }
+    } 
+     **/
+
     for (int i = 0; i < scales.Count; i++)
     {
         Scale scale = scales[i];
