@@ -86,9 +86,26 @@ Log.Logger = new LoggerConfiguration()
 
 //PrintScalesWithDesiredBase();
 //WriteAllScaleClassesToMidi(folderPath);
+ScaleCalculator scaleCalculator = new();
+for (int length = 12; length >= 7; length--)
+{
+    int scaleIndex = 0;
+    Console.WriteLine($"Scales of length {length}");
+    foreach (var scaleClass in scaleCalculator.ScaleClassesOfLength[length])
+    {
+        Console.WriteLine($"Scale index: {scaleIndex}");
+        if (scaleClass.Any(scale => scale.GetBase() < 30))
+        {
+            foreach (Scale scale in scaleClass)
+            {
+                Console.WriteLine($"{scale} - {scale.GetBase()}");
+            }
+        }
+        scaleIndex++;
+    }
+}
 
-
-QueryKeySetCompatiblePatternLengths(24);
+QueryKeySetCompatiblePatternLengths(30);
 
 
 //for (int i = 0; i < 8; i++)

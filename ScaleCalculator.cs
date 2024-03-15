@@ -254,7 +254,7 @@ namespace MusicTheory
                 new(3, 2),
                 new(8, 5),
                 new(5, 3),
-                new(16, 9), //perhaps it is 9/5, perhaps both? so far 16/9 feels better when playing.
+                new(9, 5), //perhaps it is 9/5, perhaps both? 9/5 produces more interesting results.
                 new(15, 8)
             ];
 
