@@ -87,25 +87,63 @@ Log.Logger = new LoggerConfiguration()
 //PrintScalesWithDesiredBase();
 //WriteAllScaleClassesToMidi(folderPath);
 ScaleCalculator scaleCalculator = new();
-for (int length = 12; length >= 7; length--)
+//for (int length = 12; length >= 7; length--) //print scale classes with relevant bases
+//{
+//    int scaleIndex = 0;
+//    Console.WriteLine($"Scales of length {length}");
+//    foreach (var scaleClass in scaleCalculator.ScaleClassesOfLength[length])
+//    {
+//        Console.WriteLine($"Scale index: {scaleIndex}");
+//        if (scaleClass.Any(scale => scale.GetBase() < 30))
+//        {
+//            foreach (Scale scale in scaleClass)
+//            {
+//                Console.WriteLine($"{scale} - {scale.GetBase()}");
+//            }
+//        }
+//        scaleIndex++;
+//    }
+//}
+Scale chord = new Scale("000010010001"); //Major chord
+int scaleClassIndex = 0;
+int oldScaleLength = 0;
+foreach (List<Scale> scaleClass in scaleCalculator.CalculateScaleSuperClasses(chord))
 {
-    int scaleIndex = 0;
-    Console.WriteLine($"Scales of length {length}");
-    foreach (var scaleClass in scaleCalculator.ScaleClassesOfLength[length])
+    if (scaleClass[0].NumberOfKeys() != oldScaleLength)
     {
-        Console.WriteLine($"Scale index: {scaleIndex}");
-        if (scaleClass.Any(scale => scale.GetBase() < 30))
-        {
-            foreach (Scale scale in scaleClass)
-            {
-                Console.WriteLine($"{scale} - {scale.GetBase()}");
-            }
-        }
-        scaleIndex++;
+        Console.WriteLine($"--Scale lengths: {scaleClass[0].NumberOfKeys()}");
+        oldScaleLength = scaleClass[0].NumberOfKeys();
     }
+
+    Console.WriteLine($"-Scale index: {scaleClassIndex}");
+    foreach (Scale scale in scaleClass)
+    {
+        Console.WriteLine($"{scale} - {scale.GetBase()}");
+    }
+    scaleClassIndex++;
 }
 
-QueryKeySetCompatiblePatternLengths(30);
+//QueryKeySetCompatiblePatternLengths(30);
+
+//Print all fractions of interest
+//HashSet<Fraction> fractions = new HashSet<Fr                       action>();
+//for (int denominator = 1; denominator <= 24; denominator++)
+//{
+//    for (int numerator = denominator; numerator <= 2 * denominator; numerator++)
+//    {
+//        Fraction fraction = new(numerator, denominator);
+//        var numeratorFactors = Factorize((int)fraction.Numerator);
+//        var denominatorFactors = Factorize((int)fraction.Denominator);
+//        if (numeratorFactors.Any(factor => factor >= 7) || denominatorFactors.Any(factor => factor >= 7))
+//            continue;
+//        fractions.Add(fraction);
+//    }
+//}
+//List<Fraction> sortedFractions = fractions.OrderBy(fraction => fraction.Denominator).ToList();
+//foreach (Fraction fraction in sortedFractions)
+//{
+//    Console.WriteLine($"{fraction.Numerator}/{fraction.Denominator}");
+//}
 
 
 //for (int i = 0; i < 8; i++)

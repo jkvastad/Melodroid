@@ -79,6 +79,20 @@ namespace MusicTheory
             }
         }
 
+        public List<List<Scale>> CalculateScaleSuperClasses(Scale scale)
+        {
+            List<List<Scale>> superClasses = new();
+            for (int length = 12; length > scale.NumberOfKeys(); length--)
+            {
+                foreach (var superClass in ScaleClassesOfLength[length])
+                {
+                    if (scale.isSubscale(superClass[0]))
+                        superClasses.Add(superClass);
+                }
+            }
+            return superClasses;
+        }
+
         public static NoteValue?[] ScaleToNoteValues(Scale scale)
         {
             /** Example usage
@@ -136,6 +150,11 @@ namespace MusicTheory
         public static int operator &(Bit12Int left, int right)
         {
             return left._value & right;
+        }
+
+        public static Bit12Int operator &(Bit12Int left, Bit12Int right)
+        {
+            return new Bit12Int(left._value & (int)right);
         }
 
         public static explicit operator Bit12Int(int value)
@@ -294,6 +313,18 @@ namespace MusicTheory
         public override string ToString()
         {
             return KeySet.ToString();
+        }
+
+        public bool isSubscale(Scale superScale)
+        {
+            Bit12Int superBinaryScale = superScale.KeySet.binaryRepresentation;
+            for (int i = 0; i < 12; i++)
+            {
+                if ((superBinaryScale & KeySet.binaryRepresentation) == KeySet.binaryRepresentation)
+                    return true;
+                superBinaryScale = superBinaryScale.RotateLeft(1);
+            }
+            return false;
         }
     }
 }
