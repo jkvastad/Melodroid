@@ -107,19 +107,50 @@ ScaleCalculator scaleCalculator = new();
 Scale chord = new Scale("000010010001"); //Major chord
 int scaleClassIndex = 0;
 int oldScaleLength = 0;
-foreach (List<Scale> scaleClass in scaleCalculator.CalculateScaleSuperClasses(chord))
+//foreach (List<Scale> scaleClass in scaleCalculator.CalculateScaleSuperClasses(chord))
+List<List<Scale>> scaleClasses = scaleCalculator.ScaleClasses.OrderBy(scaleClass => scaleClass[0].NumberOfKeys()).Reverse().ToList();
+foreach (List<Scale> scaleClass in scaleClasses)
 {
     if (scaleClass[0].NumberOfKeys() != oldScaleLength)
     {
-        Console.WriteLine($"--Scale lengths: {scaleClass[0].NumberOfKeys()}");
+        Console.WriteLine($"-- Scale lengths: {scaleClass[0].NumberOfKeys()} --");
         oldScaleLength = scaleClass[0].NumberOfKeys();
     }
 
-    Console.WriteLine($"-Scale index: {scaleClassIndex}");
-    foreach (Scale scale in scaleClass)
+    int? superClassIndex = null;
+    for (int previousIndex = 0; previousIndex < scaleClassIndex; previousIndex++)
     {
-        Console.WriteLine($"{scale} - {scale.GetBase()}");
+        if (scaleClasses[previousIndex].Any(scale => scaleClass[0].isSubscale(scale) && scale.GetBase() <= 24))
+        {
+            superClassIndex = previousIndex;
+            break;
+        }
     }
+
+    if (superClassIndex != null)
+        Console.WriteLine($"-Scale index: {scaleClassIndex} <- {superClassIndex}");
+    else
+        Console.WriteLine($"-Scale index: {scaleClassIndex}");
+
+    if (scaleClass.Any(scale => scale.GetBase() <= 24            
+            //&& superClassIndex == null
+            //&& scale.GetBase() != 24
+            //&& scale.GetBase() != 20
+            //&& scale.GetBase() != 15
+            //&& scale.GetBase() != 12
+            //&& scale.GetBase() != 10
+            //&& scale.GetBase() != 8
+            //&& scale.GetBase() != 6
+            //&& scale.GetBase() != 5
+            )
+        )
+    {
+        foreach (Scale scale in scaleClass)
+        {
+            Console.WriteLine($"{scale} - {scale.GetBase()}");
+        }
+    }
+
     scaleClassIndex++;
 }
 
