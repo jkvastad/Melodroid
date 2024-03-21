@@ -91,7 +91,7 @@ namespace MusicTheory
                 }
             }
             return superClasses;
-        }
+        }        
 
         public static NoteValue?[] ScaleToNoteValues(Scale scale)
         {
