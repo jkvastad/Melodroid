@@ -106,14 +106,13 @@ ScaleCalculator scaleCalculator = new();
 //}
 
 //PrintAllSuperClassHierarchies();
-Scale chord = new("000100001001");
-PrintChordSuperClasses(chord);
-
+Scale chord = new("000100110011");
+PrintChordSuperClasses(chord, maxBase:120, minBase:25);
 
 QueryKeySetCompatiblePatternLengths(30);
 
 //Print all fractions of interest
-//HashSet<Fraction> fractions = new HashSet<Fr                       action>();
+//HashSet<Fraction> fractions = new HashSet<Fraction>();
 //for (int denominator = 1; denominator <= 24; denominator++)
 //{
 //    for (int numerator = denominator; numerator <= 2 * denominator; numerator++)
@@ -521,7 +520,7 @@ void PrintAllSuperClassHierarchies()
     }
 }
 
-void PrintChordSuperClasses(Scale chord)
+void PrintChordSuperClasses(Scale chord, int maxBase = 24, int minBase = 0)
 {
     int scaleClassIndex = 0;
     int oldScaleLength = 0;
@@ -534,7 +533,7 @@ void PrintChordSuperClasses(Scale chord)
         }
         Console.WriteLine($"Scale class index: {scaleClassIndex}");
 
-        if (scaleClass.Any(scale => scale.GetBase() <= 24
+        if (scaleClass.Any(scale => scale.GetBase() <= maxBase && scale.GetBase() >= minBase
             //&& superClassIndex == null
             //&& scale.GetBase() != 24
             //&& scale.GetBase() != 20
