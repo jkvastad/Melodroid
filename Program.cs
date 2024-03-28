@@ -7,6 +7,8 @@ using Melanchall.DryWetMidi.MusicTheory;
 using MusicTheory;
 using Serilog;
 using Serilog.Core;
+using System;
+using System.Collections.Generic;
 using System.Numerics;
 using static MusicTheory.MusicTheoryUtils;
 using static System.Formats.Asn1.AsnWriter;
@@ -87,6 +89,7 @@ Log.Logger = new LoggerConfiguration()
 //PrintScalesWithDesiredBase();
 //WriteAllScaleClassesToMidi(folderPath);
 ScaleCalculator scaleCalculator = new();
+
 //for (int length = 12; length >= 7; length--) //print scale classes with relevant bases
 //{
 //    int scaleIndex = 0;
@@ -106,8 +109,11 @@ ScaleCalculator scaleCalculator = new();
 //}
 
 //PrintAllSuperClassHierarchies();
-Scale chord = new("000100110011");
+Scale chord = new("000010001001");
 PrintChordSuperClasses(chord, maxBase:120, minBase:25);
+//TODO: Method to find superclass containing specific base? E.g. if I want to play anything but keep base 8, what are my options?
+
+//PrintDissonantSets(scaleCalculator);
 
 QueryKeySetCompatiblePatternLengths(30);
 
@@ -430,7 +436,7 @@ void WriteAllScaleClassesToMidi(string folderPath)
     }
 }
 
-static void PrintScalesWithDesiredBase()
+static void PrintScalesWithUpperLimitOnBase()
 {
     ScaleCalculator scaleCalculator = new ScaleCalculator();
     List<List<Scale>> scaleClassesWithDesiredBases = new();
@@ -555,5 +561,43 @@ void PrintChordSuperClasses(Scale chord, int maxBase = 24, int minBase = 0)
             }
         }
         scaleClassIndex++;
+    }
+}
+
+//Calculate all minimal dissonant sets, i.e. sets of tones which lack a superclass containing a legal base.
+void PrintDissonantSets(ScaleCalculator scaleCalculator)
+{
+    List<int> illegalBases = new() { 24, 20, 15, 12, 10, 8, 5, 4, 3, 2, 1 };
+    foreach (int length in scaleCalculator.ScaleClassesOfLength.Keys.OrderBy(key => key).Reverse())
+    {
+        List<List<Scale>> currentScaleClasses = scaleCalculator.ScaleClassesOfLength[length];
+        List<List<Scale>> filteredClasses = new();
+        foreach (var scaleClass in currentScaleClasses)
+        {
+            List<List<Scale>> superClasses = scaleCalculator.CalculateScaleSuperClasses(scaleClass[0]);
+            //if (scaleClass.Any(scale => illegalBases.Contains(scale.GetBase())))
+            if (superClasses.Any(
+                    superClass => superClass.Any(
+                        scale => illegalBases.Contains(scale.GetBase())
+                    )
+                )
+            )
+            {
+                continue;
+            }
+
+            filteredClasses.Add(scaleClass);
+        }
+
+        Console.WriteLine($"Scale classes of length {length}");
+
+        foreach (var scaleClass in filteredClasses)
+        {
+            foreach (Scale scale in scaleClass)
+            {
+                Console.WriteLine($"{scale} - {scale.GetBase()}");
+            }
+            Console.WriteLine("---");
+        }
     }
 }
