@@ -91,7 +91,7 @@ namespace MusicTheory
                 }
             }
             return superClasses;
-        }        
+        }
 
         public static NoteValue?[] ScaleToNoteValues(Scale scale)
         {
@@ -286,6 +286,17 @@ namespace MusicTheory
         public Scale(string keySetAsBinaryString)
         {
             KeySet = new Tet12KeySet(keySetAsBinaryString);
+        }
+
+        public Scale(int[] tet12Keys)
+        {
+            int keysAsBinary = 0;
+            foreach (var key in tet12Keys)
+            {
+                keysAsBinary += 1 << key;
+            }
+
+            KeySet = new Tet12KeySet(keysAsBinary);
         }
 
         public int GetBase()

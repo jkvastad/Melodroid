@@ -109,8 +109,9 @@ ScaleCalculator scaleCalculator = new();
 //}
 
 //PrintAllSuperClassHierarchies();
-Scale chord = new("000010001001");
-PrintChordSuperClasses(chord, maxBase:120, minBase:25);
+Scale chord = new(new int[] { 0, 1, 3, 7 });
+PrintChordSuperClasses(chord);
+
 //TODO: Method to find superclass containing specific base? E.g. if I want to play anything but keep base 8, what are my options?
 
 //PrintDissonantSets(scaleCalculator);
@@ -528,6 +529,11 @@ void PrintAllSuperClassHierarchies()
 
 void PrintChordSuperClasses(Scale chord, int maxBase = 24, int minBase = 0)
 {
+    List<int> availableBases = new();
+    Dictionary<int, int> baseClassIndexLongest = new();
+    Dictionary<int, int> baseLengthLongest = new();
+    Dictionary<int, int> baseClassIndexShortest = new();
+    Dictionary<int, int> baseLengthShortest = new();
     int scaleClassIndex = 0;
     int oldScaleLength = 0;
     foreach (List<Scale> scaleClass in scaleCalculator.CalculateScaleSuperClasses(chord).OrderBy(scaleClass => scaleClass[0].NumberOfKeys()).Reverse())
@@ -554,13 +560,33 @@ void PrintChordSuperClasses(Scale chord, int maxBase = 24, int minBase = 0)
         {
             foreach (Scale scale in scaleClass)
             {
+                int baseValue = scale.GetBase();
+                if (!availableBases.Contains(baseValue))
+                {
+                    availableBases.Add(baseValue);
+                    baseClassIndexLongest[baseValue] = scaleClassIndex;
+                    baseLengthLongest[baseValue] = oldScaleLength;
+                }
+                else if (availableBases.Contains(baseValue))
+                {
+                    baseClassIndexShortest[baseValue] = scaleClassIndex;
+                    baseLengthShortest[baseValue] = oldScaleLength;
+                }
+
                 if ((scale.KeySet.binaryRepresentation & chord.KeySet.binaryRepresentation) == chord.KeySet.binaryRepresentation)
-                    Console.WriteLine($"{scale} - {scale.GetBase()} <--");
+                    Console.WriteLine($"{scale} - {baseValue} <--");
                 else
-                    Console.WriteLine($"{scale} - {scale.GetBase()}");
+                    Console.WriteLine($"{scale} - {baseValue}");
             }
         }
         scaleClassIndex++;
+    }
+
+    Console.WriteLine($"Available bases (index for first found largest key set containing the base):");
+    foreach (var baseValue in availableBases.OrderBy(value => value))
+    {
+        Console.WriteLine($"{baseValue} at {baseClassIndexLongest[baseValue]} length {baseLengthLongest[baseValue]} and " +
+            $"at {baseClassIndexShortest[baseValue]} length {baseLengthShortest[baseValue]}");
     }
 }
 
