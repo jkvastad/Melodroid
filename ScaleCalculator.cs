@@ -106,7 +106,7 @@ namespace MusicTheory
             NoteValue?[] noteValues = new NoteValue?[timeDivision];
             for (int i = 0; i < timeDivision; i++)
             {
-                if ((scale.KeySet.binaryRepresentation.RotateRight(i) & 1) == 1)
+                if (((scale.KeySet.binaryRepresentation >> i) & 1) == 1)
                 {
                     NoteValue value = new(NoteName.C, 4, 64);
                     value += i;
@@ -131,22 +131,15 @@ namespace MusicTheory
             _value = initialValue & _maxValue;
         }
 
-        public Bit12Int RotateLeft(int positions)
+        public static Bit12Int operator <<(Bit12Int left, int rotations)
         {
-            positions %= _bitSize;
-            return new((_value << positions | _value >> (_bitSize - positions)) & _maxValue);
+            rotations %= _bitSize;
+            return new((left._value << rotations | left._value >> (_bitSize - rotations)) & _maxValue);
         }
-
-        public static Bit12Int operator << (Bit12Int left, int rotations)
+        public static Bit12Int operator >>(Bit12Int left, int rotations)
         {
             rotations %= _bitSize;
             return new((left._value >> rotations | left._value << (_bitSize - rotations)) & _maxValue);
-        }
-
-        public Bit12Int RotateRight(int positions)
-        {
-            positions %= _bitSize;
-            return new((_value >> positions | _value << (_bitSize - positions)) & _maxValue);
         }
 
         public int GetValue()
@@ -217,12 +210,12 @@ namespace MusicTheory
 
         public Tet12KeySet RotateBinaryLeft()
         {
-            return new Tet12KeySet(binaryRepresentation.RotateLeft(1));
+            return new Tet12KeySet(binaryRepresentation << 1);
         }
 
         public Tet12KeySet RotateBinaryRight()
         {
-            return new Tet12KeySet(binaryRepresentation.RotateRight(1));
+            return new Tet12KeySet(binaryRepresentation >> 1);
         }
 
         public int NumberOfKeys()
@@ -322,7 +315,7 @@ namespace MusicTheory
             List<long> denominators = new();
             for (int i = 0; i < 12; i++)
             {
-                if ((KeySet.binaryRepresentation.RotateRight(i).GetValue() & 1) == 1)
+                if (((KeySet.binaryRepresentation >> 1).GetValue() & 1) == 1)
                     denominators.Add((long)keyFractionApproximations[i].Denominator);
             }
             return (int)LCM(denominators.ToArray());
@@ -352,18 +345,18 @@ namespace MusicTheory
             {
                 if ((superBinaryScale & KeySet.binaryRepresentation) == KeySet.binaryRepresentation)
                     return true;
-                superBinaryScale = superBinaryScale.RotateLeft(1);
+                superBinaryScale = superBinaryScale << 1;
             }
             return false;
         }
 
         public static Scale operator <<(Scale scale, int rotations)
         {
-            return new(new Tet12KeySet(scale.KeySet.binaryRepresentation.RotateLeft(rotations)));
+            return new(new Tet12KeySet(scale.KeySet.binaryRepresentation << rotations));
         }
         public static Scale operator >>(Scale scale, int rotations)
         {
-            return new(new Tet12KeySet(scale.KeySet.binaryRepresentation.RotateRight(rotations)));
+            return new(new Tet12KeySet((scale.KeySet.binaryRepresentation >> rotations)));
         }
 
         public static Scale operator &(Scale left, Scale right)
