@@ -315,7 +315,7 @@ namespace MusicTheory
             List<long> denominators = new();
             for (int i = 0; i < 12; i++)
             {
-                if (((KeySet.binaryRepresentation >> 1) & 1) == 1)
+                if (((KeySet.binaryRepresentation >> i) & 1) == 1)
                     denominators.Add((long)keyFractionApproximations[i].Denominator);
             }
             return (int)LCM(denominators.ToArray());
