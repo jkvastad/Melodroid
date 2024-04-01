@@ -120,6 +120,11 @@ foreach (List<Scale> superclass in superClasses)
     Scale scale = superclass.Last();
     for (int rotations = 0; rotations < 12; rotations++)
     {
+        var binaryScale = scale.KeySet.binaryRepresentation >> rotations;
+        if ((binaryScale & 1) != 1)
+            continue; //legal scales must have a fundamental
+
+        scale = new(new Tet12KeySet(binaryScale));
         if (!superclass.Contains(scale))
             continue;
 
@@ -129,8 +134,6 @@ foreach (List<Scale> superclass in superClasses)
         int scaleBase = scale.GetBase();
         if (LEGAL_BASES.Contains(scaleBase))
             legalBases.Add((scale, rotations));
-
-        scale = scale >> 1;
     }
 
     List<(int keySteps, Scale legalKeys)> chordProgressions = new();
@@ -138,18 +141,32 @@ foreach (List<Scale> superclass in superClasses)
     {
         foreach ((Scale scale, int rotations) legalBase in legalBases)
         {
-            int keySteps = legalBase.rotations - matchingRotation;
+            int keySteps = (legalBase.rotations - matchingRotation + 12) % 12;
             chordProgressions.Add((keySteps, legalBase.scale));
         }
     }
     chordProgressionsPerSuperClass.Add(chordProgressions);
 }
 
+Dictionary<int, HashSet<Scale>> chordProgressionsPerKeyStep = new();
+
 foreach (List<(int keySteps, Scale legalKeys)> chordProgressions in chordProgressionsPerSuperClass)
 {
     foreach ((int keySteps, Scale legalKeys) chordProgression in chordProgressions)
     {
-        Console.WriteLine($"{chordProgression.keySteps} - {chordProgression.legalKeys}");
+        if (!chordProgressionsPerKeyStep.ContainsKey(chordProgression.keySteps))
+            chordProgressionsPerKeyStep[chordProgression.keySteps] = new();
+        chordProgressionsPerKeyStep[chordProgression.keySteps].Add(chordProgression.legalKeys);
+        //Console.WriteLine($"{$"{(chordProgression.keySteps + 12) % 12}".PadRight(3)} - {$"{chordProgression.legalKeys.GetBase()}:".PadRight(3)}{chordProgression.legalKeys}");
+    }
+}
+
+foreach (int keySteps in chordProgressionsPerKeyStep.Keys.OrderByDescending(keyStep => keyStep))
+{
+    Console.WriteLine($"- {keySteps} -");
+    foreach (Scale scale in chordProgressionsPerKeyStep[keySteps].OrderByDescending(Scale => Scale.GetBase()).ThenByDescending(Scale => Scale.NumberOfKeys()))
+    {
+        Console.WriteLine($"{$"{scale.GetBase()}:".PadRight(3)}{scale}");
     }
 }
 
