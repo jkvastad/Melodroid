@@ -337,5 +337,20 @@ namespace MusicTheory
             }
             return false;
         }
+
+        public static Scale operator &(Scale left, Scale right)
+        {
+            return new(new Tet12KeySet(left.KeySet.binaryRepresentation & right.KeySet.binaryRepresentation));
+        }
+
+        public static bool operator ==(Scale left, Scale right)
+        {
+            return (left & right).KeySet.binaryRepresentation == left.KeySet.binaryRepresentation;
+        }
+
+        public static bool operator !=(Scale left, Scale right)
+        {
+            return !(left == right);
+        }
     }
 }

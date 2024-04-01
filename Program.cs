@@ -108,9 +108,24 @@ ScaleCalculator scaleCalculator = new();
 //    }
 //}
 
+Scale chord = new(new int[] { 0, 4, 7 });
+List<List<Scale>> superClasses = scaleCalculator.CalculateScaleSuperClasses(chord);
+foreach (List<Scale> superclass in superClasses)
+{
+    Scale firstScale = superclass.First();
+    List<int> matchingIndicies = new();
+    for (int rotation = 0; rotation < 12; rotation++)
+    {
+        if((firstScale & chord) == chord)
+        {
+
+        }
+    }
+}
+
 //PrintAllSuperClassHierarchies();
-Scale chord = new(new int[] { 0, 1, 3, 7 });
-PrintChordSuperClasses(chord);
+//Scale chord = new(new int[] { 0, 4, 7});
+//PrintChordSuperClasses(chord);
 
 //TODO: Method to find superclass containing specific base? E.g. if I want to play anything but keep base 8, what are my options?
 
@@ -586,7 +601,7 @@ void PrintChordSuperClasses(Scale chord, int maxBase = 24, int minBase = 0)
     foreach (var baseValue in availableBases.OrderBy(value => value))
     {
         Console.WriteLine($"{baseValue} at {baseClassIndexLongest[baseValue]} length {baseLengthLongest[baseValue]} and " +
-            $"at {baseClassIndexShortest[baseValue]} length {baseLengthShortest[baseValue]}");
+            $"at {baseClassIndexShortest.ElementAtOrDefault(baseValue)} length {baseLengthShortest.ElementAtOrDefault(baseValue)}");
     }
 }
 
