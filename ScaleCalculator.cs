@@ -63,7 +63,7 @@ namespace MusicTheory
                 List<Scale> rotationClass = new();
                 for (int i = 0; i < 12; i++)
                 {
-                    keySet = keySet.RotateBinaryLeft();
+                    keySet = keySet.RotateBinaryRight();
 
                     if ((keySet.binaryRepresentation & 1) == 0) continue; //only keep scales (key sets with fundamentals - i.e. first bit set)
 
@@ -211,6 +211,11 @@ namespace MusicTheory
         public Tet12KeySet RotateBinaryLeft()
         {
             return new Tet12KeySet(binaryRepresentation.RotateLeft(1));
+        }
+
+        public Tet12KeySet RotateBinaryRight()
+        {
+            return new Tet12KeySet(binaryRepresentation.RotateRight(1));
         }
 
         public int NumberOfKeys()

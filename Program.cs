@@ -108,25 +108,41 @@ ScaleCalculator scaleCalculator = new();
 //    }
 //}
 
-Scale chord = new(new int[] { 0, 4, 7 });
-List<List<Scale>> superClasses = scaleCalculator.CalculateScaleSuperClasses(chord);
-foreach (List<Scale> superclass in superClasses)
-{
-    Scale currentScale = superclass.First();
-    List<int> matchingIndicies = new();
-    for (int rotation = 0; rotation < 12; rotation++)
-    {
-        if ((currentScale & chord) == chord)
-        {
-            matchingIndicies.Add(rotation);
-        }
-        currentScale = currentScale >> 1;
-    }
-}
+//List<int> LEGAL_BASES = new() { 1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 24 };
+
+//Scale chord = new(new int[] { 0, 4, 7 });
+//List<List<Scale>> superClasses = scaleCalculator.CalculateScaleSuperClasses(chord);
+//foreach (List<Scale> superclass in superClasses)
+//{
+//    List<int> matchingIndices = new();
+//    List<(Scale scale, int superClassIndex)> legalBases = new();
+//    Scale scale = superclass.Last();
+//    for (int rotations = 0; rotations < 12; rotations++)
+//    {
+//        if ((scale & chord) == chord)
+//            matchingIndices.Add(rotations);
+
+//        int scaleBase = scale.GetBase();
+//        if (LEGAL_BASES.Contains(scaleBase))
+//            legalBases.Add((scale, rotations));
+
+//        scale = scale >> 1;
+//    }
+
+//    List<(int keySteps, Scale legalKeys)> chordProgressions = new();
+//    foreach (int matchingIndex in matchingIndices)
+//    {
+//        foreach (var legalBase in legalBases)
+//        {
+//            int keySteps = legalBase.superClassIndex - matchingIndex; //save index as rotations instead?
+//            chordProgressions.Add((keySteps, legalBase.scale));
+//        }
+//    }
+//}
 
 //PrintAllSuperClassHierarchies();
-//Scale chord = new(new int[] { 0, 4, 7});
-//PrintChordSuperClasses(chord);
+Scale chord = new(new int[] { 0, 4, 7 });
+PrintChordSuperClasses(chord);
 
 //TODO: Method to find superclass containing specific base? E.g. if I want to play anything but keep base 8, what are my options?
 
