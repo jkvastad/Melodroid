@@ -1,6 +1,7 @@
 ﻿using Fractions;
 using Melanchall.DryWetMidi.MusicTheory;
 using System.Numerics;
+using System.Text;
 using static MusicTheory.MusicTheoryUtils;
 
 namespace MusicTheory
@@ -134,6 +135,12 @@ namespace MusicTheory
         {
             positions %= _bitSize;
             return new((_value << positions | _value >> (_bitSize - positions)) & _maxValue);
+        }
+
+        public static Bit12Int operator << (Bit12Int left, int rotations)
+        {
+            rotations %= _bitSize;
+            return new((left._value >> rotations | left._value << (_bitSize - rotations)) & _maxValue);
         }
 
         public Bit12Int RotateRight(int positions)
@@ -328,7 +335,14 @@ namespace MusicTheory
 
         public override string ToString()
         {
-            return KeySet.ToString();
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < 12; i++)
+            {
+                if (((KeySet.binaryRepresentation << i) & 1) == 1)
+                    sb.Append($"{i} ");
+            }
+            sb.Remove(sb.Length - 1, 1);
+            return sb.ToString();
         }
 
         public bool isSubscale(Scale superScale)
