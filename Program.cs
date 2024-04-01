@@ -619,9 +619,9 @@ void PrintChordSuperClasses(Scale chord, int maxBase = 24, int minBase = 0)
                 }
 
                 if ((scale.KeySet.binaryRepresentation & chord.KeySet.binaryRepresentation) == chord.KeySet.binaryRepresentation)
-                    Console.WriteLine($"{scale} - {baseValue} <--");
+                    Console.WriteLine($"{scale.KeySet} - {baseValue} <--");
                 else
-                    Console.WriteLine($"{scale} - {baseValue}");
+                    Console.WriteLine($"{scale.KeySet} - {baseValue}");
             }
         }
         scaleClassIndex++;
