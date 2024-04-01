@@ -112,14 +112,15 @@ Scale chord = new(new int[] { 0, 4, 7 });
 List<List<Scale>> superClasses = scaleCalculator.CalculateScaleSuperClasses(chord);
 foreach (List<Scale> superclass in superClasses)
 {
-    Scale firstScale = superclass.First();
+    Scale currentScale = superclass.First();
     List<int> matchingIndicies = new();
     for (int rotation = 0; rotation < 12; rotation++)
     {
-        if((firstScale & chord) == chord)
+        if ((currentScale & chord) == chord)
         {
-
+            matchingIndicies.Add(rotation);
         }
+        currentScale = currentScale >> 1;
     }
 }
 

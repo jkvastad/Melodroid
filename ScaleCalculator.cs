@@ -338,6 +338,15 @@ namespace MusicTheory
             return false;
         }
 
+        public static Scale operator <<(Scale scale, int rotations)
+        {
+            return new(new Tet12KeySet(scale.KeySet.binaryRepresentation.RotateLeft(rotations)));
+        }
+        public static Scale operator >>(Scale scale, int rotations)
+        {
+            return new(new Tet12KeySet(scale.KeySet.binaryRepresentation.RotateRight(rotations)));
+        }
+
         public static Scale operator &(Scale left, Scale right)
         {
             return new(new Tet12KeySet(left.KeySet.binaryRepresentation & right.KeySet.binaryRepresentation));
