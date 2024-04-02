@@ -87,7 +87,7 @@ namespace MusicTheory
             {
                 foreach (var superClass in ScaleClassesOfLength[length])
                 {
-                    if (scale.isSubscale(superClass[0]))
+                    if (scale.isSubscaleTo(superClass[0]))
                         superClasses.Add(superClass);
                 }
             }
@@ -338,14 +338,14 @@ namespace MusicTheory
             return sb.ToString();
         }
 
-        public bool isSubscale(Scale superScale)
+        public bool isSubscaleTo(Scale superScale)
         {
-            Bit12Int superBinaryScale = superScale.KeySet.binaryRepresentation;
+            Bit12Int superScaleBinary = superScale.KeySet.binaryRepresentation;
             for (int i = 0; i < 12; i++)
             {
-                if ((superBinaryScale & KeySet.binaryRepresentation) == KeySet.binaryRepresentation)
+                if ((superScaleBinary & KeySet.binaryRepresentation) == KeySet.binaryRepresentation)
                     return true;
-                superBinaryScale = superBinaryScale << 1;
+                superScaleBinary = superScaleBinary << 1;
             }
             return false;
         }        
