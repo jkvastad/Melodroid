@@ -108,45 +108,8 @@ ScaleCalculator scaleCalculator = new();
 //    }
 //}
 
-List<int> LEGAL_BASES = new() { 1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 24 };
-
 Scale chord = new(new int[] { 0, 4, 7 });
-List<List<Scale>> superClasses = scaleCalculator.CalculateScaleSuperClasses(chord);
-List<List<(int keySteps, Scale legalKeys)>> chordProgressionsPerSuperClass = new();
-foreach (List<Scale> superclass in superClasses)
-{
-    List<int> matchingRotations = new();
-    List<(Scale scale, int rotations)> legalBases = new();
-    Scale scale = superclass.Last();
-    for (int rotations = 0; rotations < 12; rotations++)
-    {
-        var binaryScale = scale.KeySet.binaryRepresentation >> rotations;
-        if ((binaryScale & 1) != 1)
-            continue; //legal scales must have a fundamental
-
-        scale = new(new Tet12KeySet(binaryScale));
-        if (!superclass.Contains(scale))
-            continue;
-
-        if ((scale & chord) == chord)
-            matchingRotations.Add(rotations);
-
-        int scaleBase = scale.GetBase();
-        if (LEGAL_BASES.Contains(scaleBase))
-            legalBases.Add((scale, rotations));
-    }
-
-    List<(int keySteps, Scale legalKeys)> chordProgressions = new();
-    foreach (int matchingRotation in matchingRotations)
-    {
-        foreach ((Scale scale, int rotations) legalBase in legalBases)
-        {
-            int keySteps = (legalBase.rotations - matchingRotation + 12) % 12;
-            chordProgressions.Add((keySteps, legalBase.scale));
-        }
-    }
-    chordProgressionsPerSuperClass.Add(chordProgressions);
-}
+List<List<(int keySteps, Scale legalKeys)>> chordProgressionsPerSuperClass = CalculateChordProgressionsPerSuperClass(scaleCalculator, chord);
 
 Dictionary<int, HashSet<Scale>> chordProgressionsPerKeyStep = new();
 
@@ -222,7 +185,7 @@ foreach (int keySteps in chordProgressionsPerKeyStep.Keys.OrderByDescending(keyS
         {
             if (largestScale.isSubscaleTo(scale))
             {
-                largestScalesForBase.Remove(largestScale);                
+                largestScalesForBase.Remove(largestScale);
                 largestScalesForBase.Add(scale);
                 break;
             }
@@ -760,4 +723,48 @@ void PrintDissonantSets(ScaleCalculator scaleCalculator)
             Console.WriteLine("---");
         }
     }
+}
+
+static List<List<(int keySteps, Scale legalKeys)>> CalculateChordProgressionsPerSuperClass(ScaleCalculator scaleCalculator, Scale chord)
+{
+    List<int> LEGAL_BASES = new() { 1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 24 };
+
+    List<List<Scale>> superClasses = scaleCalculator.CalculateScaleSuperClasses(chord);
+    List<List<(int keySteps, Scale legalKeys)>> chordProgressionsPerSuperClass = new();
+    foreach (List<Scale> superclass in superClasses)
+    {
+        List<int> matchingRotations = new();
+        List<(Scale scale, int rotations)> legalBases = new();
+        Scale scale = superclass.Last();
+        for (int rotations = 0; rotations < 12; rotations++)
+        {
+            var binaryScale = scale.KeySet.binaryRepresentation >> rotations;
+            if ((binaryScale & 1) != 1)
+                continue; //legal scales must have a fundamental
+
+            scale = new(new Tet12KeySet(binaryScale));
+            if (!superclass.Contains(scale))
+                continue;
+
+            if ((scale & chord) == chord)
+                matchingRotations.Add(rotations);
+
+            int scaleBase = scale.GetBase();
+            if (LEGAL_BASES.Contains(scaleBase))
+                legalBases.Add((scale, rotations));
+        }
+
+        List<(int keySteps, Scale legalKeys)> chordProgressions = new();
+        foreach (int matchingRotation in matchingRotations)
+        {
+            foreach ((Scale scale, int rotations) legalBase in legalBases)
+            {
+                int keySteps = (legalBase.rotations - matchingRotation + 12) % 12;
+                chordProgressions.Add((keySteps, legalBase.scale));
+            }
+        }
+        chordProgressionsPerSuperClass.Add(chordProgressions);
+    }
+
+    return chordProgressionsPerSuperClass;
 }
