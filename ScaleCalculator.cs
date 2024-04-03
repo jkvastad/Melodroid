@@ -66,7 +66,7 @@ namespace MusicTheory
                 {
                     keySet = keySet.RotateBinaryRight();
 
-                    if ((keySet.binaryRepresentation & 1) == 0) continue; //only keep scales (key sets with fundamentals - i.e. first bit set)
+                    if ((keySet.BinaryRepresentation & 1) == 0) continue; //only keep scales (key sets with fundamentals - i.e. first bit set)
 
                     Scale scale = new(keySet);
                     if (ScaleClassForScale.ContainsKey(scale)) //Try next combination - rotation class already registered
@@ -106,7 +106,7 @@ namespace MusicTheory
             NoteValue?[] noteValues = new NoteValue?[timeDivision];
             for (int i = 0; i < timeDivision; i++)
             {
-                if (((scale.KeySet.binaryRepresentation >> i) & 1) == 1)
+                if (((scale.KeySet.BinaryRepresentation >> i) & 1) == 1)
                 {
                     NoteValue value = new(NoteName.C, 4, 64);
                     value += i;
@@ -147,6 +147,18 @@ namespace MusicTheory
             return _value;
         }
 
+        public static string Bit12IntToIntervalString(Bit12Int binaryKeySet)
+        {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < 12; i++)
+            {
+                if (((binaryKeySet >> i) & 1) == 1)
+                    sb.Append($"{i} ");
+            }
+            sb.Remove(sb.Length - 1, 1);
+            return sb.ToString();
+        }
+
         public static int operator &(Bit12Int left, int right)
         {
             return left._value & right;
@@ -185,7 +197,7 @@ namespace MusicTheory
 
     public struct Tet12KeySet
     {
-        public Bit12Int binaryRepresentation;
+        public Bit12Int BinaryRepresentation;
 
         public Tet12KeySet(string keySetAsBinaryString)
         {
@@ -195,33 +207,33 @@ namespace MusicTheory
             if (keySetAsBinaryString.Length != 12) throw new ArgumentException("12TET key set must consist of exactly 12 keys");
             if (keySetAsBinaryString.Any(key => key != '0' && key != '1')) throw new ArgumentException("12TET key set keys must be either 1 (included in scale) or 0 (excluded from scale)");
 
-            binaryRepresentation = (Bit12Int)Convert.ToInt32(keySetAsBinaryString, 2);
+            BinaryRepresentation = (Bit12Int)Convert.ToInt32(keySetAsBinaryString, 2);
         }
 
         public Tet12KeySet(Bit12Int keySet)
         {
-            binaryRepresentation = keySet;
+            BinaryRepresentation = keySet;
         }
 
         public Tet12KeySet(int keySetAsInt)
         {
-            binaryRepresentation = new(keySetAsInt);
+            BinaryRepresentation = new(keySetAsInt);
         }
 
         public Tet12KeySet RotateBinaryLeft()
         {
-            return new Tet12KeySet(binaryRepresentation << 1);
+            return new Tet12KeySet(BinaryRepresentation << 1);
         }
 
         public Tet12KeySet RotateBinaryRight()
         {
-            return new Tet12KeySet(binaryRepresentation >> 1);
+            return new Tet12KeySet(BinaryRepresentation >> 1);
         }
 
         public int NumberOfKeys()
         {
             int keys = 0;
-            int value = (int)binaryRepresentation;
+            int value = (int)BinaryRepresentation;
             while (value > 0)
             {
                 if ((value & 1) == 1)
@@ -234,7 +246,7 @@ namespace MusicTheory
         public static bool operator ==(Tet12KeySet left, Tet12KeySet right)
         {
 
-            return left.binaryRepresentation == right.binaryRepresentation;
+            return left.BinaryRepresentation == right.BinaryRepresentation;
         }
 
         public static bool operator !=(Tet12KeySet left, Tet12KeySet right)
@@ -249,17 +261,22 @@ namespace MusicTheory
 
         public bool Equals(Tet12KeySet other)
         {
-            return binaryRepresentation == other.binaryRepresentation;
+            return BinaryRepresentation == other.BinaryRepresentation;
         }
 
         public override int GetHashCode()
         {
-            return (int)binaryRepresentation;
+            return (int)BinaryRepresentation;
         }
 
         public override string ToString()
         {
-            return binaryRepresentation.ToString();
+            return BinaryRepresentation.ToString();
+        }
+
+        public string ToIntervalString()
+        {
+            return Bit12Int.Bit12IntToIntervalString(BinaryRepresentation);
         }
     }
 
@@ -284,7 +301,7 @@ namespace MusicTheory
 
         public Scale(Tet12KeySet keySet)
         {
-            if ((keySet.binaryRepresentation & 1) != 1) throw new ArgumentException($"A scale must have a fundamental - {nameof(Tet12KeySet)} did not set first bit ");
+            if ((keySet.BinaryRepresentation & 1) != 1) throw new ArgumentException($"A scale must have a fundamental - {nameof(Tet12KeySet)} did not set first bit ");
             KeySet = keySet;
         }
 
@@ -315,7 +332,7 @@ namespace MusicTheory
             List<long> denominators = new();
             for (int i = 0; i < 12; i++)
             {
-                if (((KeySet.binaryRepresentation >> i) & 1) == 1)
+                if (((KeySet.BinaryRepresentation >> i) & 1) == 1)
                     denominators.Add((long)keyFractionApproximations[i].Denominator);
             }
             return (int)LCM(denominators.ToArray());
@@ -328,22 +345,15 @@ namespace MusicTheory
 
         public override string ToString()
         {
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < 12; i++)
-            {
-                if (((KeySet.binaryRepresentation << i) & 1) == 1)
-                    sb.Append($"{i} ");
-            }
-            sb.Remove(sb.Length - 1, 1);
-            return sb.ToString();
+            return Bit12Int.Bit12IntToIntervalString(KeySet.BinaryRepresentation);
         }
 
         public bool isSubscaleTo(Scale superScale)
         {
-            Bit12Int superScaleBinary = superScale.KeySet.binaryRepresentation;
+            Bit12Int superScaleBinary = superScale.KeySet.BinaryRepresentation;
             for (int i = 0; i < 12; i++)
             {
-                if ((superScaleBinary & KeySet.binaryRepresentation) == KeySet.binaryRepresentation)
+                if ((superScaleBinary & KeySet.BinaryRepresentation) == KeySet.BinaryRepresentation)
                     return true;
                 superScaleBinary = superScaleBinary << 1;
             }
@@ -352,22 +362,22 @@ namespace MusicTheory
 
         public static Tet12KeySet operator <<(Scale left, int right)
         {
-            return new Tet12KeySet(left.KeySet.binaryRepresentation << right);
+            return new Tet12KeySet(left.KeySet.BinaryRepresentation << right);
         }
-        
+
         public static Tet12KeySet operator >>(Scale left, int right)
         {
-            return new Tet12KeySet(left.KeySet.binaryRepresentation << right);
+            return new Tet12KeySet(left.KeySet.BinaryRepresentation << right);
         }
 
         public static Scale operator &(Scale left, Scale right)
         {
-            return new(new Tet12KeySet(left.KeySet.binaryRepresentation & right.KeySet.binaryRepresentation));
+            return new(new Tet12KeySet(left.KeySet.BinaryRepresentation & right.KeySet.BinaryRepresentation));
         }
 
         public static bool operator ==(Scale left, Scale right)
         {
-            return (left & right).KeySet.binaryRepresentation == left.KeySet.binaryRepresentation;
+            return (left & right).KeySet.BinaryRepresentation == left.KeySet.BinaryRepresentation;
         }
 
         public static bool operator !=(Scale left, Scale right)

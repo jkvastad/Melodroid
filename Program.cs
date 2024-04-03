@@ -111,18 +111,20 @@ ScaleCalculator scaleCalculator = new();
 Scale chord = new(new int[] { 0, 4, 7 });
 List<List<(int keySteps, Scale legalBaseScale)>> chordProgressionsPerSuperClass = CalculateChordProgressionsPerSuperClass(scaleCalculator, chord);
 
-//Order progressions by physical keys, noting the origin (scale and key steps causing the keys)
-
-Dictionary<Tet12KeySet,List<(int keySteps, Scale legalBaseScale)>> chordProgressionsAndOrigin = new();
-foreach (var superClass in chordProgressionsPerSuperClass)
-{
-    foreach ((int keySteps, Scale legalBaseScale) chordProgression in superClass)
-    {
-        Tet12KeySet keys = chordProgression.legalBaseScale << chordProgression.keySteps;
-
-    }
-}
-
+////Order progressions by physical keys, noting the origin (scale and key steps causing the keys)
+//Dictionary<Tet12KeySet, List<(int keySteps, Scale legalBaseScale)>> chordProgressionsAndOrigins = OrderChordProgressionsByPhysicalKeys(chordProgressionsPerSuperClass);
+////TODO: Collapse subscales into superscales if origin is preserved
+//Console.WriteLine($"Original chord: {chord}");
+//Console.WriteLine($"Number of progressions: {chordProgressionsAndOrigins.Keys.Count}");
+//foreach (Tet12KeySet chordProgression in chordProgressionsAndOrigins.Keys.OrderByDescending(cp => cp.ToIntervalString()).ThenByDescending(cp => cp.NumberOfKeys()))
+//{
+//    Console.Write($"{$"{chordProgression.ToIntervalString()}",-20} : ");
+//    foreach ((int keySteps, Scale legalBaseScale) origin in chordProgressionsAndOrigins[chordProgression])
+//    {
+//        Console.Write($"{$"{origin}",-22} - ");
+//    }
+//    Console.WriteLine();
+//}
 
 //// Order progressions by key step length
 //Dictionary<int, HashSet<Scale>> chordProgressionsPerKeyStep = new();
@@ -186,7 +188,7 @@ foreach (var superClass in chordProgressionsPerSuperClass)
 
 //PrintAllSuperClassHierarchies();
 //Scale chord = new(new int[] { 0, 4, 7 });
-//PrintChordSuperClasses(chord);
+PrintChordSuperClasses(chord);
 
 //TODO: Method to find superclass containing specific base? E.g. if I want to play anything but keep base 8, what are my options?
 
@@ -649,7 +651,7 @@ void PrintChordSuperClasses(Scale chord, int maxBase = 24, int minBase = 0)
                     baseLengthShortest[baseValue] = oldScaleLength;
                 }
 
-                if ((scale.KeySet.binaryRepresentation & chord.KeySet.binaryRepresentation) == chord.KeySet.binaryRepresentation)
+                if ((scale.KeySet.BinaryRepresentation & chord.KeySet.BinaryRepresentation) == chord.KeySet.BinaryRepresentation)
                     Console.WriteLine($"{scale.KeySet} - {baseValue} <--");
                 else
                     Console.WriteLine($"{scale.KeySet} - {baseValue}");
@@ -704,6 +706,7 @@ void PrintDissonantSets(ScaleCalculator scaleCalculator)
     }
 }
 
+//Chord progressions are basically "hidden keys" in a superclass to a scale, moving from larger to smaller bases in the superscale
 static List<List<(int keySteps, Scale legalKeys)>> CalculateChordProgressionsPerSuperClass(ScaleCalculator scaleCalculator, Scale chord)
 {
     List<int> LEGAL_BASES = new() { 1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 24 };
@@ -712,33 +715,33 @@ static List<List<(int keySteps, Scale legalKeys)>> CalculateChordProgressionsPer
     List<List<(int keySteps, Scale legalBaseScale)>> chordProgressionsPerSuperClass = new();
     foreach (List<Scale> superclass in superClasses)
     {
-        List<int> matchingRotations = new();
-        List<(Scale scale, int rotations)> legalBases = new();
-        Scale scale = superclass.Last();
+        List<int> chordSuperScaleRotations = new(); // The rotations producing superscales to our chord from an arbitrary reference point in the superclass
+        List<(Scale scale, int rotations)> legalBases = new(); // The rotations producing legal bases in the superclass
+        Scale scale = superclass.First(); // The arbitrary reference point in the superclass
         for (int rotations = 0; rotations < 12; rotations++)
         {
-            var binaryScale = scale.KeySet.binaryRepresentation >> rotations;
+            var binaryScale = scale.KeySet.BinaryRepresentation >> rotations;
             if ((binaryScale & 1) != 1)
-                continue; //legal scales must have a fundamental
+                continue; // Scales must have a fundamental
 
-            scale = new(new Tet12KeySet(binaryScale));
-            if (!superclass.Contains(scale))
-                continue;
+            scale = new(new Tet12KeySet(binaryScale));            
 
             if ((scale & chord) == chord)
-                matchingRotations.Add(rotations);
+                chordSuperScaleRotations.Add(rotations); // Found superscale to our chord
 
             int scaleBase = scale.GetBase();
             if (LEGAL_BASES.Contains(scaleBase))
-                legalBases.Add((scale, rotations));
+                legalBases.Add((scale, rotations)); // Found legal base in superclass
         }
 
+        //Rotation diff between all chord superscales and legal bases in the superclass
         List<(int keySteps, Scale legalKeys)> chordProgressions = new();
-        foreach (int matchingRotation in matchingRotations)
+        foreach (int chordSuperscaleRotation in chordSuperScaleRotations)
         {
             foreach ((Scale scale, int rotations) legalBase in legalBases)
             {
-                int keySteps = (legalBase.rotations - matchingRotation + 12) % 12;
+                // From chordSuperscaleRotation, go keySteps rotations to the right and play any keys from legalBase.Scale
+                int keySteps = (legalBase.rotations - chordSuperscaleRotation + 12) % 12; 
                 chordProgressions.Add((keySteps, legalBase.scale));
             }
         }
@@ -746,4 +749,22 @@ static List<List<(int keySteps, Scale legalKeys)>> CalculateChordProgressionsPer
     }
 
     return chordProgressionsPerSuperClass;
+}
+
+static Dictionary<Tet12KeySet, List<(int keySteps, Scale legalBaseScale)>> OrderChordProgressionsByPhysicalKeys(List<List<(int keySteps, Scale legalBaseScale)>> chordProgressionsPerSuperClass)
+{
+    Dictionary<Tet12KeySet, List<(int keySteps, Scale legalBaseScale)>> chordProgressionsAndOrigins = new();
+    foreach (var superClass in chordProgressionsPerSuperClass)
+    {
+        foreach ((int keySteps, Scale legalBaseScale) origin in superClass)
+        {
+            Tet12KeySet keys = origin.legalBaseScale << origin.keySteps;
+            if (!chordProgressionsAndOrigins.ContainsKey(keys))
+                chordProgressionsAndOrigins[keys] = new();
+
+            chordProgressionsAndOrigins[keys].Add(origin);
+        }
+    }
+
+    return chordProgressionsAndOrigins;
 }
