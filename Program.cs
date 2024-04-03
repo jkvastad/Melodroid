@@ -109,7 +109,20 @@ ScaleCalculator scaleCalculator = new();
 //}
 
 Scale chord = new(new int[] { 0, 4, 7 });
-List<List<(int keySteps, Scale legalKeys)>> chordProgressionsPerSuperClass = CalculateChordProgressionsPerSuperClass(scaleCalculator, chord);
+List<List<(int keySteps, Scale legalBaseScale)>> chordProgressionsPerSuperClass = CalculateChordProgressionsPerSuperClass(scaleCalculator, chord);
+
+//Order progressions by physical keys, noting the origin (scale and key steps causing the keys)
+
+Dictionary<Tet12KeySet,List<(int keySteps, Scale legalBaseScale)>> chordProgressionsAndOrigin = new();
+foreach (var superClass in chordProgressionsPerSuperClass)
+{
+    foreach ((int keySteps, Scale legalBaseScale) chordProgression in superClass)
+    {
+        Tet12KeySet keys = chordProgression.legalBaseScale << chordProgression.keySteps;
+
+    }
+}
+
 
 //// Order progressions by key step length
 //Dictionary<int, HashSet<Scale>> chordProgressionsPerKeyStep = new();
@@ -696,7 +709,7 @@ static List<List<(int keySteps, Scale legalKeys)>> CalculateChordProgressionsPer
     List<int> LEGAL_BASES = new() { 1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 24 };
 
     List<List<Scale>> superClasses = scaleCalculator.CalculateScaleSuperClasses(chord);
-    List<List<(int keySteps, Scale legalKeys)>> chordProgressionsPerSuperClass = new();
+    List<List<(int keySteps, Scale legalBaseScale)>> chordProgressionsPerSuperClass = new();
     foreach (List<Scale> superclass in superClasses)
     {
         List<int> matchingRotations = new();
