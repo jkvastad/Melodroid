@@ -37,14 +37,14 @@ namespace MusicTheory
 
         private void InitScaleClassesOfLength()
         {
-            foreach (var rotationClass in ScaleClasses)
+            foreach (var scaleClass in ScaleClasses)
             {
-                int length = rotationClass[0].KeySet.NumberOfKeys();
+                int length = scaleClass[0].KeySet.NumberOfKeys();
 
                 if (!ScaleClassesOfLength.ContainsKey(length))
                     ScaleClassesOfLength[length] = new();
 
-                ScaleClassesOfLength[length].Add(rotationClass);
+                ScaleClassesOfLength[length].Add(scaleClass);
             }
         }
 

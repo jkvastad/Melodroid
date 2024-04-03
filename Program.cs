@@ -117,15 +117,15 @@ foreach (List<(int keySteps, Scale legalKeys)> chordProgressions in chordProgres
         if (!chordProgressionsPerKeyStep.ContainsKey(chordProgression.keySteps))
             chordProgressionsPerKeyStep[chordProgression.keySteps] = new();
         chordProgressionsPerKeyStep[chordProgression.keySteps].Add(chordProgression.legalKeys);
-        Console.WriteLine($"{$"{(chordProgression.keySteps + 12) % 12}".PadRight(3)} - {$"{chordProgression.legalKeys.GetBase()}:".PadRight(3)}{chordProgression.legalKeys}");
+        //Console.WriteLine($"{$"{(chordProgression.keySteps + 12) % 12}".PadRight(3)} - {$"{chordProgression.legalKeys.GetBase()}:".PadRight(3)}{chordProgression.legalKeys}");
     }
 }
 
-// Order progressions by steps then by base then by scale size
+// Order progressions by steps then by base then by alphetical size
 foreach (int keySteps in chordProgressionsPerKeyStep.Keys.OrderByDescending(keyStep => keyStep))
 {
     Console.WriteLine($"- {keySteps} -");
-    foreach (Scale scale in chordProgressionsPerKeyStep[keySteps].OrderByDescending(Scale => Scale.GetBase()).ThenByDescending(Scale => Scale.NumberOfKeys()))
+    foreach (Scale scale in chordProgressionsPerKeyStep[keySteps].OrderByDescending(Scale => Scale.GetBase()).ThenByDescending(Scale => Scale.ToString()))
     {
         Console.WriteLine($"{$"{scale.GetBase()}:".PadRight(3)}{scale}");
     }
@@ -697,8 +697,8 @@ static List<List<(int keySteps, Scale legalKeys)>> CalculateChordProgressionsPer
     List<List<(int keySteps, Scale legalBaseScale)>> chordProgressionsPerSuperClass = new();
     foreach (List<Scale> superclass in superClasses)
     {
-        List<int> chordSuperScaleRotations = new(); // The rotations producing superscales to our chord from an arbitrary reference point in the superclass
-        List<(int rotations, Scale scale)> legalBases = new(); // The rotations producing legal bases in the superclass
+        List<int> superScaleRotations = new(); // The rotations producing superscales to our chord from an arbitrary reference point in the superclass
+        List<(int rotations, Scale scale)> legalBasesAndRotations = new(); // The rotations producing legal bases in the superclass
         Scale scale = superclass.First(); // The arbitrary reference point in the superclass
         for (int rotations = 0; rotations < 12; rotations++)
         {
@@ -706,21 +706,23 @@ static List<List<(int keySteps, Scale legalKeys)>> CalculateChordProgressionsPer
             if ((binaryScale & 1) != 1)
                 continue; // Scales must have a fundamental
 
+            //only include scales from in the superclass
             scale = new(new Tet12KeySet(binaryScale));
+            if (!superclass.Contains(scale))
+                continue;
 
-            if ((scale & chord) == chord)
-                chordSuperScaleRotations.Add(rotations); // Found superscale to our chord
+            if (chord.isSubScaleTo(scale))
+                superScaleRotations.Add(rotations); // Found superscale to our chord at current rotations 
 
-            int scaleBase = scale.GetBase();
-            if (LEGAL_BASES.Contains(scaleBase))
-                legalBases.Add((rotations, scale)); // Found legal base in superclass
+            if (LEGAL_BASES.Contains(scale.GetBase()))
+                legalBasesAndRotations.Add((rotations, scale)); // Found legal base in superclass
         }
 
         //Rotation diff between all chord superscales and legal bases in the superclass
         List<(int keySteps, Scale legalKeys)> chordProgressions = new();
-        foreach (int chordSuperscaleRotation in chordSuperScaleRotations)
+        foreach (int chordSuperscaleRotation in superScaleRotations)
         {
-            foreach ((int rotations, Scale scale) legalBase in legalBases)
+            foreach ((int rotations, Scale scale) legalBase in legalBasesAndRotations)
             {
                 // From chordSuperscaleRotation, go keySteps rotations to the right and play any keys from legalBase.Scale
                 int keySteps = (legalBase.rotations - chordSuperscaleRotation + 12) % 12;
