@@ -111,18 +111,18 @@ ScaleCalculator scaleCalculator = new();
 Scale chord = new(new int[] { 0, 4, 7 });
 List<List<(int keySteps, Scale legalKeys)>> chordProgressionsPerSuperClass = CalculateChordProgressionsPerSuperClass(scaleCalculator, chord);
 
-Dictionary<int, HashSet<Scale>> chordProgressionsPerKeyStep = new();
-
-foreach (List<(int keySteps, Scale legalKeys)> chordProgressions in chordProgressionsPerSuperClass)
-{
-    foreach ((int keySteps, Scale legalKeys) chordProgression in chordProgressions)
-    {
-        if (!chordProgressionsPerKeyStep.ContainsKey(chordProgression.keySteps))
-            chordProgressionsPerKeyStep[chordProgression.keySteps] = new();
-        chordProgressionsPerKeyStep[chordProgression.keySteps].Add(chordProgression.legalKeys);
-        //Console.WriteLine($"{$"{(chordProgression.keySteps + 12) % 12}".PadRight(3)} - {$"{chordProgression.legalKeys.GetBase()}:".PadRight(3)}{chordProgression.legalKeys}");
-    }
-}
+//// Order progressions by key step length
+//Dictionary<int, HashSet<Scale>> chordProgressionsPerKeyStep = new();
+//foreach (List<(int keySteps, Scale legalKeys)> chordProgressions in chordProgressionsPerSuperClass)
+//{
+//    foreach ((int keySteps, Scale legalKeys) chordProgression in chordProgressions)
+//    {
+//        if (!chordProgressionsPerKeyStep.ContainsKey(chordProgression.keySteps))
+//            chordProgressionsPerKeyStep[chordProgression.keySteps] = new();
+//        chordProgressionsPerKeyStep[chordProgression.keySteps].Add(chordProgression.legalKeys);
+//        //Console.WriteLine($"{$"{(chordProgression.keySteps + 12) % 12}".PadRight(3)} - {$"{chordProgression.legalKeys.GetBase()}:".PadRight(3)}{chordProgression.legalKeys}");
+//    }
+//}
 
 //// Order progressions by steps then by base then by scale size
 //foreach (int keySteps in chordProgressionsPerKeyStep.Keys.OrderByDescending(keyStep => keyStep))
