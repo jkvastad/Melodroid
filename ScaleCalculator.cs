@@ -81,7 +81,7 @@ namespace MusicTheory
         }
 
         public List<List<Scale>> CalculateScaleSuperClasses(Scale scale)
-        {            
+        {
             List<List<Scale>> superClasses = new();
             for (int length = 12; length > scale.NumberOfKeys(); length--)
             {
@@ -363,7 +363,7 @@ namespace MusicTheory
         public bool isSubClassTo(Scale superClassScale)
         {
             List<Scale> superClass = superClassScale.CalculateScaleClass();
-            
+
             if (superClass.Any(isSubScaleTo))
                 return true;
             return false;
@@ -380,7 +380,7 @@ namespace MusicTheory
 
         public bool isSubScaleTo(Scale superScale)
         {
-            return (this & superScale) == this;
+            return (this & superScale) == KeySet;
         }
 
         public static Tet12KeySet operator <<(Scale left, int right)
@@ -393,14 +393,14 @@ namespace MusicTheory
             return new Tet12KeySet(left.KeySet.BinaryRepresentation >> right);
         }
 
-        public static Scale operator &(Scale left, Scale right)
+        public static Tet12KeySet operator &(Scale left, Scale right)
         {
-            return new(new Tet12KeySet(left.KeySet.BinaryRepresentation & right.KeySet.BinaryRepresentation));
+            return new Tet12KeySet(left.KeySet.BinaryRepresentation & right.KeySet.BinaryRepresentation);
         }
 
         public static bool operator ==(Scale left, Scale right)
         {
-            return (left & right).KeySet.BinaryRepresentation == left.KeySet.BinaryRepresentation;
+            return left.KeySet.BinaryRepresentation == right.KeySet.BinaryRepresentation;
         }
 
         public static bool operator !=(Scale left, Scale right)
