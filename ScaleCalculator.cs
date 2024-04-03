@@ -390,7 +390,7 @@ namespace MusicTheory
 
         public static Tet12KeySet operator >>(Scale left, int right)
         {
-            return new Tet12KeySet(left.KeySet.BinaryRepresentation << right);
+            return new Tet12KeySet(left.KeySet.BinaryRepresentation >> right);
         }
 
         public static Scale operator &(Scale left, Scale right)

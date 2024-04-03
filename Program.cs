@@ -697,22 +697,22 @@ static List<List<(int keySteps, Scale legalKeys)>> CalculateChordProgressionsPer
     List<List<(int keySteps, Scale legalBaseScale)>> chordProgressionsPerSuperClass = new();
     foreach (List<Scale> superclass in superClasses)
     {
+        Scale scale = superclass.First(); // Arbitrary reference point in the superclass
         List<int> superScaleRotations = new(); // The rotations producing superscales to our chord from an arbitrary reference point in the superclass
         List<(int rotations, Scale scale)> legalBasesAndRotations = new(); // The rotations producing legal bases in the superclass
-        Scale scale = superclass.First(); // The arbitrary reference point in the superclass
+
         for (int rotations = 0; rotations < 12; rotations++)
         {
-            var binaryScale = scale.KeySet.BinaryRepresentation >> rotations;
-            if ((binaryScale & 1) != 1)
+            Tet12KeySet scaleKeys = scale >> rotations;
+            if ((scaleKeys.BinaryRepresentation & 1) != 1)
                 continue; // Scales must have a fundamental
 
-            //only include scales from in the superclass
-            scale = new(new Tet12KeySet(binaryScale));
-            if (!superclass.Contains(scale))
-                continue;
+            Scale currentScale = new(scaleKeys);
+            if (!superclass.Contains(currentScale))
+                continue; // Only include scales from the superclass
 
             if (chord.isSubScaleTo(scale))
-                superScaleRotations.Add(rotations); // Found superscale to our chord at current rotations 
+                superScaleRotations.Add(rotations); // Found superscale to our chord at current rotations
 
             if (LEGAL_BASES.Contains(scale.GetBase()))
                 legalBasesAndRotations.Add((rotations, scale)); // Found legal base in superclass
@@ -720,12 +720,12 @@ static List<List<(int keySteps, Scale legalKeys)>> CalculateChordProgressionsPer
 
         //Rotation diff between all chord superscales and legal bases in the superclass
         List<(int keySteps, Scale legalKeys)> chordProgressions = new();
-        foreach (int chordSuperscaleRotation in superScaleRotations)
+        foreach (int chordSuperScaleRotation in superScaleRotations)
         {
             foreach ((int rotations, Scale scale) legalBase in legalBasesAndRotations)
             {
                 // From chordSuperscaleRotation, go keySteps rotations to the right and play any keys from legalBase.Scale
-                int keySteps = (legalBase.rotations - chordSuperscaleRotation + 12) % 12;
+                int keySteps = (legalBase.rotations - chordSuperScaleRotation + 12) % 12;
                 chordProgressions.Add((keySteps, legalBase.scale));
             }
         }
