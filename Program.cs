@@ -124,10 +124,20 @@ foreach (List<(int keySteps, Scale legalKeys)> chordProgressions in chordProgres
     }
 }
 
-//Dictionary<int, HashSet<Scale>> largestProgressionScalesPerBase = new();
-
-//foreach (int keySteps in chordProgressionsPerKeyStep.Keys)
+//// Order progressions by steps then by base then by scale size
+//foreach (int keySteps in chordProgressionsPerKeyStep.Keys.OrderByDescending(keyStep => keyStep))
 //{
+//    Console.WriteLine($"- {keySteps} -");
+//    foreach (Scale scale in chordProgressionsPerKeyStep[keySteps].OrderByDescending(Scale => Scale.GetBase()).ThenByDescending(Scale => Scale.NumberOfKeys()))
+//    {
+//        Console.WriteLine($"{$"{scale.GetBase()}:".PadRight(3)}{scale}");
+//    }
+//}
+
+////Order progressions by steps then by base then by scale size, keeping only unique supersets
+//foreach (int keySteps in chordProgressionsPerKeyStep.Keys.OrderByDescending(keyStep => keyStep))
+//{
+//    Dictionary<int, HashSet<Scale>> largestProgressionScalesPerBase = new();
 //    foreach (Scale scale in chordProgressionsPerKeyStep[keySteps])
 //    {
 //        int scaleBase = scale.GetBase();
@@ -135,75 +145,31 @@ foreach (List<(int keySteps, Scale legalKeys)> chordProgressions in chordProgres
 //        if (!largestProgressionScalesPerBase.ContainsKey(scaleBase))
 //            largestProgressionScalesPerBase[scaleBase] = new();
 
-//        var largestScales = largestProgressionScalesPerBase[scaleBase];
-//        bool isScaleSuperscale = false;
-//        foreach (var largestScale in largestScales)
+//        HashSet<Scale> largestScalesForBase = largestProgressionScalesPerBase[scaleBase];
+//        bool isScaleUnique = true;
+//        foreach (Scale largestScale in largestScalesForBase)
 //        {
-//            if (largestScale.isSubscale(scale))
+//            if (largestScale.isSubscaleTo(scale))
 //            {
-//                largestScales.Remove(largestScale);
-//                isScaleSuperscale = true;
+//                largestScalesForBase.Remove(largestScale);
+//                largestScalesForBase.Add(scale);
+//                break;
 //            }
+//            if (scale.isSubscaleTo(largestScale)) //Scales are subscales to themselves
+//                isScaleUnique = false;
 //        }
-//        if (!isScaleSuperscale)
-//            largestScales.Add(scale);
+//        if (isScaleUnique)
+//            largestScalesForBase.Add(scale);
 //    }
-//}
-
-//foreach (int scaleBase in largestProgressionScalesPerBase.Keys.OrderByDescending(scaleBase => scaleBase))
-//{
-//    foreach (Scale scale in largestProgressionScalesPerBase[scaleBase].OrderByDescending(scale => scale.NumberOfKeys()))
+//    Console.WriteLine($"- {keySteps} -");
+//    foreach (int scaleBase in largestProgressionScalesPerBase.Keys.OrderByDescending(scaleBase => scaleBase))
 //    {
-//        Console.WriteLine($"{$"{scale.GetBase()}:".PadRight(3)}{scale}");
+//        foreach (Scale scale in largestProgressionScalesPerBase[scaleBase])
+//        {
+//            Console.WriteLine($"{$"{scale.GetBase()}:".PadRight(3)}{scale}");
+//        }
 //    }
 //}
-
-// Order progressions by steps then by base then by scale size
-foreach (int keySteps in chordProgressionsPerKeyStep.Keys.OrderByDescending(keyStep => keyStep))
-{
-    Console.WriteLine($"- {keySteps} -");
-    foreach (Scale scale in chordProgressionsPerKeyStep[keySteps].OrderByDescending(Scale => Scale.GetBase()).ThenByDescending(Scale => Scale.NumberOfKeys()))
-    {
-        Console.WriteLine($"{$"{scale.GetBase()}:".PadRight(3)}{scale}");
-    }
-}
-
-//Order progressions by steps then by base then by scale size, keeping only unique supersets
-foreach (int keySteps in chordProgressionsPerKeyStep.Keys.OrderByDescending(keyStep => keyStep))
-{
-    Dictionary<int, HashSet<Scale>> largestProgressionScalesPerBase = new();
-    foreach (Scale scale in chordProgressionsPerKeyStep[keySteps])
-    {
-        int scaleBase = scale.GetBase();
-
-        if (!largestProgressionScalesPerBase.ContainsKey(scaleBase))
-            largestProgressionScalesPerBase[scaleBase] = new();
-
-        HashSet<Scale> largestScalesForBase = largestProgressionScalesPerBase[scaleBase];
-        bool isScaleUnique = true;
-        foreach (Scale largestScale in largestScalesForBase)
-        {
-            if (largestScale.isSubscaleTo(scale))
-            {
-                largestScalesForBase.Remove(largestScale);
-                largestScalesForBase.Add(scale);
-                break;
-            }
-            if (scale.isSubscaleTo(largestScale)) //Scales are subscales to themselves
-                isScaleUnique = false;
-        }
-        if (isScaleUnique)
-            largestScalesForBase.Add(scale);
-    }
-    Console.WriteLine($"- {keySteps} -");
-    foreach (int scaleBase in largestProgressionScalesPerBase.Keys.OrderByDescending(scaleBase => scaleBase))
-    {
-        foreach (Scale scale in largestProgressionScalesPerBase[scaleBase])
-        {
-            Console.WriteLine($"{$"{scale.GetBase()}:".PadRight(3)}{scale}");
-        }
-    }
-}
 
 //PrintAllSuperClassHierarchies();
 //Scale chord = new(new int[] { 0, 4, 7 });
