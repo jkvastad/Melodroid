@@ -90,41 +90,23 @@ Log.Logger = new LoggerConfiguration()
 //WriteAllScaleClassesToMidi(folderPath);
 ScaleCalculator scaleCalculator = new();
 
-//for (int length = 12; length >= 7; length--) //print scale classes with relevant bases
-//{
-//    int scaleIndex = 0;
-//    Console.WriteLine($"Scales of length {length}");
-//    foreach (var scaleClass in scaleCalculator.ScaleClassesOfLength[length])
-//    {
-//        Console.WriteLine($"Scale index: {scaleIndex}");
-//        if (scaleClass.Any(scale => scale.GetBase() < 30))
-//        {
-//            foreach (Scale scale in scaleClass)
-//            {
-//                Console.WriteLine($"{scale} - {scale.GetBase()}");
-//            }
-//        }
-//        scaleIndex++;
-//    }
-//}
-
 Scale chord = new(new int[] { 0, 4, 7 });
 List<List<(int keySteps, Scale legalBaseScale)>> chordProgressionsPerSuperClass = CalculateChordProgressionsPerSuperClass(scaleCalculator, chord);
 
-////Order progressions by physical keys, noting the origin (scale and key steps causing the keys)
-//Dictionary<Tet12KeySet, List<(int keySteps, Scale legalBaseScale)>> chordProgressionsAndOrigins = OrderChordProgressionsByPhysicalKeys(chordProgressionsPerSuperClass);
-////TODO: Collapse subscales into superscales if origin is preserved
-//Console.WriteLine($"Original chord: {chord}");
-//Console.WriteLine($"Number of progressions: {chordProgressionsAndOrigins.Keys.Count}");
-//foreach (Tet12KeySet chordProgression in chordProgressionsAndOrigins.Keys.OrderByDescending(cp => cp.ToIntervalString()).ThenByDescending(cp => cp.NumberOfKeys()))
-//{
-//    Console.Write($"{$"{chordProgression.ToIntervalString()}",-20} : ");
-//    foreach ((int keySteps, Scale legalBaseScale) origin in chordProgressionsAndOrigins[chordProgression])
-//    {
-//        Console.Write($"{$"{origin}",-22} - ");
-//    }
-//    Console.WriteLine();
-//}
+//Order progressions by physical keys, noting the origin (scale and key steps causing the keys)
+Dictionary<Tet12KeySet, List<(int keySteps, Scale legalBaseScale)>> chordProgressionsAndOrigins = OrderChordProgressionsByPhysicalKeys(chordProgressionsPerSuperClass);
+//TODO: Collapse subscales into superscales if origin is preserved
+Console.WriteLine($"Original chord: {chord}");
+Console.WriteLine($"Number of progressions: {chordProgressionsAndOrigins.Keys.Count}");
+foreach (Tet12KeySet chordProgression in chordProgressionsAndOrigins.Keys.OrderByDescending(cp => cp.ToIntervalString()).ThenByDescending(cp => cp.NumberOfKeys()))
+{
+    Console.Write($"{$"{chordProgression.ToIntervalString()}",-20} : ");
+    foreach ((int keySteps, Scale legalBaseScale) origin in chordProgressionsAndOrigins[chordProgression])
+    {
+        Console.Write($"{$"{origin}",-22} - ");
+    }
+    Console.WriteLine();
+}
 
 //// Order progressions by key step length
 //Dictionary<int, HashSet<Scale>> chordProgressionsPerKeyStep = new();
@@ -188,7 +170,7 @@ List<List<(int keySteps, Scale legalBaseScale)>> chordProgressionsPerSuperClass 
 
 //PrintAllSuperClassHierarchies();
 //Scale chord = new(new int[] { 0, 4, 7 });
-PrintChordSuperClasses(chord);
+//PrintChordSuperClasses(chord);
 
 //TODO: Method to find superclass containing specific base? E.g. if I want to play anything but keep base 8, what are my options?
 
@@ -758,7 +740,7 @@ static Dictionary<Tet12KeySet, List<(int keySteps, Scale legalBaseScale)>> Order
     {
         foreach ((int keySteps, Scale legalBaseScale) origin in superClass)
         {
-            Tet12KeySet keys = origin.legalBaseScale << origin.keySteps;
+            Tet12KeySet keys = origin.legalBaseScale >> origin.keySteps; //scale in intervals relative to chord root
             if (!chordProgressionsAndOrigins.ContainsKey(keys))
                 chordProgressionsAndOrigins[keys] = new();
 
