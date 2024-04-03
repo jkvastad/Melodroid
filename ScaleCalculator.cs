@@ -81,14 +81,14 @@ namespace MusicTheory
         }
 
         public List<List<Scale>> CalculateScaleSuperClasses(Scale scale)
-        {
+        {            
             List<List<Scale>> superClasses = new();
             for (int length = 12; length > scale.NumberOfKeys(); length--)
             {
-                foreach (var superClass in ScaleClassesOfLength[length])
+                foreach (var scaleClass in ScaleClassesOfLength[length])
                 {
-                    if (scale.isSubscaleTo(superClass[0]))
-                        superClasses.Add(superClass);
+                    if (scale.isSubClassTo(scaleClass[0]))
+                        superClasses.Add(scaleClass);
                 }
             }
             return superClasses;
@@ -348,16 +348,39 @@ namespace MusicTheory
             return Bit12Int.Bit12IntToIntervalString(KeySet.BinaryRepresentation);
         }
 
-        public bool isSubscaleTo(Scale superScale)
+        public List<Scale> CalculateScaleClass()
         {
-            Bit12Int superScaleBinary = superScale.KeySet.BinaryRepresentation;
+            List<Scale> scaleClass = new();
             for (int i = 0; i < 12; i++)
             {
-                if ((superScaleBinary & KeySet.BinaryRepresentation) == KeySet.BinaryRepresentation)
-                    return true;
-                superScaleBinary = superScaleBinary << 1;
+                Tet12KeySet keySet = this >> i;
+                if ((keySet.BinaryRepresentation & 1) == 1)
+                    scaleClass.Add(new(keySet));
             }
+            return scaleClass;
+        }
+
+        public bool isSubClassTo(Scale superClassScale)
+        {
+            List<Scale> superClass = superClassScale.CalculateScaleClass();
+            
+            if (superClass.Any(isSubScaleTo))
+                return true;
             return false;
+
+            //Bit12Int superScaleBinary = superClassScale.KeySet.BinaryRepresentation;
+            //for (int i = 0; i < 12; i++)
+            //{
+            //    if ((superScaleBinary & KeySet.BinaryRepresentation) == KeySet.BinaryRepresentation)
+            //        return true;
+            //    superScaleBinary = superScaleBinary << 1;
+            //}
+            //return false;
+        }
+
+        public bool isSubScaleTo(Scale superScale)
+        {
+            return (this & superScale) == this;
         }
 
         public static Tet12KeySet operator <<(Scale left, int right)
