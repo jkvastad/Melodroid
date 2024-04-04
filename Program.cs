@@ -95,18 +95,13 @@ List<List<(int keySteps, Scale legalBaseScale)>> chordProgressionsPerSuperClass 
 
 //Order progressions by physical keys, noting the origin (scale and key steps causing the keys)
 Dictionary<Tet12KeySet, List<(int keySteps, Scale legalBaseScale)>> chordProgressionsAndOrigins = OrderChordProgressionsByPhysicalKeys(chordProgressionsPerSuperClass);
-//TODO: Collapse subscales into superscales if origin is preserved
-Console.WriteLine($"Original chord: {chord}");
-Console.WriteLine($"Number of progressions: {chordProgressionsAndOrigins.Keys.Count}");
-foreach (Tet12KeySet chordProgression in chordProgressionsAndOrigins.Keys.OrderByDescending(cp => cp.ToIntervalString()).ThenByDescending(cp => cp.NumberOfKeys()))
-{
-    Console.Write($"{$"{chordProgression.ToIntervalString()}",-20} : ");
-    foreach ((int keySteps, Scale legalBaseScale) origin in chordProgressionsAndOrigins[chordProgression])
-    {
-        Console.Write($"{$"({origin.keySteps}, {origin.legalBaseScale.GetBase()}, {origin.legalBaseScale})",-25} - ");
-    }
-    Console.WriteLine();
-}
+PrintChordProgressionsAndOrigins(chord, chordProgressionsAndOrigins);
+
+Console.WriteLine();
+
+// Collapse subscales into superscales if origin keys steps and base is preserved
+Dictionary<Tet12KeySet, List<(int keySteps, Scale legalBaseScale)>> chordProgressionsAndOriginsCollapsed = CollapseChordProgressionsByPhysicalKeys(chordProgressionsAndOrigins);
+PrintChordProgressionsAndOrigins(chord, chordProgressionsAndOriginsCollapsed);
 
 //// Order progressions by key step length
 //Dictionary<int, HashSet<Scale>> chordProgressionsPerKeyStep = new();
@@ -749,4 +744,65 @@ static Dictionary<Tet12KeySet, List<(int keySteps, Scale legalBaseScale)>> Order
     }
 
     return chordProgressionsAndOrigins;
+}
+
+Dictionary<Tet12KeySet, List<(int keySteps, Scale legalBaseScale)>> CollapseChordProgressionsByPhysicalKeys(Dictionary<Tet12KeySet, List<(int keySteps, Scale legalBaseScale)>> chordProgressionsAndOrigins)
+{
+    // Clone original list
+    Dictionary<Tet12KeySet, List<(int keySteps, Scale legalBaseScale)>> collapsedChordProgressions = new();
+    foreach (Tet12KeySet keySet in chordProgressionsAndOrigins.Keys)
+    {
+        collapsedChordProgressions[keySet] = [.. chordProgressionsAndOrigins[keySet]]; //spread element syntx for collection expression cloning
+    }
+    // Remove redundant entries from clone
+    foreach (Tet12KeySet currentKeySet in chordProgressionsAndOrigins.Keys)
+    {
+        foreach (Tet12KeySet referenceKeySet in chordProgressionsAndOrigins.Keys)
+        {
+            if (collapsedChordProgressions.ContainsKey(referenceKeySet))
+            {
+                if (referenceKeySet.IsSubsetTo(currentKeySet) && referenceKeySet != currentKeySet) // Do not remove self
+                {
+                    var currentOrigins = chordProgressionsAndOrigins[currentKeySet];
+                    var referenceOrigins = chordProgressionsAndOrigins[referenceKeySet];
+                    if (currentOrigins.Count != referenceOrigins.Count)
+                        continue; // different origins, do not collapse
+                    bool isBaseAndKeyStepsSame = true;
+                    for (int i = 0; i < currentOrigins.Count; i++)
+                    {
+                        if (currentOrigins[i].keySteps != referenceOrigins[i].keySteps)
+                        {
+                            isBaseAndKeyStepsSame = false;
+                            break;
+                        }
+                        if (currentOrigins[i].legalBaseScale.GetBase() != referenceOrigins[i].legalBaseScale.GetBase())
+                        {
+                            isBaseAndKeyStepsSame = false;
+                            break;
+                        }
+                    }
+                    if (isBaseAndKeyStepsSame)
+                    {
+                        collapsedChordProgressions.Remove(referenceKeySet); // Collapse into current key set
+                    }
+                }
+            }
+        }
+    }
+    return collapsedChordProgressions;
+}
+
+static void PrintChordProgressionsAndOrigins(Scale chord, Dictionary<Tet12KeySet, List<(int keySteps, Scale legalBaseScale)>> chordProgressionsAndOrigins)
+{
+    Console.WriteLine($"Original chord: {chord}");
+    Console.WriteLine($"Number of progressions: {chordProgressionsAndOrigins.Keys.Count}");
+    foreach (Tet12KeySet chordProgression in chordProgressionsAndOrigins.Keys.OrderByDescending(cp => cp.ToIntervalString()).ThenByDescending(cp => cp.NumberOfKeys()))
+    {
+        Console.Write($"{$"{chordProgression.ToIntervalString()}",-20} : ");
+        foreach ((int keySteps, Scale legalBaseScale) origin in chordProgressionsAndOrigins[chordProgression])
+        {
+            Console.Write($"{$"({origin.legalBaseScale.GetBase()}, {origin.keySteps}, {origin.legalBaseScale})",-25} - ");
+        }
+        Console.WriteLine();
+    }
 }

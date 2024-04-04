@@ -278,6 +278,11 @@ namespace MusicTheory
         {
             return Bit12Int.Bit12IntToIntervalString(BinaryRepresentation);
         }
+
+        internal bool IsSubsetTo(Tet12KeySet superSet)
+        {
+            return (BinaryRepresentation & superSet.BinaryRepresentation) == BinaryRepresentation;
+        }
     }
 
     public struct Scale
