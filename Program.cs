@@ -93,43 +93,43 @@ ScaleCalculator scaleCalculator = new();
 Scale chord = new(new int[] { 0, 4, 7 });
 List<List<(int keySteps, Scale legalBaseScale)>> chordProgressionsPerSuperClass = CalculateChordProgressionsPerSuperClass(scaleCalculator, chord);
 
-////Order progressions by physical keys, noting the origin (scale and key steps causing the keys)
-//Dictionary<Tet12KeySet, List<(int keySteps, Scale legalBaseScale)>> chordProgressionsAndOrigins = OrderChordProgressionsByPhysicalKeys(chordProgressionsPerSuperClass);
-////TODO: Collapse subscales into superscales if origin is preserved
-//Console.WriteLine($"Original chord: {chord}");
-//Console.WriteLine($"Number of progressions: {chordProgressionsAndOrigins.Keys.Count}");
-//foreach (Tet12KeySet chordProgression in chordProgressionsAndOrigins.Keys.OrderByDescending(cp => cp.ToIntervalString()).ThenByDescending(cp => cp.NumberOfKeys()))
+//Order progressions by physical keys, noting the origin (scale and key steps causing the keys)
+Dictionary<Tet12KeySet, List<(int keySteps, Scale legalBaseScale)>> chordProgressionsAndOrigins = OrderChordProgressionsByPhysicalKeys(chordProgressionsPerSuperClass);
+//TODO: Collapse subscales into superscales if origin is preserved
+Console.WriteLine($"Original chord: {chord}");
+Console.WriteLine($"Number of progressions: {chordProgressionsAndOrigins.Keys.Count}");
+foreach (Tet12KeySet chordProgression in chordProgressionsAndOrigins.Keys.OrderByDescending(cp => cp.ToIntervalString()).ThenByDescending(cp => cp.NumberOfKeys()))
+{
+    Console.Write($"{$"{chordProgression.ToIntervalString()}",-20} : ");
+    foreach ((int keySteps, Scale legalBaseScale) origin in chordProgressionsAndOrigins[chordProgression])
+    {
+        Console.Write($"{$"({origin.keySteps}, {origin.legalBaseScale.GetBase()}, {origin.legalBaseScale})",-25} - ");
+    }
+    Console.WriteLine();
+}
+
+//// Order progressions by key step length
+//Dictionary<int, HashSet<Scale>> chordProgressionsPerKeyStep = new();
+//foreach (List<(int keySteps, Scale legalKeys)> chordProgressions in chordProgressionsPerSuperClass)
 //{
-//    Console.Write($"{$"{chordProgression.ToIntervalString()}",-20} : ");
-//    foreach ((int keySteps, Scale legalBaseScale) origin in chordProgressionsAndOrigins[chordProgression])
+//    foreach ((int keySteps, Scale legalKeys) chordProgression in chordProgressions)
 //    {
-//        Console.Write($"{$"({origin.keySteps}, {origin.legalBaseScale.GetBase()}, {origin.legalBaseScale})",-25} - ");
+//        if (!chordProgressionsPerKeyStep.ContainsKey(chordProgression.keySteps))
+//            chordProgressionsPerKeyStep[chordProgression.keySteps] = new();
+//        chordProgressionsPerKeyStep[chordProgression.keySteps].Add(chordProgression.legalKeys);
+//        //Console.WriteLine($"{$"{(chordProgression.keySteps + 12) % 12}".PadRight(3)} - {$"{chordProgression.legalKeys.GetBase()}:".PadRight(3)}{chordProgression.legalKeys}");
 //    }
-//    Console.WriteLine();
 //}
 
-// Order progressions by key step length
-Dictionary<int, HashSet<Scale>> chordProgressionsPerKeyStep = new();
-foreach (List<(int keySteps, Scale legalKeys)> chordProgressions in chordProgressionsPerSuperClass)
-{
-    foreach ((int keySteps, Scale legalKeys) chordProgression in chordProgressions)
-    {
-        if (!chordProgressionsPerKeyStep.ContainsKey(chordProgression.keySteps))
-            chordProgressionsPerKeyStep[chordProgression.keySteps] = new();
-        chordProgressionsPerKeyStep[chordProgression.keySteps].Add(chordProgression.legalKeys);
-        //Console.WriteLine($"{$"{(chordProgression.keySteps + 12) % 12}".PadRight(3)} - {$"{chordProgression.legalKeys.GetBase()}:".PadRight(3)}{chordProgression.legalKeys}");
-    }
-}
-
-// Order progressions by steps then by base then by alphetical size
-foreach (int keySteps in chordProgressionsPerKeyStep.Keys.OrderByDescending(keyStep => keyStep))
-{
-    Console.WriteLine($"- {keySteps} -");
-    foreach (Scale scale in chordProgressionsPerKeyStep[keySteps].OrderByDescending(Scale => Scale.GetBase()).ThenByDescending(Scale => Scale.ToString()))
-    {
-        Console.WriteLine($"{$"{scale.GetBase()}:".PadRight(3)}{scale}");
-    }
-}
+//// Order progressions by steps then by base then by alphetical size
+//foreach (int keySteps in chordProgressionsPerKeyStep.Keys.OrderByDescending(keyStep => keyStep))
+//{
+//    Console.WriteLine($"- {keySteps} -");
+//    foreach (Scale scale in chordProgressionsPerKeyStep[keySteps].OrderByDescending(Scale => Scale.GetBase()).ThenByDescending(Scale => Scale.ToString()))
+//    {
+//        Console.WriteLine($"{$"{scale.GetBase()}:".PadRight(3)}{scale}");
+//    }
+//}
 
 ////Order progressions by steps then by base then by scale size, keeping only unique supersets
 //foreach (int keySteps in chordProgressionsPerKeyStep.Keys.OrderByDescending(keyStep => keyStep))
@@ -740,7 +740,7 @@ static Dictionary<Tet12KeySet, List<(int keySteps, Scale legalBaseScale)>> Order
     {
         foreach ((int keySteps, Scale legalBaseScale) origin in superClass)
         {
-            Tet12KeySet keys = origin.legalBaseScale >> origin.keySteps; //scale in intervals relative to chord root
+            Tet12KeySet keys = origin.legalBaseScale << origin.keySteps; //scale in intervals relative to chord root
             if (!chordProgressionsAndOrigins.ContainsKey(keys))
                 chordProgressionsAndOrigins[keys] = new();
 
