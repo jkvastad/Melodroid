@@ -87,7 +87,7 @@ namespace MusicTheory
             {
                 foreach (var scaleClass in ScaleClassesOfLength[length])
                 {
-                    if (scale.isSubClassTo(scaleClass[0]))
+                    if (scale.isSubClassTo(scaleClass.First())) //arbitrary member of the larger scale class
                         superClasses.Add(scaleClass);
                 }
             }
