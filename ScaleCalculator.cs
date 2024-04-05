@@ -220,6 +220,16 @@ namespace MusicTheory
             BinaryRepresentation = new(keySetAsInt);
         }
 
+        public Tet12KeySet(int[] keysAsIntervals)
+        {
+            int keysAsBinary = 0;
+            foreach (int key in keysAsIntervals)
+            {
+                keysAsBinary += 1 << key;
+            }
+            BinaryRepresentation = new(keysAsBinary);
+        }
+
         public Tet12KeySet RotateBinaryLeft()
         {
             return new Tet12KeySet(BinaryRepresentation << 1);
@@ -317,13 +327,7 @@ namespace MusicTheory
 
         public Scale(int[] tet12Keys)
         {
-            int keysAsBinary = 0;
-            foreach (var key in tet12Keys)
-            {
-                keysAsBinary += 1 << key;
-            }
-
-            KeySet = new Tet12KeySet(keysAsBinary);
+            KeySet = new Tet12KeySet(tet12Keys);
         }
 
         public int GetBase()

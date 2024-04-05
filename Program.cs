@@ -95,13 +95,15 @@ List<List<(int keySteps, Scale legalBaseScale)>> chordProgressionsPerSuperClass 
 
 //Order progressions by physical keys, noting the origin (scale and key steps causing the keys)
 Dictionary<Tet12KeySet, List<(int keySteps, Scale legalBaseScale)>> chordProgressionsAndOrigins = OrderChordProgressionsByPhysicalKeys(chordProgressionsPerSuperClass);
-PrintChordProgressionsAndOrigins(chord, chordProgressionsAndOrigins);
+//PrintChordProgressionsAndOrigins(chord, chordProgressionsAndOrigins);
 
-Console.WriteLine();
+//Console.WriteLine();
 
 // Collapse subscales into superscales if origin keys steps and base is preserved
 Dictionary<Tet12KeySet, List<(int keySteps, Scale legalBaseScale)>> chordProgressionsAndOriginsCollapsed = CollapseChordProgressionsByPhysicalKeys(chordProgressionsAndOrigins);
 PrintChordProgressionsAndOrigins(chord, chordProgressionsAndOriginsCollapsed);
+
+QueryChordInProgression(chordProgressionsAndOrigins);
 
 //// Order progressions by key step length
 //Dictionary<int, HashSet<Scale>> chordProgressionsPerKeyStep = new();
@@ -171,7 +173,7 @@ PrintChordProgressionsAndOrigins(chord, chordProgressionsAndOriginsCollapsed);
 
 //PrintDissonantSets(scaleCalculator);
 
-QueryKeySetCompatiblePatternLengths(30);
+//QueryKeySetCompatiblePatternLengths(30);
 
 //Print all fractions of interest
 //HashSet<Fraction> fractions = new HashSet<Fraction>();
@@ -202,6 +204,32 @@ QueryKeySetCompatiblePatternLengths(30);
 //e.g.:
 //BeatBox beatBox = new BeatBox();
 //WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, "melodroid testing");
+
+//Use with printing all chord progressions and origins for faster than manual lookup
+void QueryChordInProgression(Dictionary<Tet12KeySet, List<(int keySteps, Scale legalBaseScale)>> chordProgressionsAndOrigins)
+{
+    while (true)
+    {
+        Console.WriteLine($"Input space separated tet12 keys for progression containing chord. (empty input to exit)");
+        string input = Console.ReadLine();
+
+        if (input.Length == 0) return;
+        Tet12KeySet inputKeys = new(Array.ConvertAll(input.Split(' '), int.Parse));
+
+        foreach (Tet12KeySet progression in chordProgressionsAndOrigins.Keys)
+        {
+            if (inputKeys.IsSubsetTo(progression))
+            {
+                Console.Write($"{$"{progression.ToIntervalString()}",-20} : ");
+                foreach ((int keySteps, Scale legalBaseScale) origin in chordProgressionsAndOrigins[progression])
+                {
+                    Console.Write($"{$"({origin.legalBaseScale.GetBase()}, {origin.keySteps}, {origin.legalBaseScale})",-25} - ");
+                }
+                Console.WriteLine();
+            }
+        }
+    }
+}
 
 //Prints possible pattern lengths of inputed keys based on fraction approximations
 void QueryKeySetCompatiblePatternLengths(int maxPatternLength = 50)
