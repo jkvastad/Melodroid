@@ -90,7 +90,7 @@ Log.Logger = new LoggerConfiguration()
 //WriteAllScaleClassesToMidi(folderPath);
 ScaleCalculator scaleCalculator = new();
 
-Scale chord = new(new int[] { 0, 4, 7 });
+Scale chord = new(new int[] { 0, 2, 4, 7 });
 List<List<(int keySteps, Scale legalBaseScale)>> chordProgressionsPerSuperClass = CalculateChordProgressionsPerSuperClass(scaleCalculator, chord);
 
 //Order progressions by physical keys, noting the origin (scale and key steps causing the keys)
@@ -103,7 +103,7 @@ Dictionary<Tet12KeySet, List<(int keySteps, Scale legalBaseScale)>> chordProgres
 Dictionary<Tet12KeySet, List<(int keySteps, Scale legalBaseScale)>> chordProgressionsAndOriginsCollapsed = CollapseChordProgressionsByPhysicalKeys(chordProgressionsAndOrigins);
 PrintChordProgressionsAndOrigins(chord, chordProgressionsAndOriginsCollapsed);
 
-QueryChordInProgression(chordProgressionsAndOriginsCollapsed);
+QueryChordInProgression(chordProgressionsAndOriginsCollapsed); 
 
 //// Order progressions by key step length
 //Dictionary<int, HashSet<Scale>> chordProgressionsPerKeyStep = new();
@@ -173,7 +173,7 @@ QueryChordInProgression(chordProgressionsAndOriginsCollapsed);
 
 //PrintDissonantSets(scaleCalculator);
 
-//QueryKeySetCompatiblePatternLengths(30);
+QueryKeySetCompatiblePatternLengths(30);
 
 //Print all fractions of interest
 //HashSet<Fraction> fractions = new HashSet<Fraction>();

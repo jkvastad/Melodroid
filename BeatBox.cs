@@ -1,4 +1,6 @@
 ﻿using Fractions;
+using Melanchall.DryWetMidi.Core;
+using Melanchall.DryWetMidi.Interaction;
 using Melanchall.DryWetMidi.MusicTheory;
 using MusicTheory;
 using Serilog;
@@ -98,5 +100,39 @@ public class BeatBox
             throw new ArgumentException($"No interval can preserve lcm {lcm}");
         var interval = intervals[_random.Next(intervals.Count)];
         return fundamentalNote + interval;
+    }
+
+    public void WriteMeasuresToMidi(List<Measure> measures, string folderPath, string fileName, bool overWrite = false)
+    {
+
+        /** Example Usage
+            string folderPath = @"E:\Documents\Reaper Projects\Melodroid\MIDI_write_testing\";
+            int timeDivision = 8;
+            NoteValue?[] noteValues = new NoteValue?[timeDivision];
+            noteValues[3] = new(NoteName.A, 4, 64);
+            Measure measure = new(noteValues);
+            List<Measure> measureList = new();
+            measureList.Add(measure);
+            WriteMeasuresToMidi(measureList, folderPath, "test", true);
+        **/
+
+        MidiFile midiFile = new MidiFile();
+
+        //TODO set tempo
+
+        TrackChunk trackChunk = new TrackChunk();
+        using (TimedObjectsManager<Melanchall.DryWetMidi.Interaction.Note> notesManager = trackChunk.ManageNotes())
+        {
+            TimedObjectsCollection<Melanchall.DryWetMidi.Interaction.Note> notes = notesManager.Objects;
+            NoteBuilder nb = new NoteBuilder(measures);
+            midiFile.TimeDivision = new TicksPerQuarterNoteTimeDivision(nb.MidiTimeDivision);
+            foreach (var note in nb.Notes)
+            {
+                notes.Add(note);
+            }
+        }
+
+        midiFile.Chunks.Add(trackChunk);
+        midiFile.Write(Path.Combine(folderPath, fileName + ".mid"), overWrite);
     }
 }
