@@ -183,7 +183,7 @@ public class RandomWalkMeasureHarmonizer(Scale currentScale) : IMeasureHarmonize
         List<Measure> measures = new();
         foreach (int?[] velocityMeasure in velocities)
         {
-            List<int> intervals = CurrentScale.AsIntervals();
+            List<int> intervals = CurrentScale.ToIntervals();
             NoteValue?[] noteValues = new NoteValue?[velocityMeasure.Length];
             for (int i = 0; i < velocityMeasure.Length; i++)
             {
@@ -200,11 +200,11 @@ public class RandomWalkMeasureHarmonizer(Scale currentScale) : IMeasureHarmonize
 
             List<List<(int keySteps, Scale legalKeys)>> chordProgressionsPerSuperClass = _scaleCalculator.CalculateChordProgressionsPerSuperClass(CurrentScale);
             List<(int keySteps, Scale legalKeys)> chordProgressions = chordProgressionsPerSuperClass.TakeRandom();
-            (int keySteps, Scale legalKeys) chordProgression = chordProgressions.TakeRandom();
-            CurrentScale = chordProgression.legalKeys;
+            (int keySteps, Scale legalKeys) chordProgression = chordProgressions.TakeRandom();            
+            CurrentScale = new(chordProgression.legalKeys.ToIntervals().TakeRandom(3).ToArray()); //triad chord
+
             CurrentFundamental = (NoteName)(((int)(CurrentFundamental + chordProgression.keySteps)) % 12);
-        }
-        //Get all chord progressions for the current chord, choose a new chord from progression, decorate measure, repeat.
+        }        
         return measures;
     }
 }

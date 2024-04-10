@@ -167,6 +167,18 @@ namespace MusicTheory
             return list.ElementAt(random.Next(list.Count()));
         }
 
+        public static List<T> TakeRandom<T>(this IEnumerable<T> list, int uniqueElements)
+        {
+            HashSet<T> result = new();
+            if (uniqueElements > list.Count() || uniqueElements <= 0)
+                throw new ArgumentException("Must take more than 0 and less than list count random elements");
+            while (result.Count < uniqueElements)
+            {
+                result.Add(list.ElementAt(random.Next(list.Count())));
+            }
+            return result.ToList();
+        }
+
         public static int[] OctaveTransposed(this int[] tet12Keys)
         {
             List<int> transposed12TetKeys = new();
