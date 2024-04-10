@@ -3,95 +3,17 @@ using Melanchall.DryWetMidi.Core;
 using Melanchall.DryWetMidi.Interaction;
 using Melanchall.DryWetMidi.MusicTheory;
 using MusicTheory;
-using Serilog;
-using System.Collections.Generic;
-using static MusicTheory.MusicTheoryUtils;
 using Scale = MusicTheory.Scale;
 
-public class BeatBox
+public class BeatBox(IMeasureHarmonizer measureHarmonizer, IRhythmMeasureMaker rhythmMeasureMaker)
 {
-    Dictionary<int, HashSet<(int key, Fraction approximation)>> _allKeysCompatibleWithDenominator = new();
-    Dictionary<int, List<Fraction>> _tet12FractionApproximations;
-    Random _random = new Random();
-    public BeatBox(int maxFactors = 4, int maxPatternLength = 50)
+    public IMeasureHarmonizer MeasureHarmonizer = measureHarmonizer;
+    public IRhythmMeasureMaker RhythmMeasureMaker = rhythmMeasureMaker;
+
+    public List<Measure> MakeMeasures()
     {
-        _allKeysCompatibleWithDenominator = CalculateKeysCompatibleWithPatternLength(maxFactors, maxPatternLength);
-
-        Console.WriteLine($"Denominators of 12TET fraction approximations for pattern length {maxPatternLength} and primes {string.Join(",", standardPrimes)} with compatible keys:");
-        Console.WriteLine();
-        foreach (var entry in new SortedDictionary<int, HashSet<(int key, Fraction approximation)>>(_allKeysCompatibleWithDenominator))
-        {
-            Console.Write($"Denominator: {entry.Key} - Keys: ");
-            foreach (var keyAndApproximation in entry.Value)
-            {
-                //Console.Write($"{keyAndApproximation.key} ({keyAndApproximation.approximation.Numerator}/{keyAndApproximation.approximation.Denominator}), ");
-                Console.Write($"{keyAndApproximation.key}, ");
-            }
-            Console.WriteLine();
-        }
-
-        Console.WriteLine($"Denominators of 12TET fraction approximations for pattern length {maxPatternLength} and primes {string.Join(",", standardPrimes)} with compatible keys:");
-        foreach (var entry in new SortedDictionary<int, HashSet<(int key, Fraction approximation)>>(_allKeysCompatibleWithDenominator))
-        {
-            Console.Write($"Denominator: {entry.Key} - Keys: ");
-            foreach (var keyAndApproximation in entry.Value)
-            {
-                Console.Write($"{keyAndApproximation.key} ({keyAndApproximation.approximation.Numerator}/{keyAndApproximation.approximation.Denominator}), ");
-                //Console.Write($"{keyAndApproximation.key}, ");
-            }
-            Console.WriteLine();
-        }
-    }
-
-    public Phrase TestPhrase()
-    {
-        List<Measure> measures = new List<Measure>();
-
-        int measureTimeDivision = 8;
-        int measuresInPhrase = 4;
-        int firstKey = _random.Next(12);
-        int firstDenominator = (int)_tet12FractionApproximations[firstKey].TakeRandom().Denominator;
-        for (int measureIndex = 0; measureIndex < measuresInPhrase; measureIndex++)
-        {
-            int?[] velocities = GetRhythm(measureTimeDivision);
-
-            NoteValue?[] noteValues = GetHarmony(velocities, firstDenominator);
-            measures.Add(new(noteValues));
-        }
-
-        return new Phrase(measures);
-    }
-
-    private int?[] GetRhythm(int measureTimeDivision)
-    {
-        int?[] velocities = new int?[measureTimeDivision];
-        for (int i = 0; i < velocities.Length; i++)
-        {
-            //TODO generate better rhythms, perhaps things which the brain can easily chunk (based on cerebullum and rhythm - e.g. learning 2 + 3 count)
-            if (_random.Next(measureTimeDivision) > measureTimeDivision / 4)
-            {
-                if (_random.Next(6) > 0)
-                    velocities[i] = _random.Next(64, 97);
-                else
-                    velocities[i] = 0;
-            }
-        }
-        return velocities;
-    }
-
-    private NoteValue?[] GetHarmony(int?[] velocities, int firstDenominator)
-    {
-        NoteValue?[] noteValues = new NoteValue?[velocities.Length];
-        NoteValue fundamentalNote = new NoteValue(NoteName.C, 4, 64);
-        Log.Information($"denominators dividing {firstDenominator}");
-        for (int i = 0; i < velocities.Length; i++)
-        {
-            if (velocities[i].HasValue)
-            {
-                noteValues[i] = fundamentalNote + _allKeysCompatibleWithDenominator[firstDenominator].TakeRandom().key;
-            }
-        }
-        return noteValues;
+        List<int?[]> velocities = RhythmMeasureMaker.MakeVelocities();
+        return MeasureHarmonizer.MeasuresFromVelocities(velocities);
     }
 
     public void WriteMeasuresToMidi(List<Measure> measures, string folderPath, string fileName, bool overWrite = false)
@@ -130,7 +52,7 @@ public class BeatBox
 }
 
 //Decorates rhythms (lists with time division number of nullable velocities) with scientific pitch according to the rules of consonance 
-interface IMeasureHarmonizer
+public interface IMeasureHarmonizer
 {
     //Wants some sort of rhtyhmic proto measure - NoteValues without name or octave -> Velocity values only?
     //Velocity 0 is note off
@@ -141,7 +63,7 @@ interface IMeasureHarmonizer
 }
 
 //Creates rhythms (lists with time division number of nullable velocities) according to some heuristic (e.g. simply isochrony or triplet swing time)
-interface IRhythmMeasureMaker
+public interface IRhythmMeasureMaker
 {
     public List<int?[]> MakeVelocities();
 }
@@ -200,11 +122,11 @@ public class RandomWalkMeasureHarmonizer(Scale currentScale) : IMeasureHarmonize
 
             List<List<(int keySteps, Scale legalKeys)>> chordProgressionsPerSuperClass = _scaleCalculator.CalculateChordProgressionsPerSuperClass(CurrentScale);
             List<(int keySteps, Scale legalKeys)> chordProgressions = chordProgressionsPerSuperClass.TakeRandom();
-            (int keySteps, Scale legalKeys) chordProgression = chordProgressions.TakeRandom();            
+            (int keySteps, Scale legalKeys) chordProgression = chordProgressions.TakeRandom();
             CurrentScale = new(chordProgression.legalKeys.ToIntervals().TakeRandom(3).ToArray()); //triad chord
 
             CurrentFundamental = (NoteName)(((int)(CurrentFundamental + chordProgression.keySteps)) % 12);
-        }        
+        }
         return measures;
     }
 }
