@@ -90,17 +90,7 @@ public class BeatBox
             }
         }
         return noteValues;
-    }
-
-    private NoteValue GetNoteValuePreservingLcm(int lcm, NoteValue fundamentalNote)
-    {
-        //TODO Still necessary? Cleanup/Deprecated?
-        var intervals = MidiIntervalsPreservingLcm(lcm);
-        if (intervals.Count == 0)
-            throw new ArgumentException($"No interval can preserve lcm {lcm}");
-        var interval = intervals[_random.Next(intervals.Count)];
-        return fundamentalNote + interval;
-    }
+    }    
 
     public void WriteMeasuresToMidi(List<Measure> measures, string folderPath, string fileName, bool overWrite = false)
     {
@@ -135,4 +125,21 @@ public class BeatBox
         midiFile.Chunks.Add(trackChunk);
         midiFile.Write(Path.Combine(folderPath, fileName + ".mid"), overWrite);
     }
+}
+
+//Decorates rhythms (lists with time division number of nullable velocities) with scientific pitch according to the rules of consonance 
+interface IMeasureHarmonizer
+{
+    //Wants some sort of rhtyhmic proto measure - NoteValues without name or octave -> Velocity values only?
+    //Velocity 0 is note off
+    //Else note on
+    //Cannot represent crescendo - how to differ between change of velocity for old note and new note with new velocity value?
+    // - Midi has no explicit support for crescendo - must use expression/volume messages, so perhaps the problem is elsewhere in any way.
+    public List<Measure> MeasuresFromVelocities(List<List<int?[]>> velocities);
+}
+
+//Creates rhythms (lists with time division number of nullable velocities) according to some heuristic (e.g. simply isochrony or triplet swing time)
+interface IRhythmMeasureMaker
+{
+    public List<List<int?[]>> VelocitiesFromMeasureTimeDivisions(List<int> measureTimeDivisions);
 }
