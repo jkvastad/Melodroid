@@ -5,7 +5,7 @@ using Melanchall.DryWetMidi.MusicTheory;
 using MusicTheory;
 using Scale = MusicTheory.Scale;
 
-public class BeatBox(IMeasureHarmonizer measureHarmonizer, IRhythmMeasureMaker rhythmMeasureMaker)
+public class BeatBox(IRhythmMeasureMaker rhythmMeasureMaker, IMeasureHarmonizer measureHarmonizer)
 {
     public IMeasureHarmonizer MeasureHarmonizer = measureHarmonizer;
     public IRhythmMeasureMaker RhythmMeasureMaker = rhythmMeasureMaker;
@@ -87,6 +87,7 @@ public class SimpleIsochronicRhythmMaker(int timeDivision, int numberOfMeasures,
                 if (j % beatsPerDivision == 0)
                     velocities[j] = Velocity;
             }
+            velocityMeasures.Add(velocities);
         }
         return velocityMeasures;
     }
@@ -121,6 +122,7 @@ public class RandomWalkMeasureHarmonizer(Scale currentScale) : IMeasureHarmonize
             measures.Add(measure);
 
             List<List<(int keySteps, Scale legalKeys)>> chordProgressionsPerSuperClass = _scaleCalculator.CalculateChordProgressionsPerSuperClass(CurrentScale);
+            chordProgressionsPerSuperClass = chordProgressionsPerSuperClass.Where(superClass => superClass.Count > 0).ToList();
             List<(int keySteps, Scale legalKeys)> chordProgressions = chordProgressionsPerSuperClass.TakeRandom();
             (int keySteps, Scale legalKeys) chordProgression = chordProgressions.TakeRandom();
             CurrentScale = new(chordProgression.legalKeys.ToIntervals().TakeRandom(3).ToArray()); //triad chord

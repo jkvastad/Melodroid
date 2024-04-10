@@ -31,17 +31,23 @@ This means "create scientific pitch note B4 at 96 ticks into the midi file, make
 
 // TODO: Start work on beatbox to calculate rhythms based on "How Beat Perception Co-opts Motor Neurophysiology". This can be used to define rhythmic chunks.
 
-string folderPath = @"E:\Documents\Reaper Projects\Melodroid\MIDI_write_testing\ScalesByBase";
+string folderPath = @"E:\Documents\Reaper Projects\Melodroid\MIDI_write_testing";
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.File(@"D:\Projects\Code\Melodroid\logs\log.txt", rollingInterval: RollingInterval.Day)
     .CreateLogger();
 
-//BeatBox beatBox = new BeatBox();
-//for (int i = 0; i < 4; i++)
-//{
-//    WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, $"beat_box_test_phrase_lcm_15_{i}", true);
-//}
+int timeDivision = 24;
+int numberOfMeasures = 4;
+int beatsPerMeasure = 8;
+SimpleIsochronicRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, beatsPerMeasure);
+
+Scale initialScale = new(new int[] { 0, 4, 7 });
+RandomWalkMeasureHarmonizer measureHarmonizer = new(initialScale);
+BeatBox beatBox = new BeatBox(rhythmMaker, measureHarmonizer);
+List<Measure> measures = beatBox.MakeMeasures();
+beatBox.WriteMeasuresToMidi(measures, folderPath, "beat_box_test", true);
+
 
 //TODO: Check for patterns in complex chords, e.g. in 3/2, 5/4 the 3/2 interval loops twice, cutting 5/4 in "half" and creating a mirrored version -
 // - i.e. look for patterns in the numerator part
@@ -86,24 +92,33 @@ Log.Logger = new LoggerConfiguration()
 //  - - - - 20: 0 3 4 6 7 8 10 - Aug chord. Rotationally symmetrical. Gives a characterstic bluesy sound with 0 2 3 4 6 7 10 when a major chord is sounded
 //  - - - - - for some reason 8 sounds wrong when voiced with major chord. Voicing seems to matter a lot (e.g. minor vs major vs aug vs dim).
 
-//PrintScalesWithDesiredBase();
-//WriteAllScaleClassesToMidi(folderPath);
-ScaleCalculator scaleCalculator = new();
+////PrintScalesWithDesiredBase();
+////WriteAllScaleClassesToMidi(folderPath);
+//ScaleCalculator scaleCalculator = new();
 
-Scale chord = new(new int[] { 0, 2, 4, 7 });
-List<List<(int keySteps, Scale legalBaseScale)>> chordProgressionsPerSuperClass = scaleCalculator.CalculateChordProgressionsPerSuperClass(chord);
+//Scale chord = new(new int[] { 0, 6, 8 });
+//List<List<(int keySteps, Scale legalBaseScale)>> chordProgressionsPerSuperClass = scaleCalculator.CalculateChordProgressionsPerSuperClass(chord);
+//int superClassIndex = 0;
+//foreach (var superClass in chordProgressionsPerSuperClass)
+//{
+//    Console.WriteLine($"{superClassIndex++}");
+//    foreach (var chordProgression in superClass)
+//    {
+//        Console.WriteLine($"{chordProgression.legalBaseScale}");
+//    }
+//}
 
-//Order progressions by physical keys, noting the origin (scale and key steps causing the keys)
-Dictionary<Tet12KeySet, List<(int keySteps, Scale legalBaseScale)>> chordProgressionsAndOrigins = OrderChordProgressionsByPhysicalKeys(chordProgressionsPerSuperClass);
-//PrintChordProgressionsAndOrigins(chord, chordProgressionsAndOrigins);
+////Order progressions by physical keys, noting the origin (scale and key steps causing the keys)
+//Dictionary<Tet12KeySet, List<(int keySteps, Scale legalBaseScale)>> chordProgressionsAndOrigins = OrderChordProgressionsByPhysicalKeys(chordProgressionsPerSuperClass);
+////PrintChordProgressionsAndOrigins(chord, chordProgressionsAndOrigins);
 
-//Console.WriteLine();
+////Console.WriteLine();
 
-// Collapse subscales into superscales if origin keys steps and base is preserved
-Dictionary<Tet12KeySet, List<(int keySteps, Scale legalBaseScale)>> chordProgressionsAndOriginsCollapsed = CollapseChordProgressionsByPhysicalKeys(chordProgressionsAndOrigins);
-PrintChordProgressionsAndOrigins(chord, chordProgressionsAndOriginsCollapsed);
+//// Collapse subscales into superscales if origin keys steps and base is preserved
+//Dictionary<Tet12KeySet, List<(int keySteps, Scale legalBaseScale)>> chordProgressionsAndOriginsCollapsed = CollapseChordProgressionsByPhysicalKeys(chordProgressionsAndOrigins);
+//PrintChordProgressionsAndOrigins(chord, chordProgressionsAndOriginsCollapsed);
 
-QueryChordInProgression(chordProgressionsAndOriginsCollapsed);
+//QueryChordInProgression(chordProgressionsAndOriginsCollapsed);
 
 //// Order progressions by key step length
 //Dictionary<int, HashSet<Scale>> chordProgressionsPerKeyStep = new();
@@ -173,7 +188,7 @@ QueryChordInProgression(chordProgressionsAndOriginsCollapsed);
 
 //PrintDissonantSets(scaleCalculator);
 
-QueryKeySetCompatiblePatternLengths(30);
+//QueryKeySetCompatiblePatternLengths(30);
 
 //Print all fractions of interest
 //HashSet<Fraction> fractions = new HashSet<Fraction>();
@@ -558,7 +573,7 @@ static void PrintScalesWithUpperLimitOnBase()
     }
 }
 
-void PrintAllSuperClassHierarchies()
+void PrintAllSuperClassHierarchies(ScaleCalculator scaleCalculator)
 {
     int scaleClassIndex = 0;
     int oldScaleLength = 0;
@@ -610,7 +625,7 @@ void PrintAllSuperClassHierarchies()
     }
 }
 
-void PrintChordSuperClasses(Scale chord, int maxBase = 24, int minBase = 0)
+void PrintChordSuperClasses(ScaleCalculator scaleCalculator, Scale chord, int maxBase = 24, int minBase = 0)
 {
     List<int> availableBases = new();
     Dictionary<int, int> baseClassIndexLongest = new();
