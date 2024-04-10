@@ -4,6 +4,7 @@ using Melanchall.DryWetMidi.Interaction;
 using Melanchall.DryWetMidi.MusicTheory;
 using MusicTheory;
 using Serilog;
+using System.Collections.Generic;
 using static MusicTheory.MusicTheoryUtils;
 
 public class BeatBox
@@ -90,7 +91,7 @@ public class BeatBox
             }
         }
         return noteValues;
-    }    
+    }
 
     public void WriteMeasuresToMidi(List<Measure> measures, string folderPath, string fileName, bool overWrite = false)
     {
@@ -135,11 +136,43 @@ interface IMeasureHarmonizer
     //Else note on
     //Cannot represent crescendo - how to differ between change of velocity for old note and new note with new velocity value?
     // - Midi has no explicit support for crescendo - must use expression/volume messages, so perhaps the problem is elsewhere in any way.
-    public List<Measure> MeasuresFromVelocities(List<List<int?[]>> velocities);
+    public List<Measure> MeasuresFromVelocities(List<int?[]> velocities);
 }
 
 //Creates rhythms (lists with time division number of nullable velocities) according to some heuristic (e.g. simply isochrony or triplet swing time)
 interface IRhythmMeasureMaker
 {
-    public List<List<int?[]>> VelocitiesFromMeasureTimeDivisions(List<int> measureTimeDivisions);
+    public List<int?[]> MakeVelocities();
+}
+
+public class SimpleIsochronicRhythmMaker(int timeDivision, int numberOfMeasures, int beatsPerMeasure, int velocity = 64) : IRhythmMeasureMaker
+{
+    public int TimeDivision = timeDivision;
+    public int NumberOfMeasures = numberOfMeasures;
+    public int BeatsPerMeasure = beatsPerMeasure;
+    public int Velocity = velocity;
+
+    public List<int?[]> MakeVelocities()
+    {
+        List<int?[]> velocityMeasures = new();
+        for (int i = 0; i < NumberOfMeasures; i++)
+        {
+            int?[] velocities = new int?[TimeDivision];
+            int beatsPerDivision = TimeDivision / BeatsPerMeasure;
+            for (int j = 0; j < velocities.Length; j++)
+            {
+                if (j % beatsPerDivision == 0)
+                    velocities[j] = Velocity;
+            }
+        }
+        return velocityMeasures;
+    }
+}
+
+public class SimpleMeasureHarmonizer : IMeasureHarmonizer
+{
+    public List<Measure> MeasuresFromVelocities(List<int?[]> velocities)
+    {
+        throw new NotImplementedException();
+    }
 }
