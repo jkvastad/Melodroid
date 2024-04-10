@@ -94,6 +94,51 @@ namespace MusicTheory
             return superClasses;
         }
 
+        //Chord progressions are basically "hidden keys" in a superclass to a scale, moving from larger to smaller bases in the superscale
+        public List<List<(int keySteps, Scale legalKeys)>> CalculateChordProgressionsPerSuperClass(Scale chord)
+        {
+            List<int> LEGAL_BASES = new() { 1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 24 };
+
+            List<List<Scale>> superClasses = CalculateScaleSuperClasses(chord);
+            List<List<(int keySteps, Scale legalBaseScale)>> chordProgressionsPerSuperClass = new();
+            foreach (List<Scale> superclass in superClasses)
+            {
+                Scale referenceScale = superclass.First(); // Arbitrary reference point in the superclass
+                List<int> superScaleRotations = new(); // The rotations producing superscales to our chord from an arbitrary reference point in the superclass
+                List<(int rotations, Scale scale)> legalBasesAndRotations = new(); // The rotations producing legal bases in the superclass
+
+                for (int rotations = 0; rotations < 12; rotations++)
+                {
+                    Tet12KeySet scaleKeys = referenceScale >> rotations;
+                    if ((scaleKeys.BinaryRepresentation & 1) != 1)
+                        continue; // Scales must have a fundamental - also implies that the resulting scale is in the superclass            
+
+                    Scale rotatedScale = new(scaleKeys);
+
+                    if (chord.isSubScaleTo(rotatedScale))
+                        superScaleRotations.Add(rotations); // Found superscale to our chord at current rotations
+
+                    if (LEGAL_BASES.Contains(rotatedScale.GetBase()))
+                        legalBasesAndRotations.Add((rotations, rotatedScale)); // Found legal base in superclass
+                }
+
+                //Rotation diff between all chord superscales and legal bases in the superclass
+                List<(int keySteps, Scale legalKeys)> chordProgressions = new();
+                foreach (int chordSuperScaleRotation in superScaleRotations)
+                {
+                    foreach ((int rotations, Scale scale) legalBase in legalBasesAndRotations)
+                    {
+                        // From chordSuperscaleRotation, go keySteps rotations to the right and play any keys from legalBase.Scale
+                        int keySteps = ((legalBase.rotations - chordSuperScaleRotation) + 12) % 12;
+                        chordProgressions.Add((keySteps, legalBase.scale));
+                    }
+                }
+                chordProgressionsPerSuperClass.Add(chordProgressions);
+            }
+
+            return chordProgressionsPerSuperClass;
+        }
+
         public static NoteValue?[] ScaleToNoteValues(Scale scale)
         {
             /** Example usage
@@ -157,6 +202,18 @@ namespace MusicTheory
             }
             sb.Remove(sb.Length - 1, 1);
             return sb.ToString();
+        }
+
+        public static List<int> Bit12IntToIntervals(Bit12Int binaryKeySet)
+        {
+            List<int> intervals = new();
+            for (int i = 0; i < 12; i++)
+            {
+                if (((binaryKeySet >> i) & 1) == 1)
+                    intervals.Add(i);
+            }
+
+            return intervals;
         }
 
         public static int operator &(Bit12Int left, int right)
@@ -330,6 +387,11 @@ namespace MusicTheory
             KeySet = new Tet12KeySet(tet12Keys);
         }
 
+        public List<int> AsIntervals()
+        {
+            return Bit12Int.Bit12IntToIntervals(KeySet.BinaryRepresentation);
+        }
+
         public int GetBase()
         {
             return GetBase(TET12_STANDARD_FRACTION_APPROXIMATIONS);
@@ -376,15 +438,6 @@ namespace MusicTheory
             if (superClass.Any(isSubScaleTo))
                 return true;
             return false;
-
-            //Bit12Int superScaleBinary = superClassScale.KeySet.BinaryRepresentation;
-            //for (int i = 0; i < 12; i++)
-            //{
-            //    if ((superScaleBinary & KeySet.BinaryRepresentation) == KeySet.BinaryRepresentation)
-            //        return true;
-            //    superScaleBinary = superScaleBinary << 1;
-            //}
-            //return false;
         }
 
         public bool isSubScaleTo(Scale superScale)

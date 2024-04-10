@@ -91,7 +91,7 @@ Log.Logger = new LoggerConfiguration()
 ScaleCalculator scaleCalculator = new();
 
 Scale chord = new(new int[] { 0, 2, 4, 7 });
-List<List<(int keySteps, Scale legalBaseScale)>> chordProgressionsPerSuperClass = CalculateChordProgressionsPerSuperClass(scaleCalculator, chord);
+List<List<(int keySteps, Scale legalBaseScale)>> chordProgressionsPerSuperClass = scaleCalculator.CalculateChordProgressionsPerSuperClass(chord);
 
 //Order progressions by physical keys, noting the origin (scale and key steps causing the keys)
 Dictionary<Tet12KeySet, List<(int keySteps, Scale legalBaseScale)>> chordProgressionsAndOrigins = OrderChordProgressionsByPhysicalKeys(chordProgressionsPerSuperClass);
@@ -103,7 +103,7 @@ Dictionary<Tet12KeySet, List<(int keySteps, Scale legalBaseScale)>> chordProgres
 Dictionary<Tet12KeySet, List<(int keySteps, Scale legalBaseScale)>> chordProgressionsAndOriginsCollapsed = CollapseChordProgressionsByPhysicalKeys(chordProgressionsAndOrigins);
 PrintChordProgressionsAndOrigins(chord, chordProgressionsAndOriginsCollapsed);
 
-QueryChordInProgression(chordProgressionsAndOriginsCollapsed); 
+QueryChordInProgression(chordProgressionsAndOriginsCollapsed);
 
 //// Order progressions by key step length
 //Dictionary<int, HashSet<Scale>> chordProgressionsPerKeyStep = new();
@@ -709,51 +709,6 @@ void PrintDissonantSets(ScaleCalculator scaleCalculator)
             Console.WriteLine("---");
         }
     }
-}
-
-//Chord progressions are basically "hidden keys" in a superclass to a scale, moving from larger to smaller bases in the superscale
-static List<List<(int keySteps, Scale legalKeys)>> CalculateChordProgressionsPerSuperClass(ScaleCalculator scaleCalculator, Scale chord)
-{
-    List<int> LEGAL_BASES = new() { 1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 24 };
-
-    List<List<Scale>> superClasses = scaleCalculator.CalculateScaleSuperClasses(chord);
-    List<List<(int keySteps, Scale legalBaseScale)>> chordProgressionsPerSuperClass = new();
-    foreach (List<Scale> superclass in superClasses)
-    {
-        Scale referenceScale = superclass.First(); // Arbitrary reference point in the superclass
-        List<int> superScaleRotations = new(); // The rotations producing superscales to our chord from an arbitrary reference point in the superclass
-        List<(int rotations, Scale scale)> legalBasesAndRotations = new(); // The rotations producing legal bases in the superclass
-
-        for (int rotations = 0; rotations < 12; rotations++)
-        {
-            Tet12KeySet scaleKeys = referenceScale >> rotations;
-            if ((scaleKeys.BinaryRepresentation & 1) != 1)
-                continue; // Scales must have a fundamental - also implies that the resulting scale is in the superclass            
-
-            Scale rotatedScale = new(scaleKeys);
-
-            if (chord.isSubScaleTo(rotatedScale))
-                superScaleRotations.Add(rotations); // Found superscale to our chord at current rotations
-
-            if (LEGAL_BASES.Contains(rotatedScale.GetBase()))
-                legalBasesAndRotations.Add((rotations, rotatedScale)); // Found legal base in superclass
-        }
-
-        //Rotation diff between all chord superscales and legal bases in the superclass
-        List<(int keySteps, Scale legalKeys)> chordProgressions = new();
-        foreach (int chordSuperScaleRotation in superScaleRotations)
-        {
-            foreach ((int rotations, Scale scale) legalBase in legalBasesAndRotations)
-            {
-                // From chordSuperscaleRotation, go keySteps rotations to the right and play any keys from legalBase.Scale
-                int keySteps = ((legalBase.rotations - chordSuperScaleRotation) + 12) % 12;
-                chordProgressions.Add((keySteps, legalBase.scale));
-            }
-        }
-        chordProgressionsPerSuperClass.Add(chordProgressions);
-    }
-
-    return chordProgressionsPerSuperClass;
 }
 
 static Dictionary<Tet12KeySet, List<(int keySteps, Scale legalBaseScale)>> OrderChordProgressionsByPhysicalKeys(List<List<(int keySteps, Scale legalBaseScale)>> chordProgressionsPerSuperClass)

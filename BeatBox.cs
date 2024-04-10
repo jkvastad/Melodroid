@@ -6,6 +6,7 @@ using MusicTheory;
 using Serilog;
 using System.Collections.Generic;
 using static MusicTheory.MusicTheoryUtils;
+using Scale = MusicTheory.Scale;
 
 public class BeatBox
 {
@@ -169,10 +170,41 @@ public class SimpleIsochronicRhythmMaker(int timeDivision, int numberOfMeasures,
     }
 }
 
-public class SimpleMeasureHarmonizer : IMeasureHarmonizer
+//Do a random walk from some starting chord
+public class RandomWalkMeasureHarmonizer(Scale currentScale) : IMeasureHarmonizer
 {
+    public Scale CurrentScale = currentScale;
+    public NoteName CurrentFundamental = 0;
+    public int InitialOctave = 4;
+    private ScaleCalculator _scaleCalculator = new();
+
     public List<Measure> MeasuresFromVelocities(List<int?[]> velocities)
     {
-        throw new NotImplementedException();
+        List<Measure> measures = new();
+        foreach (int?[] velocityMeasure in velocities)
+        {
+            List<int> intervals = CurrentScale.AsIntervals();
+            NoteValue?[] noteValues = new NoteValue?[velocityMeasure.Length];
+            for (int i = 0; i < velocityMeasure.Length; i++)
+            {
+                if (velocityMeasure[i] == null)
+                    continue;
+
+                NoteName noteName = (NoteName)(((int)(CurrentFundamental + intervals.TakeRandom())) % 12); //C is 0
+                int octave = InitialOctave;
+                int velocity = (int)velocityMeasure[i]!; //checked for null on the lines just above
+                noteValues[i] = new(noteName, octave, velocity);
+            }
+            Measure measure = new(noteValues);
+            measures.Add(measure);
+
+            List<List<(int keySteps, Scale legalKeys)>> chordProgressionsPerSuperClass = _scaleCalculator.CalculateChordProgressionsPerSuperClass(CurrentScale);
+            List<(int keySteps, Scale legalKeys)> chordProgressions = chordProgressionsPerSuperClass.TakeRandom();
+            (int keySteps, Scale legalKeys) chordProgression = chordProgressions.TakeRandom();
+            CurrentScale = chordProgression.legalKeys;
+            CurrentFundamental = (NoteName)(((int)(CurrentFundamental + chordProgression.keySteps)) % 12);
+        }
+        //Get all chord progressions for the current chord, choose a new chord from progression, decorate measure, repeat.
+        return measures;
     }
 }
