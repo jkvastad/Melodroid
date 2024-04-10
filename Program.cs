@@ -37,8 +37,9 @@ Log.Logger = new LoggerConfiguration()
     .WriteTo.File(@"D:\Projects\Code\Melodroid\logs\log.txt", rollingInterval: RollingInterval.Day)
     .CreateLogger();
 
+//TODO write multiple simultaneous tones
 int timeDivision = 24;
-int numberOfMeasures = 4;
+int numberOfMeasures = 16;
 int beatsPerMeasure = 8;
 SimpleIsochronicRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, beatsPerMeasure);
 

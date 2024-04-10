@@ -121,11 +121,13 @@ public class RandomWalkMeasureHarmonizer(Scale currentScale) : IMeasureHarmonize
             Measure measure = new(noteValues);
             measures.Add(measure);
 
-            List<List<(int keySteps, Scale legalKeys)>> chordProgressionsPerSuperClass = _scaleCalculator.CalculateChordProgressionsPerSuperClass(CurrentScale);
+            //superscales from triad chord
+            List<List<(int keySteps, Scale legalKeys)>> chordProgressionsPerSuperClass =
+                _scaleCalculator.CalculateChordProgressionsPerSuperClass(new(CurrentScale.ToIntervals().TakeRandom(3).ToArray())); 
             chordProgressionsPerSuperClass = chordProgressionsPerSuperClass.Where(superClass => superClass.Count > 0).ToList();
             List<(int keySteps, Scale legalKeys)> chordProgressions = chordProgressionsPerSuperClass.TakeRandom();
             (int keySteps, Scale legalKeys) chordProgression = chordProgressions.TakeRandom();
-            CurrentScale = new(chordProgression.legalKeys.ToIntervals().TakeRandom(3).ToArray()); //triad chord
+            CurrentScale = new(chordProgression.legalKeys.ToIntervals().ToArray());
 
             CurrentFundamental = (NoteName)(((int)(CurrentFundamental + chordProgression.keySteps)) % 12);
         }
