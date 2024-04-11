@@ -386,33 +386,6 @@ void WriteMIDIWithTimedObjectManager(string fullWritePath)
     midiFile.Write(fullWritePath, true);
 }
 
-void TestMidiWrite(string folderPath)
-{
-    var noteValues1 = new NoteValue?[8];
-    noteValues1[0] = new(NoteName.A, 4, 64);
-    noteValues1[4] = NoteValue.SilentNote;
-    var noteValues2 = new NoteValue?[7];
-    noteValues2[2] = new(NoteName.C, 4, 64);
-    var noteValues3 = new NoteValue?[12];
-    noteValues3[1] = NoteValue.SilentNote;
-    noteValues3[3] = new(NoteName.A, 4, 72);
-    noteValues3[8] = NoteValue.SilentNote;
-
-    var measure1 = new Measure(noteValues1);
-    var measure2 = new Measure(noteValues2);
-    var measure3 = new Measure(noteValues3);
-
-    Console.Write(measure1.NoteVelocitiesString());
-    Console.Write(measure2.NoteVelocitiesString());
-    Console.Write(measure3.NoteVelocitiesString());
-    Console.WriteLine();
-    Console.Write(measure1.NoteValuesString());
-    Console.Write(measure2.NoteValuesString());
-    Console.Write(measure3.NoteValuesString());
-
-    WriteMeasuresToMidi(new List<Measure>() { measure1, measure2, measure3 }, folderPath, "midi_write_test_2", true);
-}
-
 static List<(int patternLength, List<(int key, Fraction approximation)> keysAndApproximations)> CalculatePatternLengthsCompatibleWithInputKeys(
     Dictionary<int, HashSet<(int key, Fraction approximation)>> keysCompatibleWithPatternLength, int[] inputKeys)
 {
@@ -501,7 +474,14 @@ void WriteScalesOfBaseToMidi(List<Scale> scales, string folderPath)
     {
         Scale scale = scales[i];
         NoteValue?[] noteValues = ScaleCalculator.ScaleToNoteValues(scale);
-        Measure measure = new(noteValues);
+        List<NoteValue>?[] noteValuesList = noteValues.Select(noteValue =>
+        {
+            if (noteValue != null)
+                return new List<NoteValue>() { noteValue.Value };
+            return null;
+        }).ToArray();
+
+        Measure measure = new(noteValuesList);
         List<Measure> measureList = [measure];
         WriteMeasuresToMidi(measureList, folderPath, $"base_{scale.GetBase()}_keys_{scale.NumberOfKeys()}_number_{i}", true);
     }

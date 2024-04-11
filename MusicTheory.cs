@@ -19,53 +19,19 @@ namespace MusicTheory
     {
         public int TimeDivision { get; }
         //TODO add support for simultaneous note values. Simply convert to array of lists? How does MIDI handle multiple simultaneous notes with note on/off?
-        public NoteValue?[] NoteValues { get; } 
+        public List<NoteValue>?[] NoteValues { get; }
 
-        public Measure(NoteValue?[] noteValues)
+        public Measure(NoteValue?[] noteValues) : this(noteValues.Select(noteValue =>
+        {
+            if (noteValue != null)
+                return new List<NoteValue>() { noteValue.Value };
+            return null;
+        }).ToArray())
+        {}
+        public Measure(List<NoteValue>?[] noteValues)
         {
             NoteValues = noteValues;
             TimeDivision = noteValues.Length;
-        }
-
-        int stringPadding = 3; //max value 127
-
-        public string NoteVelocitiesString()
-        {
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < NoteValues.Length; i++)
-            {
-                int? noteVelocity = NoteValues[i]?.Velocity;
-                if (noteVelocity == null)
-                {
-                    sb.Append("-".PadRight(stringPadding));
-                    continue;
-                }
-                else
-                {
-                    sb.Append($"{noteVelocity}".PadRight(stringPadding));
-                }
-            }
-            return sb.ToString();
-        }
-
-        public string NoteValuesString()
-        {
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < NoteValues.Length; i++)
-            {
-                NoteValue? noteValue = NoteValues[i];
-                if (noteValue is NoteValue valueOfNote)
-                {
-                    sb.Append($"{valueOfNote.Name}{valueOfNote.Octave}".PadRight(stringPadding));
-                }
-                else
-                {
-                    sb.Append("-".PadRight(stringPadding));
-
-                    continue;
-                }
-            }
-            return sb.ToString();
         }
     }
 
@@ -113,48 +79,60 @@ namespace MusicTheory
 
         short ParseNotes()
         {
+            Dictionary<(NoteName noteName, int octave), (NoteValue noteValue, int noteStart)> currentNotes = new(); //Track note on/off 
+
             short songTimeDivision = (short)MusicTheoryUtils.LCM(_measures.Select((measure, index) => (long)measure.TimeDivision).ToArray());
             int totalMidiTicks = 0;
-            NoteValue currentNoteValue = NoteValue.SilentNote;
-            int currentNoteStart = totalMidiTicks;
 
-            foreach (var measure in _measures)
+            NoteValue initialNoteValue = NoteValue.SilentNote;
+            int initialNoteStart = totalMidiTicks;
+            currentNotes[(initialNoteValue.Name, initialNoteValue.Octave)] = (initialNoteValue, initialNoteStart);
+
+            foreach (Measure measure in _measures)
             {
-                foreach (NoteValue? noteValue in measure.NoteValues) //TODO how to handle multiple simultaneous note values? Hash name and octave instead of a single "current note"?
+                foreach (List<NoteValue>? notes in measure.NoteValues)
                 {
-                    if (noteValue != null)
+                    if (notes != null)
                     {
-                        if (currentNoteValue.Velocity > 0)
-                            AddCurrentNote();
-                        //Begin building next note
-                        currentNoteValue = noteValue.Value;
-                        currentNoteStart = totalMidiTicks;
+                        foreach (NoteValue noteValue in notes) //TODO how to handle multiple simultaneous note values? Hash name and octave instead of a single "current note"?
+                        {
+                            //Ongoing non-silent note?
+                            if (currentNotes.ContainsKey((noteValue.Name, noteValue.Octave)) && currentNotes[(noteValue.Name, noteValue.Octave)].noteValue.Velocity > 0)
+                            {
+                                AddCurrentNote(noteValue);
+                            }
+                            //Begin building next note
+                            currentNotes[(noteValue.Name, noteValue.Octave)] = (noteValue, totalMidiTicks);
+                        }
                     }
                     //midi time division is per quarter note rather than per measure, thus 4 times higher resolution
                     int midiTicks = 4 * (songTimeDivision / measure.TimeDivision);
                     totalMidiTicks += midiTicks;
                 }
             }
-            //Add final note
-            AddCurrentNote();
-            //Pad with one division of silence, otherwise drywetmidi clips the last midi tick.
-            if (currentNoteValue.Velocity > 0)
-                Notes.Add(new(NoteName.A, 4)
-                {
-                    Time = totalMidiTicks,
-                    Length = songTimeDivision,
-                    Velocity = (SevenBitNumber)0
-                });
+            //Add final non silent note
+            foreach (NoteValue currentNote in currentNotes.Values.Select(noteTuple => noteTuple.noteValue).Where(noteValue => noteValue.Velocity > 0))
+            {
+                AddCurrentNote(currentNote);
+            }
+
+            //Pad with one division of silence, otherwise drywetmidi clips the last midi tick.            
+            Notes.Add(new(NoteName.A, 4)
+            {
+                Time = totalMidiTicks,
+                Length = songTimeDivision,
+                Velocity = (SevenBitNumber)0
+            });
 
             return songTimeDivision;
 
-            void AddCurrentNote()
+            void AddCurrentNote(NoteValue note)
             {
-                Notes.Add(new(currentNoteValue.Name, currentNoteValue.Octave)
+                Notes.Add(new(note.Name, note.Octave)
                 {
-                    Time = currentNoteStart,
-                    Length = totalMidiTicks - currentNoteStart,
-                    Velocity = (SevenBitNumber)currentNoteValue.Velocity
+                    Time = currentNotes[(note.Name, note.Octave)].noteStart,
+                    Length = totalMidiTicks - currentNotes[(note.Name, note.Octave)].noteStart,
+                    Velocity = (SevenBitNumber)currentNotes[(note.Name, note.Octave)].noteValue.Velocity
                 });
             }
         }
