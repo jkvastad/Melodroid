@@ -99,14 +99,19 @@ public class RandomWalkMeasureHarmonizer(Scale currentScale) : IMeasureHarmonize
     public Scale CurrentScale = currentScale;
     public NoteName CurrentFundamental = 0;
     public int InitialOctave = 4;
+
     private ScaleCalculator _scaleCalculator = new();
+
+    public List<(NoteName fundamental, Scale scale)> ChordProgressionPerMeasure = new();
 
     public List<Measure> MeasuresFromVelocities(List<int?[]> velocities)
     {
         List<Measure> measures = new();
+        ChordProgressionPerMeasure.Clear();
         foreach (int?[] velocityMeasure in velocities)
         {
             List<int> intervals = CurrentScale.ToIntervals();
+            ChordProgressionPerMeasure.Add((CurrentFundamental, CurrentScale));
             NoteValue?[] noteValues = new NoteValue?[velocityMeasure.Length];
             for (int i = 0; i < velocityMeasure.Length; i++)
             {
@@ -123,7 +128,7 @@ public class RandomWalkMeasureHarmonizer(Scale currentScale) : IMeasureHarmonize
 
             //superscales from triad chord
             List<List<(int keySteps, Scale legalKeys)>> chordProgressionsPerSuperClass =
-                _scaleCalculator.CalculateChordProgressionsPerSuperClass(new(CurrentScale.ToIntervals().TakeRandom(3).ToArray())); 
+                _scaleCalculator.CalculateChordProgressionsPerSuperClass(new(CurrentScale.ToIntervals().TakeRandom(3).ToArray()));
             chordProgressionsPerSuperClass = chordProgressionsPerSuperClass.Where(superClass => superClass.Count > 0).ToList();
             List<(int keySteps, Scale legalKeys)> chordProgressions = chordProgressionsPerSuperClass.TakeRandom();
             (int keySteps, Scale legalKeys) chordProgression = chordProgressions.TakeRandom();

@@ -38,6 +38,7 @@ Log.Logger = new LoggerConfiguration()
     .CreateLogger();
 
 //TODO write multiple simultaneous tones
+//TODO add logger for scales used (and other random outcomes during generation)
 int timeDivision = 24;
 int numberOfMeasures = 16;
 int beatsPerMeasure = 8;
