@@ -139,3 +139,34 @@ public class RandomWalkMeasureHarmonizer(Scale currentScale) : IMeasureHarmonize
         return measures;
     }
 }
+
+public class ChordMeasureHarmonizer(List<(NoteName Fundamental, Scale Scale)> chordProgressionsPerMeasure, int initialOctave) : IMeasureHarmonizer
+{
+    public int InitialOctave = initialOctave;
+    public List<(NoteName Fundamental, Scale Scale)> ChordProgressionsPerMeasure { get; } = chordProgressionsPerMeasure;
+
+    public List<Measure> MeasuresFromVelocities(List<int?[]> velocities)
+    {
+        List<Measure> measures = new();
+        int measureIndex = 0;
+        foreach (int?[] velocityMeasure in velocities)
+        {
+            List<int> intervals = ChordProgressionsPerMeasure[measureIndex].Scale.ToIntervals();
+            NoteValue?[] noteValues = new NoteValue?[velocityMeasure.Length];
+            for (int i = 0; i < velocityMeasure.Length; i++)
+            {
+                if (velocityMeasure[i] == null)
+                    continue;
+
+                NoteName noteName = (NoteName)(((int)(ChordProgressionsPerMeasure[measureIndex].Fundamental + intervals.TakeRandom())) % 12); //C is 0
+                int octave = InitialOctave;
+                int velocity = (int)velocityMeasure[i]!; //checked for null on the lines just above
+                noteValues[i] = new(noteName, octave, velocity); //Needs support for multiple simultaneous note values
+                break;
+            }
+            Measure measure = new(noteValues);
+            measures.Add(measure);
+        }
+        return measures;
+    }
+}

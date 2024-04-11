@@ -18,7 +18,8 @@ namespace MusicTheory
     public class Measure
     {
         public int TimeDivision { get; }
-        public NoteValue?[] NoteValues { get; }
+        //TODO add support for simultaneous note values. Simply convert to array of lists? How does MIDI handle multiple simultaneous notes with note on/off?
+        public NoteValue?[] NoteValues { get; } 
 
         public Measure(NoteValue?[] noteValues)
         {
@@ -119,7 +120,7 @@ namespace MusicTheory
 
             foreach (var measure in _measures)
             {
-                foreach (NoteValue? noteValue in measure.NoteValues)
+                foreach (NoteValue? noteValue in measure.NoteValues) //TODO how to handle multiple simultaneous note values? Hash name and octave instead of a single "current note"?
                 {
                     if (noteValue != null)
                     {
