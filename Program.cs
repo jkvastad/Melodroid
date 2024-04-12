@@ -654,9 +654,9 @@ void PrintChordSuperClasses(ScaleCalculator scaleCalculator, Scale chord, int ma
                 }
 
                 if ((scale.KeySet.BinaryRepresentation & chord.KeySet.BinaryRepresentation) == chord.KeySet.BinaryRepresentation)
-                    Console.WriteLine($"{scale.KeySet} - {baseValue} <--");
+                    Console.WriteLine($"{scale.KeySet.ToIntervalString()} - {baseValue} <--");
                 else
-                    Console.WriteLine($"{scale.KeySet} - {baseValue}");
+                    Console.WriteLine($"{scale.KeySet.ToIntervalString()} - {baseValue}");
             }
         }
         scaleClassIndex++;

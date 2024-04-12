@@ -96,8 +96,9 @@ namespace MusicTheory
             return superClasses;
         }
 
-        //Chord progressions are basically "hidden keys" in a superclass to a scale, moving from larger to smaller bases in the superscale
-        public List<List<(int keySteps, Scale legalKeys)>> CalculateChordProgressionsPerSuperClass(Scale chord)
+        //Chord progressions may be "hidden keys" in a superclass to a scale, moving from larger to smaller bases in the superscale
+        //A superclass progression is a chord progression to a superscale in a superclass
+        public List<List<(int keySteps, Scale legalKeys)>> CalculateSuperClassProgressionsPerSuperClass(Scale chord)
         {
             List<List<Scale>> superClasses = CalculateScaleSuperClasses(chord);
             List<List<(int keySteps, Scale legalBaseScale)>> chordProgressionsPerSuperClass = new();
@@ -484,9 +485,15 @@ namespace MusicTheory
         }
     }
 
+    //Working hypothesis - rules of progression:
+    //1. Can move to any superscale if the superclass has a legal base
+    //1.1. Strict superscales (no rotation) have edge weight 0
+    //1.2. Rotated superscales have edge weight r % 12 with r = #rotations (take care with rotation sign)
+    //2. Can move to any subscale if the subclass has a legal base (sufficient that there exists a superclass to the subclass with a legal base?)
+    //2.1. Strict subscales (no rotation) have edge weight 0
+    //2.2. Subscales from a rotated original scale have edge weight r % 12 with r = #rotations (take care with rotation sign)
     public class ChordProgressionGraph
     {
-
         Dictionary<Scale, ScaleNode> Nodes = new();
         public ChordProgressionGraph(ScaleCalculator scaleCalculator)
         {
@@ -500,13 +507,13 @@ namespace MusicTheory
             //Create all edges
             foreach (ScaleNode node in Nodes.Values)
             {
-                List<List<(int keySteps, Scale legalKeys)>> superClasses = scaleCalculator.CalculateChordProgressionsPerSuperClass(node.Scale);
+                List<List<(int keySteps, Scale legalKeys)>> superClasses = scaleCalculator.CalculateSuperClassProgressionsPerSuperClass(node.Scale);
                 foreach (List<(int keySteps, Scale legalKeys)> chordProgressions in superClasses)
                 {
                     foreach ((int keySteps, Scale legalKeys) chordProgression in chordProgressions)
-                    {                        
-                        node.Edges[chordProgression.legalKeys] = chordProgression.keySteps;
-                        Nodes[chordProgression.legalKeys].Edges[node.Scale] = -chordProgression.keySteps;
+                    {
+                        node.Edges[chordProgression.legalKeys] = chordProgression.keySteps; //Edge to superclass
+                        Nodes[chordProgression.legalKeys].Edges[node.Scale] = (-chordProgression.keySteps + 12) % 12; //Reverse edge is same as edge to subclass
                     }
                 }
             }
