@@ -13,6 +13,8 @@ namespace MusicTheory
         public Dictionary<int, List<List<Scale>>> ScaleClassesOfLength = new();
         public Dictionary<int, List<Scale>> ScalesWithBase = new();
 
+        public static List<int> LEGAL_BASES = new() { 1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 24 };
+
         public ScaleCalculator()
         {
             InitScaleClassForScale();
@@ -97,8 +99,6 @@ namespace MusicTheory
         //Chord progressions are basically "hidden keys" in a superclass to a scale, moving from larger to smaller bases in the superscale
         public List<List<(int keySteps, Scale legalKeys)>> CalculateChordProgressionsPerSuperClass(Scale chord)
         {
-            List<int> LEGAL_BASES = new() { 1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 24 };
-
             List<List<Scale>> superClasses = CalculateScaleSuperClasses(chord);
             List<List<(int keySteps, Scale legalBaseScale)>> chordProgressionsPerSuperClass = new();
             foreach (List<Scale> superclass in superClasses)
@@ -468,6 +468,48 @@ namespace MusicTheory
         public static bool operator !=(Scale left, Scale right)
         {
             return !(left == right);
+        }
+    }
+
+    //Node used to represent a scale in the chord progression graph
+    public class ScaleNode
+    {
+        public Scale Scale;
+        public int Base;
+        public Dictionary<Scale, int> Edges = new();
+        public ScaleNode(Scale scale)
+        {
+            Scale = scale;
+            Base = scale.GetBase();
+        }
+    }
+
+    public class ChordProgressionGraph
+    {
+
+        Dictionary<Scale, ScaleNode> Nodes = new();
+        public ChordProgressionGraph(ScaleCalculator scaleCalculator)
+        {
+            //Create all possible scales. Keep the ones with legal base.
+            for (int i = 0; i < BigInteger.Pow(2, 12); i++)
+            {
+                ScaleNode node = new(new Scale(new Tet12KeySet(i)));
+                if (ScaleCalculator.LEGAL_BASES.Contains(node.Base))
+                    Nodes[node.Scale] = node;
+            }
+            //Create all edges
+            foreach (ScaleNode node in Nodes.Values)
+            {
+                List<List<(int keySteps, Scale legalKeys)>> superClasses = scaleCalculator.CalculateChordProgressionsPerSuperClass(node.Scale);
+                foreach (List<(int keySteps, Scale legalKeys)> chordProgressions in superClasses)
+                {
+                    foreach ((int keySteps, Scale legalKeys) chordProgression in chordProgressions)
+                    {                        
+                        node.Edges[chordProgression.legalKeys] = chordProgression.keySteps;
+                        Nodes[chordProgression.legalKeys].Edges[node.Scale] = -chordProgression.keySteps;
+                    }
+                }
+            }
         }
     }
 }
