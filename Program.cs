@@ -40,7 +40,7 @@ Log.Logger = new LoggerConfiguration()
 
 //TODO add logger for scales used (and other random outcomes during generation)
 int timeDivision = 24;
-int numberOfMeasures = 16;
+int numberOfMeasures = 32;
 int beatsPerMeasure = 8;
 SimpleIsochronicRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, beatsPerMeasure);
 

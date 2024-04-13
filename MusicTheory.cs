@@ -180,6 +180,6 @@ namespace MusicTheory
             while (fraction >= 2)
                 fraction /= 2;
             return fraction;
-        }
+        }        
     }
 }

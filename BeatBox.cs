@@ -148,6 +148,7 @@ public class PathWalkMeasureHarmonizer(Scale originScale, Scale destinationScale
     public int TargetSteps = targetSteps;
     public NoteName CurrentFundamental = 0;
     public int CurrentOctave = 4;
+    Random random = new();
 
     private ScaleCalculator _scaleCalculator = new();
 
@@ -157,20 +158,20 @@ public class PathWalkMeasureHarmonizer(Scale originScale, Scale destinationScale
         ChordProgressionGraph chordProgressionGraph = new(_scaleCalculator);
         ChordProgressionPathFinder pathFinder = new(chordProgressionGraph);
         Queue<ChordPath> chordPaths = pathFinder.FindPathsFrom(CurrentScale, TargetSteps);
-        ChordPath? chosenPath = null;
+        List<ChordPath> legalPaths = new();
         foreach (ChordPath chordPath in chordPaths)
         {
             if (chordPath.Path.Last().Scale == DestinationScale)
             {
-                chosenPath = chordPath;
-                break;
+                legalPaths.Add(chordPath);
             }
         }
-        if (chosenPath == null)
+        if (legalPaths.Count == 0)
         {
             throw new ArgumentException($"No path found from {CurrentScale} to {DestinationScale} with {TargetSteps} steps");
         }
-        int pathIndex = 0;
+        int indexInsidePath = 0;
+        int currentPathIndex = 0;
 
         List<Measure> measures = new();
         ChordPerMeasure.Clear();
@@ -194,9 +195,12 @@ public class PathWalkMeasureHarmonizer(Scale originScale, Scale destinationScale
             measures.Add(measure);
 
             //Next scale from chord progressions
-            pathIndex = (pathIndex + 1) % chosenPath.Path.Count;
-            CurrentScale = chosenPath.Path[pathIndex].Scale;
-            CurrentFundamental = (NoteName)(((int)(CurrentFundamental + chosenPath.PathSteps[pathIndex])) % 12);
+            indexInsidePath = (indexInsidePath + 1) % legalPaths[currentPathIndex].Path.Count;
+            //next chord progression
+            if (indexInsidePath == 0)
+                currentPathIndex = random.Next(legalPaths.Count);
+            CurrentScale = legalPaths[currentPathIndex].Path[indexInsidePath].Scale;
+            CurrentFundamental = (NoteName)(((int)(CurrentFundamental + legalPaths[currentPathIndex].PathSteps[indexInsidePath])) % 12);
         }
         return measures;
     }
