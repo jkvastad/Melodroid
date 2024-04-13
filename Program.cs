@@ -38,17 +38,18 @@ Log.Logger = new LoggerConfiguration()
     .CreateLogger();
 
 
-////TODO add logger for scales used (and other random outcomes during generation)
-//int timeDivision = 24;
-//int numberOfMeasures = 16;
-//int beatsPerMeasure = 12;
-//SimpleIsochronicRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, beatsPerMeasure);
+//TODO add logger for scales used (and other random outcomes during generation)
+int timeDivision = 24;
+int numberOfMeasures = 16;
+int beatsPerMeasure = 8;
+SimpleIsochronicRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, beatsPerMeasure);
 
-//Scale initialScale = new(new int[] { 0, 4, 7 });
+Scale initialScale = new(new int[] { 0, 4, 7 });
 //RandomWalkMeasureHarmonizer measureHarmonizer = new(initialScale);
-//BeatBox beatBox = new BeatBox(rhythmMaker, measureHarmonizer);
-//List<Measure> measures = beatBox.MakeMeasures();
-//beatBox.WriteMeasuresToMidi(measures, folderPath, "beat_box_test", true);
+PathWalkMeasureHarmonizer measureHarmonizer = new(initialScale, initialScale, 4);
+BeatBox beatBox = new BeatBox(rhythmMaker, measureHarmonizer);
+List<Measure> measures = beatBox.MakeMeasures();
+beatBox.WriteMeasuresToMidi(measures, folderPath, "beat_box_test", true);
 
 
 //TODO: Check for patterns in complex chords, e.g. in 3/2, 5/4 the 3/2 interval loops twice, cutting 5/4 in "half" and creating a mirrored version -
@@ -96,7 +97,7 @@ Log.Logger = new LoggerConfiguration()
 
 ////PrintScalesWithDesiredBase();
 ////WriteAllScaleClassesToMidi(folderPath);
-ScaleCalculator scaleCalculator = new();
+//ScaleCalculator scaleCalculator = new();
 
 //Scale chord = new(new int[] { 0, 6, 8 });
 //List<List<(int keySteps, Scale legalBaseScale)>> chordProgressionsPerSuperClass = scaleCalculator.CalculateChordProgressionsPerSuperClass(chord);
@@ -183,8 +184,8 @@ ScaleCalculator scaleCalculator = new();
 //}
 
 //PrintAllSuperClassHierarchies();
-Scale chord = new(new int[] { 0, 4, 7 });
-PrintChordSuperClasses(scaleCalculator, chord);
+//Scale chord = new(new int[] { 0, 4, 7 });
+//PrintChordSuperClasses(scaleCalculator, chord);
 
 //TODO: Method to find superclass containing specific base? E.g. if I want to play anything but keep base 8, what are my options?
 

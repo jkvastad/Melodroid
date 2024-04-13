@@ -168,7 +168,7 @@ public class PathWalkMeasureHarmonizer(Scale originScale, Scale destinationScale
         }
         if (chosenPath == null)
         {
-            throw new ArgumentException($"No path found from {CurrentScale.ToIntervals()} to {DestinationScale.ToIntervals()} with {TargetSteps} steps");
+            throw new ArgumentException($"No path found from {CurrentScale} to {DestinationScale} with {TargetSteps} steps");
         }
         int pathIndex = 0;
 

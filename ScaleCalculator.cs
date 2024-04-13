@@ -498,7 +498,8 @@ namespace MusicTheory
         public ChordProgressionGraph(ScaleCalculator scaleCalculator)
         {
             //Create all possible scales. Keep the ones with legal base.
-            for (int i = 0; i < BigInteger.Pow(2, 12); i++)
+            //Only odd numbers represent scales since the least significant bit must be set for a fundamental to exist
+            for (int i = 1; i < BigInteger.Pow(2, 12); i += 2)
             {
                 ScaleNode node = new(new Scale(new Tet12KeySet(i)));
                 if (ScaleCalculator.LEGAL_BASES.Contains(node.Base))
@@ -542,7 +543,7 @@ namespace MusicTheory
             Queue<ChordPath> nextQueue = new();
 
             ChordPath origin = new();
-            origin.Add(new(chord), 0);
+            origin.Add(_progressionGraph[chord], 0);
             currentQueue.Enqueue(origin);
 
             for (int i = 1; i < pathLength; i++) //start at 1 - step 0 is adding origin node
@@ -564,7 +565,7 @@ namespace MusicTheory
                 nextQueue = new();
             }
             return currentQueue;
-        }        
+        }
     }
     public class ChordPath
     {
