@@ -102,16 +102,16 @@ public class RandomWalkMeasureHarmonizer(Scale currentScale) : IMeasureHarmonize
 
     private ScaleCalculator _scaleCalculator = new();
 
-    public List<(NoteName fundamental, Scale scale)> ChordProgressionPerMeasure = new();
+    public List<(NoteName fundamental, Scale scale)> ChordPerMeasure = new();
 
     public List<Measure> MeasuresFromVelocities(List<int?[]> velocities)
     {
         List<Measure> measures = new();
-        ChordProgressionPerMeasure.Clear();
+        ChordPerMeasure.Clear();
         foreach (int?[] velocityMeasure in velocities)
         {
             List<int> intervals = CurrentScale.ToIntervals();
-            ChordProgressionPerMeasure.Add((CurrentFundamental, CurrentScale));
+            ChordPerMeasure.Add((CurrentFundamental, CurrentScale));
             NoteValue?[] noteValues = new NoteValue?[velocityMeasure.Length];
             for (int i = 0; i < velocityMeasure.Length; i++)
             {
@@ -140,6 +140,69 @@ public class RandomWalkMeasureHarmonizer(Scale currentScale) : IMeasureHarmonize
     }
 }
 
+//Walks a path of chords from origin to destination
+public class PathWalkMeasureHarmonizer(Scale originScale, Scale destinationScale, int targetSteps) : IMeasureHarmonizer
+{
+    public Scale CurrentScale = originScale;
+    public Scale DestinationScale = destinationScale;
+    public int TargetSteps = targetSteps;
+    public NoteName CurrentFundamental = 0;
+    public int CurrentOctave = 4;
+
+    private ScaleCalculator _scaleCalculator = new();
+
+    public List<(NoteName fundamental, Scale scale)> ChordPerMeasure = new();
+    public List<Measure> MeasuresFromVelocities(List<int?[]> velocities)
+    {
+        ChordProgressionGraph chordProgressionGraph = new(_scaleCalculator);
+        ChordProgressionPathFinder pathFinder = new(chordProgressionGraph);
+        Queue<ChordPath> chordPaths = pathFinder.FindPathsFrom(CurrentScale, TargetSteps);
+        ChordPath? chosenPath = null;
+        foreach (ChordPath chordPath in chordPaths)
+        {
+            if (chordPath.Path.Last().Scale == DestinationScale)
+            {
+                chosenPath = chordPath;
+                break;
+            }
+        }
+        if (chosenPath == null)
+        {
+            throw new ArgumentException($"No path found from {CurrentScale.ToIntervals()} to {DestinationScale.ToIntervals()} with {TargetSteps} steps");
+        }
+        int pathIndex = 0;
+
+        List<Measure> measures = new();
+        ChordPerMeasure.Clear();
+
+        foreach (int?[] velocityMeasure in velocities)
+        {
+            List<int> currentIntervals = CurrentScale.ToIntervals();
+            ChordPerMeasure.Add((CurrentFundamental, CurrentScale));
+            NoteValue?[] measureNoteValues = new NoteValue?[velocityMeasure.Length];
+            for (int i = 0; i < velocityMeasure.Length; i++)
+            {
+                if (velocityMeasure[i] == null)
+                    continue;
+
+                NoteName noteName = (NoteName)(((int)(CurrentFundamental + currentIntervals.TakeRandom())) % 12); //C is 0
+                int octave = CurrentOctave;
+                int velocity = (int)velocityMeasure[i]!; //checked for null on the lines just above
+                measureNoteValues[i] = new(noteName, octave, velocity);
+            }
+            Measure measure = new(measureNoteValues);
+            measures.Add(measure);
+
+            //Next scale from chord progressions
+            pathIndex = (pathIndex + 1) % chosenPath.Path.Count;
+            CurrentScale = chosenPath.Path[pathIndex].Scale;
+            CurrentFundamental = (NoteName)(((int)(CurrentFundamental + chosenPath.PathSteps[pathIndex])) % 12);
+        }
+        return measures;
+    }
+}
+
+//TODO: WIP - supply with chords from melody to generate measures with block chords at measure start
 public class ChordMeasureHarmonizer(List<(NoteName Fundamental, Scale Scale)> chordProgressionsPerMeasure, int initialOctave) : IMeasureHarmonizer
 {
     public int InitialOctave = initialOctave;

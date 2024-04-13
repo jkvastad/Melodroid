@@ -564,25 +564,22 @@ namespace MusicTheory
                 nextQueue = new();
             }
             return currentQueue;
+        }        
+    }
+    public class ChordPath
+    {
+        public List<ScaleNode> Path = new();
+        public List<int> PathSteps = new();
+        public void Add(ScaleNode scale, int keySteps)
+        {
+            Path.Add(scale);
+            PathSteps.Add(keySteps);
         }
 
-        public class ChordPath
+        //Note that ScaleNodes are shallow copies
+        public ChordPath Clone()
         {
-            public List<ScaleNode> Path = new();
-            public List<int> PathSteps = new();
-            public void Add(ScaleNode scale, int keySteps)
-            {
-                Path.Add(scale);
-                PathSteps.Add(keySteps);
-            }
-
-            //Note that ScaleNodes are shallow copies
-            public ChordPath Clone()
-            {
-                return new ChordPath() { Path = new(Path), PathSteps = new(PathSteps) };
-            }
+            return new ChordPath() { Path = new(Path), PathSteps = new(PathSteps) };
         }
     }
-
-
 }
