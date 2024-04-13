@@ -494,7 +494,7 @@ namespace MusicTheory
     //2.2. Subscales from a rotated original scale have edge weight r % 12 with r = #rotations (take care with rotation sign)
     public class ChordProgressionGraph
     {
-        Dictionary<Scale, ScaleNode> Nodes = new();
+        public Dictionary<Scale, ScaleNode> Nodes = new();
         public ChordProgressionGraph(ScaleCalculator scaleCalculator)
         {
             //Create all possible scales. Keep the ones with legal base.
@@ -518,5 +518,71 @@ namespace MusicTheory
                 }
             }
         }
+        public ScaleNode this[Scale key]
+        {
+            get => Nodes[key];
+            set => Nodes[key] = value;
+        }
     }
+
+    public class ChordProgressionPathFinder
+    {
+        ChordProgressionGraph _progressionGraph;
+        public ChordProgressionPathFinder(ChordProgressionGraph chordProgressionGraph)
+        {
+            _progressionGraph = chordProgressionGraph;
+        }
+
+        public Queue<ChordPath> FindPathsFrom(Scale chord, int pathLength)
+        {
+            if (pathLength < 2)
+                throw new ArgumentException("Path must be at least 2 long - a start and an end is required");
+
+            Queue<ChordPath> currentQueue = new();
+            Queue<ChordPath> nextQueue = new();
+
+            ChordPath origin = new();
+            origin.Add(new(chord), 0);
+            currentQueue.Enqueue(origin);
+
+            for (int i = 1; i < pathLength; i++) //start at 1 - step 0 is adding origin node
+            {
+                while (currentQueue.Count > 0)
+                {
+                    ChordPath currentPath = currentQueue.Dequeue();
+                    foreach (KeyValuePair<Scale, int> edge in currentPath.Path.Last().Edges)
+                    {
+                        ChordPath nextPath = currentPath.Clone();
+                        ScaleNode nextNode = _progressionGraph[edge.Key];
+                        nextPath.Add(nextNode, edge.Value);
+
+                        nextQueue.Enqueue(nextPath);
+                    }
+                }
+
+                currentQueue = nextQueue;
+                nextQueue = new();
+            }
+            return currentQueue;
+        }
+
+        public class ChordPath
+        {
+            public List<ScaleNode> Path = new();
+            public List<int> PathSteps = new();
+            public void Add(ScaleNode scale, int keySteps)
+            {
+                Path.Add(scale);
+                PathSteps.Add(keySteps);
+            }
+
+            //Note that ScaleNodes are shallow copies
+            public ChordPath Clone()
+            {
+                return new ChordPath() { Path = new(Path), PathSteps = new(PathSteps) };
+            }
+        }
+    }
+
+
 }
