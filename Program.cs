@@ -474,15 +474,9 @@ void WriteScalesOfBaseToMidi(List<Scale> scales, string folderPath)
     for (int i = 0; i < scales.Count; i++)
     {
         Scale scale = scales[i];
-        NoteValue?[] noteValues = ScaleCalculator.ScaleToNoteValues(scale);
-        List<NoteValue>?[] noteValuesList = noteValues.Select(noteValue =>
-        {
-            if (noteValue != null)
-                return new List<NoteValue>() { noteValue.Value };
-            return null;
-        }).ToArray();
+        NoteValue?[] noteValues = ScaleCalculator.ScaleToNoteValues(scale);        
 
-        Measure measure = new(noteValuesList);
+        Measure measure = new(noteValues);
         List<Measure> measureList = [measure];
         WriteMeasuresToMidi(measureList, folderPath, $"base_{scale.GetBase()}_keys_{scale.NumberOfKeys()}_number_{i}", true);
     }

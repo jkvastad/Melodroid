@@ -98,7 +98,7 @@ public class RandomWalkMeasureHarmonizer(Scale currentScale) : IMeasureHarmonize
 {
     public Scale CurrentScale = currentScale;
     public NoteName CurrentFundamental = 0;
-    public int InitialOctave = 4;
+    public int CurrentOctave = 4;
 
     private ScaleCalculator _scaleCalculator = new();
 
@@ -110,20 +110,22 @@ public class RandomWalkMeasureHarmonizer(Scale currentScale) : IMeasureHarmonize
         ChordPerMeasure.Clear();
         foreach (int?[] velocityMeasure in velocities)
         {
-            List<int> intervals = CurrentScale.ToIntervals();
+            List<int> currentIntervals = CurrentScale.ToIntervals();
             ChordPerMeasure.Add((CurrentFundamental, CurrentScale));
-            NoteValue?[] noteValues = new NoteValue?[velocityMeasure.Length];
+            Dictionary<int, int>?[] measureNoteValues = new Dictionary<int, int>?[velocityMeasure.Length];
             for (int i = 0; i < velocityMeasure.Length; i++)
             {
                 if (velocityMeasure[i] == null)
                     continue;
 
-                NoteName noteName = (NoteName)(((int)(CurrentFundamental + intervals.TakeRandom())) % 12); //C is 0
-                int octave = InitialOctave;
-                int velocity = (int)velocityMeasure[i]!; //checked for null on the lines just above
-                noteValues[i] = new(noteName, octave, velocity);
+                measureNoteValues[i] = new();
+
+                int noteNameNumber = ((int)(CurrentFundamental + currentIntervals.TakeRandom())) % 12; //C is 0
+                int noteNumber = ((CurrentOctave + 1) * 12) + noteNameNumber;
+                int velocity = (int)velocityMeasure[i]!; //checked for null on the lines just above                
+                measureNoteValues[i][noteNumber] = velocity;
             }
-            Measure measure = new(noteValues);
+            Measure measure = new(measureNoteValues);
             measures.Add(measure);
 
             //superscales from triad chord
@@ -180,16 +182,18 @@ public class PathWalkMeasureHarmonizer(Scale originScale, Scale destinationScale
         {
             List<int> currentIntervals = CurrentScale.ToIntervals();
             ChordPerMeasure.Add((CurrentFundamental, CurrentScale));
-            NoteValue?[] measureNoteValues = new NoteValue?[velocityMeasure.Length];
+            Dictionary<int, int>?[] measureNoteValues = new Dictionary<int, int>?[velocityMeasure.Length];
             for (int i = 0; i < velocityMeasure.Length; i++)
             {
                 if (velocityMeasure[i] == null)
                     continue;
 
-                NoteName noteName = (NoteName)(((int)(CurrentFundamental + currentIntervals.TakeRandom())) % 12); //C is 0
-                int octave = CurrentOctave;
-                int velocity = (int)velocityMeasure[i]!; //checked for null on the lines just above
-                measureNoteValues[i] = new(noteName, octave, velocity);
+                measureNoteValues[i] = new();
+
+                int noteNameNumber = ((int)(CurrentFundamental + currentIntervals.TakeRandom())) % 12; //C is 0
+                int noteNumber = ((CurrentOctave + 1) * 12) + noteNameNumber;
+                int velocity = (int)velocityMeasure[i]!; //checked for null on the lines just above                
+                measureNoteValues[i][noteNumber] = velocity;
             }
             Measure measure = new(measureNoteValues);
             measures.Add(measure);
@@ -216,33 +220,33 @@ public class PathWalkMeasureHarmonizer(Scale originScale, Scale destinationScale
 }
 
 //TODO: WIP - supply with chords from melody to generate measures with block chords at measure start
-public class ChordMeasureHarmonizer(List<(NoteName Fundamental, Scale Scale)> chordProgressionsPerMeasure, int initialOctave) : IMeasureHarmonizer
-{
-    public int InitialOctave = initialOctave;
-    public List<(NoteName Fundamental, Scale Scale)> ChordProgressionsPerMeasure { get; } = chordProgressionsPerMeasure;
+//public class ChordMeasureHarmonizer(List<(NoteName Fundamental, Scale Scale)> chordProgressionsPerMeasure, int initialOctave) : IMeasureHarmonizer
+//{
+//    public int InitialOctave = initialOctave;
+//    public List<(NoteName Fundamental, Scale Scale)> ChordProgressionsPerMeasure { get; } = chordProgressionsPerMeasure;
 
-    public List<Measure> MeasuresFromVelocities(List<int?[]> velocities)
-    {
-        List<Measure> measures = new();
-        int measureIndex = 0;
-        foreach (int?[] velocityMeasure in velocities)
-        {
-            List<int> intervals = ChordProgressionsPerMeasure[measureIndex].Scale.ToIntervals();
-            NoteValue?[] noteValues = new NoteValue?[velocityMeasure.Length];
-            for (int i = 0; i < velocityMeasure.Length; i++)
-            {
-                if (velocityMeasure[i] == null)
-                    continue;
+//    public List<Measure> MeasuresFromVelocities(List<int?[]> velocities)
+//    {
+//        List<Measure> measures = new();
+//        int measureIndex = 0;
+//        foreach (int?[] velocityMeasure in velocities)
+//        {
+//            List<int> intervals = ChordProgressionsPerMeasure[measureIndex].Scale.ToIntervals();
+//            NoteValue?[] noteValues = new NoteValue?[velocityMeasure.Length];
+//            for (int i = 0; i < velocityMeasure.Length; i++)
+//            {
+//                if (velocityMeasure[i] == null)
+//                    continue;
 
-                NoteName noteName = (NoteName)(((int)(ChordProgressionsPerMeasure[measureIndex].Fundamental + intervals.TakeRandom())) % 12); //C is 0
-                int octave = InitialOctave;
-                int velocity = (int)velocityMeasure[i]!; //checked for null on the lines just above
-                noteValues[i] = new(noteName, octave, velocity); //Needs support for multiple simultaneous note values
-                break;
-            }
-            Measure measure = new(noteValues);
-            measures.Add(measure);
-        }
-        return measures;
-    }
-}
+//                NoteName noteName = (NoteName)(((int)(ChordProgressionsPerMeasure[measureIndex].Fundamental + intervals.TakeRandom())) % 12); //C is 0
+//                int octave = InitialOctave;
+//                int velocity = (int)velocityMeasure[i]!; //checked for null on the lines just above
+//                noteValues[i] = new(noteName, octave, velocity); //Needs support for multiple simultaneous note values
+//                break;
+//            }
+//            Measure measure = new(noteValues);
+//            measures.Add(measure);
+//        }
+//        return measures;
+//    }
+//}
