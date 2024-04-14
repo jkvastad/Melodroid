@@ -171,7 +171,7 @@ public class PathWalkMeasureHarmonizer(Scale originScale, Scale destinationScale
             throw new ArgumentException($"No path found from {CurrentScale} to {DestinationScale} with {TargetSteps} steps");
         }
         int indexInsidePath = 0;
-        int currentPathIndex = 0;
+        ChordPath currentPath = legalPaths[random.Next(legalPaths.Count)];
 
         List<Measure> measures = new();
         ChordPerMeasure.Clear();
@@ -195,15 +195,21 @@ public class PathWalkMeasureHarmonizer(Scale originScale, Scale destinationScale
             measures.Add(measure);
 
             //Next scale from chord progressions
-            indexInsidePath = (indexInsidePath + 1) % legalPaths[currentPathIndex].Nodes.Count;
+            indexInsidePath = (indexInsidePath + 1) % currentPath.Nodes.Count;
             //next chord progression
             if (indexInsidePath == 0)
             {
-                currentPathIndex = random.Next(legalPaths.Count);
+                //currentPath = legalPaths[random.Next(legalPaths.Count)];
+                List<ChordPath> evenBasePaths = legalPaths.Where(path => path.Nodes.All(node =>
+                    (node.Base % 2) == 0 &&
+                    (node.Base % 3) != 0 &&
+                    (node.Base % 5) != 0
+                    )).ToList();
+                currentPath = evenBasePaths[random.Next(evenBasePaths.Count)];
             }
-                
-            CurrentScale = legalPaths[currentPathIndex].Nodes[indexInsidePath].Scale;
-            CurrentFundamental = (NoteName)(((int)(CurrentFundamental + legalPaths[currentPathIndex].PathSteps[indexInsidePath])) % 12);
+
+            CurrentScale = currentPath.Nodes[indexInsidePath].Scale;
+            CurrentFundamental = (NoteName)(((int)(CurrentFundamental + currentPath.PathSteps[indexInsidePath])) % 12);
         }
         return measures;
     }
