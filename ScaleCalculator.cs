@@ -552,12 +552,16 @@ namespace MusicTheory
                 while (currentQueue.Count > 0)
                 {
                     ChordPath currentPath = currentQueue.Dequeue();
-                    foreach (KeyValuePair<Scale, int> edge in currentPath.Path.Last().Edges)
+                    foreach (KeyValuePair<Scale, int> edge in currentPath.Nodes.Last().Edges)
                     {
-                        ChordPath nextPath = currentPath.Clone();
                         ScaleNode nextNode = _progressionGraph[edge.Key];
+                        if (currentPath.Nodes.Count < 2) { }
+                        else if (currentPath.Nodes[^2] == nextNode) //skip direct backtracking, if desired can be inferred from the path by bouncing between adjacent nodes.
+                        {
+                            continue;
+                        }
+                        ChordPath nextPath = currentPath.Clone();
                         nextPath.Add(nextNode, edge.Value);
-
                         nextQueue.Enqueue(nextPath);
                     }
                 }
@@ -570,18 +574,18 @@ namespace MusicTheory
     }
     public class ChordPath
     {
-        public List<ScaleNode> Path = new();
+        public List<ScaleNode> Nodes = new();
         public List<int> PathSteps = new();
         public void Add(ScaleNode scale, int keySteps)
         {
-            Path.Add(scale);
+            Nodes.Add(scale);
             PathSteps.Add(keySteps);
         }
 
         //Note that ScaleNodes are shallow copies
         public ChordPath Clone()
         {
-            return new ChordPath() { Path = new(Path), PathSteps = new(PathSteps) };
+            return new ChordPath() { Nodes = new(Nodes), PathSteps = new(PathSteps) };
         }
     }
 }

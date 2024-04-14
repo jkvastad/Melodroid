@@ -161,7 +161,7 @@ public class PathWalkMeasureHarmonizer(Scale originScale, Scale destinationScale
         List<ChordPath> legalPaths = new();
         foreach (ChordPath chordPath in chordPaths)
         {
-            if (chordPath.Path.Last().Scale == DestinationScale)
+            if (chordPath.Nodes.Last().Scale == DestinationScale)
             {
                 legalPaths.Add(chordPath);
             }
@@ -195,11 +195,14 @@ public class PathWalkMeasureHarmonizer(Scale originScale, Scale destinationScale
             measures.Add(measure);
 
             //Next scale from chord progressions
-            indexInsidePath = (indexInsidePath + 1) % legalPaths[currentPathIndex].Path.Count;
+            indexInsidePath = (indexInsidePath + 1) % legalPaths[currentPathIndex].Nodes.Count;
             //next chord progression
             if (indexInsidePath == 0)
+            {
                 currentPathIndex = random.Next(legalPaths.Count);
-            CurrentScale = legalPaths[currentPathIndex].Path[indexInsidePath].Scale;
+            }
+                
+            CurrentScale = legalPaths[currentPathIndex].Nodes[indexInsidePath].Scale;
             CurrentFundamental = (NoteName)(((int)(CurrentFundamental + legalPaths[currentPathIndex].PathSteps[indexInsidePath])) % 12);
         }
         return measures;
