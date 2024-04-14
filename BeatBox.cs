@@ -178,23 +178,45 @@ public class PathWalkMeasureHarmonizer(Scale originScale, Scale destinationScale
         List<Measure> measures = new();
         ChordPerMeasure.Clear();
 
+
+        HashSet<int> activeNotes = new();
         foreach (int?[] velocityMeasure in velocities)
         {
             List<int> currentIntervals = CurrentScale.ToIntervals();
             ChordPerMeasure.Add((CurrentFundamental, CurrentScale));
             Dictionary<int, int>?[] measureNoteValues = new Dictionary<int, int>?[velocityMeasure.Length];
+
+            measureNoteValues[0] = new();
+            foreach (int noteNumber in activeNotes) //close notes from last measure
+                measureNoteValues[0]![noteNumber] = 0;
+
             for (int i = 0; i < velocityMeasure.Length; i++)
             {
                 if (velocityMeasure[i] == null)
                     continue;
 
-                measureNoteValues[i] = new();
+                if (measureNoteValues[i] == null)
+                    measureNoteValues[i] = new();
 
                 int noteNameNumber = ((int)(CurrentFundamental + currentIntervals.TakeRandom())) % 12; //C is 0
                 int noteNumber = ((CurrentOctave + 1) * 12) + noteNameNumber;
                 int velocity = (int)velocityMeasure[i]!; //checked for null on the lines just above                
-                measureNoteValues[i][noteNumber] = velocity;
+                measureNoteValues[i]![noteNumber] = velocity;
             }
+            //note which notes are still open
+            foreach (Dictionary<int, int>? noteVelocities in measureNoteValues)
+            {
+                if (noteVelocities == null)
+                    continue;
+                foreach (int noteNumber in noteVelocities.Keys)
+                {
+                    if (noteVelocities[noteNumber] != 0)
+                        activeNotes.Add(noteNumber);
+                    else
+                        activeNotes.Remove(noteNumber);
+                }
+            }
+
             Measure measure = new(measureNoteValues);
             measures.Add(measure);
 
@@ -204,10 +226,10 @@ public class PathWalkMeasureHarmonizer(Scale originScale, Scale destinationScale
             if (indexInsidePath == 0)
             {
                 //currentPath = legalPaths[random.Next(legalPaths.Count)];
-                List<ChordPath> evenBasePaths = legalPaths.Where(path => path.Nodes.All(node =>
-                    (node.Base % 2) == 0 &&
-                    (node.Base % 3) != 0 &&
-                    (node.Base % 5) != 0
+                List<ChordPath> evenBasePaths = legalPaths.Where(path => path.Nodes.All(node => true
+                    //(node.Base % 2) == 0 &&
+                    //(node.Base % 3) != 0 &&
+                    //(node.Base % 5) != 0
                     )).ToList();
                 currentPath = evenBasePaths[random.Next(evenBasePaths.Count)];
             }
