@@ -48,8 +48,12 @@ Scale initialScale = new(new int[] { 0, 4, 7 });
 //RandomWalkMeasureHarmonizer measureHarmonizer = new(initialScale);
 PathWalkMeasureHarmonizer measureHarmonizer = new(initialScale, initialScale, 4);
 BeatBox beatBox = new BeatBox(rhythmMaker, measureHarmonizer);
-List<Measure> measures = beatBox.MakeMeasures();
-beatBox.WriteMeasuresToMidi(measures, folderPath, "beat_box_test", true);
+List<Measure> melodyMeasures = beatBox.MakeMeasures();
+beatBox.WriteMeasuresToMidi(melodyMeasures, folderPath, "beat_box_test", true);
+
+ChordMeasureHarmonizer chordHarmonizer = new(measureHarmonizer.ChordPerMeasure, 4);
+List<Measure> chordMeasures = chordHarmonizer.MeasuresFromVelocities(rhythmMaker.VelocityMeasures);
+beatBox.WriteMeasuresToMidi(chordMeasures, folderPath, "beat_box_chord_test", true);
 
 
 //TODO: Check for patterns in complex chords, e.g. in 3/2, 5/4 the 3/2 interval loops twice, cutting 5/4 in "half" and creating a mirrored version -
@@ -474,7 +478,7 @@ void WriteScalesOfBaseToMidi(List<Scale> scales, string folderPath)
     for (int i = 0; i < scales.Count; i++)
     {
         Scale scale = scales[i];
-        NoteValue?[] noteValues = ScaleCalculator.ScaleToNoteValues(scale);        
+        NoteValue?[] noteValues = ScaleCalculator.ScaleToNoteValues(scale);
 
         Measure measure = new(noteValues);
         List<Measure> measureList = [measure];
