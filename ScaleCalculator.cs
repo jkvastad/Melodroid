@@ -499,7 +499,8 @@ namespace MusicTheory
         {
             //Create all possible scales. Keep the ones with legal base.
             //Only odd numbers represent scales since the least significant bit must be set for a fundamental to exist
-            for (int i = 1; i < BigInteger.Pow(2, 12); i += 2)
+            //Skip the single key scale - thus start at i = 3
+            for (int i = 3; i < BigInteger.Pow(2, 12); i += 2)
             {
                 ScaleNode node = new(new Scale(new Tet12KeySet(i)));
                 if (ScaleCalculator.LEGAL_BASES.Contains(node.Base))
