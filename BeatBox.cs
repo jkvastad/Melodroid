@@ -277,19 +277,13 @@ public class ChordMeasureHarmonizer(List<(int fundamentalNoteNumber, Scale scale
             int previousNoteNumber = 0;
             foreach (int interval in _currentScale.ToIntervals())
             {
-                int currentNoteNumber = _currentFundamentalNoteNumber + interval;
+                int currentNoteNumber = _currentFundamentalNoteNumber + interval - 12; //put the chords one octave below the melody
                 int velocity = 64; //This particular harmonizer cares not for actual velocities
                 //Voice chord
-                //Avoid beating from voicing adjacent semitones
-                if (previousNoteNumber != _currentFundamentalNoteNumber && Math.Abs(currentNoteNumber - previousNoteNumber) < 2)
+                //Avoid beating from voicing adjacent semitones                
+                if (Math.Abs(currentNoteNumber - previousNoteNumber) < 2) 
                 {
-                    measureNoteValues[0]![previousNoteNumber + 12] = measureNoteValues[0]![previousNoteNumber];
-                    measureNoteValues[0]!.Remove(previousNoteNumber);
-                    previousNoteNumber = currentNoteNumber + 12;
-                }
-                else if (Math.Abs(currentNoteNumber - previousNoteNumber) < 2) //do not move the root note
-                {
-                    measureNoteValues[0]![currentNoteNumber + 12] = velocity;
+                    measureNoteValues[0]![currentNoteNumber + 12] = velocity;                    
                     previousNoteNumber = currentNoteNumber + 12;
                 }
                 else
