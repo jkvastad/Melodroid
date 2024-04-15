@@ -3,6 +3,7 @@ using Melanchall.DryWetMidi.Core;
 using Melanchall.DryWetMidi.Interaction;
 using Melanchall.DryWetMidi.MusicTheory;
 using MusicTheory;
+using Serilog;
 using System;
 using Scale = MusicTheory.Scale;
 
@@ -149,13 +150,13 @@ public class PathWalkMeasureHarmonizer(Scale originScale, Scale destinationScale
     public Scale CurrentScale = originScale;
     public Scale DestinationScale = destinationScale;
     public int TargetSteps = targetSteps;
-    public NoteName CurrentFundamental = 0;
-    public int CurrentOctave = 4;
+    public int LowestOctaveNoteNumber = 60; //C4 is 60
+    int _currentFundamentalNoteNumber = 60;
     Random random = new();
 
     private ScaleCalculator _scaleCalculator = new();
 
-    public List<(NoteName fundamental, Scale scale)> ChordPerMeasure = new();
+    public List<(int fundamentalNoteNumber, Scale scale)> ChordPerMeasure = new();
     public List<Measure> MeasuresFromVelocities(List<int?[]> velocities)
     {
         ChordProgressionGraph chordProgressionGraph = new(_scaleCalculator);
@@ -184,7 +185,7 @@ public class PathWalkMeasureHarmonizer(Scale originScale, Scale destinationScale
         foreach (int?[] velocityMeasure in velocities)
         {
             List<int> currentIntervals = CurrentScale.ToIntervals();
-            ChordPerMeasure.Add((CurrentFundamental, CurrentScale));
+            ChordPerMeasure.Add((_currentFundamentalNoteNumber, CurrentScale));
             Dictionary<int, int>?[] measureNoteValues = new Dictionary<int, int>?[velocityMeasure.Length];
 
             measureNoteValues[0] = new();
@@ -199,8 +200,7 @@ public class PathWalkMeasureHarmonizer(Scale originScale, Scale destinationScale
                 if (measureNoteValues[i] == null)
                     measureNoteValues[i] = new();
 
-                int noteNameNumber = ((int)(CurrentFundamental + currentIntervals.TakeRandom())) % 12; //C is 0
-                int noteNumber = ((CurrentOctave + 1) * 12) + noteNameNumber;
+                int noteNumber = _currentFundamentalNoteNumber + currentIntervals.TakeRandom();
                 int velocity = (int)velocityMeasure[i]!; //checked for null on the lines just above                
                 measureNoteValues[i]![noteNumber] = velocity;
             }
@@ -236,20 +236,21 @@ public class PathWalkMeasureHarmonizer(Scale originScale, Scale destinationScale
             }
 
             CurrentScale = currentPath.Nodes[indexInsidePath].Scale;
-            CurrentFundamental = (NoteName)(((int)(CurrentFundamental + currentPath.PathSteps[indexInsidePath])) % 12);
+            int keyStep = currentPath.PathSteps[indexInsidePath];
+            Log.Information($"{keyStep,-2} - {CurrentScale.GetBase(),-2} - {CurrentScale}");
+            _currentFundamentalNoteNumber = ((_currentFundamentalNoteNumber + keyStep) % 12) + LowestOctaveNoteNumber;
         }
         return measures;
     }
 }
 
-//TODO: WIP - supply with chords from melody to generate measures with block chords at measure start
-public class ChordMeasureHarmonizer(List<(NoteName Fundamental, Scale Scale)> chordProgressionsPerMeasure, int initialOctave) : IMeasureHarmonizer
+//Supply with chords from melody to generate measures with block chords at measure start
+public class ChordMeasureHarmonizer(List<(int fundamentalNoteNumber, Scale scale)> chordProgressionsPerMeasure, int initialOctave) : IMeasureHarmonizer
 {
-    List<ChordPath> legalPaths = new();
     public int CurrentOctave = initialOctave;
-    Scale CurrentScale;
-    NoteName CurrentFundamental;
-    public List<(NoteName Fundamental, Scale Scale)> ChordProgressionsPerMeasure { get; } = chordProgressionsPerMeasure;
+    Scale _currentScale;
+    int _currentFundamentalNoteNumber;
+    public List<(int fundamentalNoteNumber, Scale scale)> ChordProgressionsPerMeasure { get; } = chordProgressionsPerMeasure;
 
     public List<Measure> MeasuresFromVelocities(List<int?[]> velocities)
     {
@@ -258,8 +259,8 @@ public class ChordMeasureHarmonizer(List<(NoteName Fundamental, Scale Scale)> ch
 
         foreach (int?[] velocityMeasure in velocities)
         {
-            CurrentScale = ChordProgressionsPerMeasure[measureIndex].Scale;
-            CurrentFundamental = ChordProgressionsPerMeasure[measureIndex].Fundamental;
+            _currentScale = ChordProgressionsPerMeasure[measureIndex].scale;
+            _currentFundamentalNoteNumber = ChordProgressionsPerMeasure[measureIndex].fundamentalNoteNumber;
             Dictionary<int, int>?[] measureNoteValues = new Dictionary<int, int>?[velocityMeasure.Length];
             measureNoteValues[0] = new();
 
@@ -273,12 +274,29 @@ public class ChordMeasureHarmonizer(List<(NoteName Fundamental, Scale Scale)> ch
             }
 
             //Create chord
-            foreach (int interval in CurrentScale.ToIntervals())
+            int previousNoteNumber = 0;
+            foreach (int interval in _currentScale.ToIntervals())
             {
-                int noteNameNumber = ((int)(CurrentFundamental + interval)) % 12; //C is 0
-                int noteNumber = ((CurrentOctave + 1) * 12) + noteNameNumber;
+                int currentNoteNumber = _currentFundamentalNoteNumber + interval;
                 int velocity = 64; //This particular harmonizer cares not for actual velocities
-                measureNoteValues[0]![noteNumber] = velocity;
+                //Voice chord
+                //Avoid beating from voicing adjacent semitones
+                if (previousNoteNumber != _currentFundamentalNoteNumber && Math.Abs(currentNoteNumber - previousNoteNumber) < 2)
+                {
+                    measureNoteValues[0]![previousNoteNumber + 12] = measureNoteValues[0]![previousNoteNumber];
+                    measureNoteValues[0]!.Remove(previousNoteNumber);
+                    previousNoteNumber = currentNoteNumber + 12;
+                }
+                else if (Math.Abs(currentNoteNumber - previousNoteNumber) < 2) //do not move the root note
+                {
+                    measureNoteValues[0]![currentNoteNumber + 12] = velocity;
+                    previousNoteNumber = currentNoteNumber + 12;
+                }
+                else
+                {
+                    measureNoteValues[0]![currentNoteNumber] = velocity;
+                    previousNoteNumber = currentNoteNumber;
+                }
             }
 
             Measure measure = new(measureNoteValues);
