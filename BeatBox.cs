@@ -165,7 +165,8 @@ public class PathWalkMeasureHarmonizer(Scale originScale, Scale destinationScale
         List<ChordPath> legalPaths = new();
         foreach (ChordPath chordPath in chordPaths)
         {
-            if (chordPath.Nodes.Last().Scale == DestinationScale)
+            //if (chordPath.Nodes.Last().Scale == DestinationScale)
+            if (chordPath.PathSteps.Sum() % 12 == 0)
             {
                 legalPaths.Add(chordPath);
             }
@@ -281,9 +282,9 @@ public class ChordMeasureHarmonizer(List<(int fundamentalNoteNumber, Scale scale
                 int velocity = 64; //This particular harmonizer cares not for actual velocities
                 //Voice chord
                 //Avoid beating from voicing adjacent semitones                
-                if (Math.Abs(currentNoteNumber - previousNoteNumber) < 2) 
+                if (Math.Abs(currentNoteNumber - previousNoteNumber) < 2)
                 {
-                    measureNoteValues[0]![currentNoteNumber + 12] = velocity;                    
+                    measureNoteValues[0]![currentNoteNumber + 12] = velocity;
                     previousNoteNumber = currentNoteNumber + 12;
                 }
                 else
