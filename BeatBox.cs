@@ -164,8 +164,7 @@ public class PathWalkMeasureHarmonizer(Scale originScale, Scale destinationScale
         Queue<ChordPath> chordPaths = pathFinder.FindPathsFrom(CurrentScale, TargetSteps);
         List<ChordPath> legalPaths = new();
         foreach (ChordPath chordPath in chordPaths)
-        {
-            //if (chordPath.Nodes.Last().Scale == DestinationScale)
+        {            
             if (chordPath.PathSteps.Sum() % 12 == 0)
             {
                 legalPaths.Add(chordPath);
