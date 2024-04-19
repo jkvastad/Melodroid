@@ -90,7 +90,7 @@ namespace MusicTheory
             {
                 foreach (var scaleClass in ScaleClassesOfLength[length])
                 {
-                    if (scale.isSubClassTo(scaleClass.First())) //arbitrary member of the larger scale class
+                    if (scale.IsSubClassTo(scaleClass.First())) //arbitrary member of the larger scale class
                         superClasses.Add(scaleClass);
                 }
             }
@@ -117,7 +117,7 @@ namespace MusicTheory
 
                     Scale rotatedScale = new(scaleKeys);
 
-                    if (chord.isSubScaleTo(rotatedScale))
+                    if (chord.IsSubScaleTo(rotatedScale))
                         superScaleRotations.Add(rotations); // Found superscale to our chord at current rotations
 
                     if (LEGAL_BASES.Contains(rotatedScale.GetBase()))
@@ -433,18 +433,31 @@ namespace MusicTheory
             return scaleClass;
         }
 
-        public bool isSubClassTo(Scale superClassScale)
+        public bool IsSubClassTo(Scale superClassScale)
         {
             List<Scale> superClass = superClassScale.CalculateScaleClass();
 
-            if (superClass.Any(isSubScaleTo))
+            if (superClass.Any(IsSubScaleTo))
                 return true;
             return false;
         }
 
-        public bool isSubScaleTo(Scale superScale)
+        public bool IsSubScaleTo(Scale superScale)
         {
             return (this & superScale) == KeySet;
+        }
+
+        public bool HasSemitoneInterval()
+        {
+            List<int> scaleIntervals = ToIntervals();
+            int previousInterval = scaleIntervals.Last();
+            foreach (int interval in scaleIntervals)
+            {
+                if (Math.Abs(interval - previousInterval) == 1)
+                    return true;
+                previousInterval = interval;
+            }
+            return false;
         }
 
         public static Tet12KeySet operator <<(Scale left, int right)

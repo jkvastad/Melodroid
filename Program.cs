@@ -37,23 +37,25 @@ Log.Logger = new LoggerConfiguration()
     .WriteTo.File(@"D:\Projects\Code\Melodroid\logs\log.txt", rollingInterval: RollingInterval.Day)
     .CreateLogger();
 
+ScaleCalculator scaleCalculator = new();
 
-////TODO add logger for scales used (and other random outcomes during generation)
-//int timeDivision = 24;
-//int numberOfMeasures = 32;
-//int beatsPerMeasure = 8;
-//SimpleIsochronicRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, beatsPerMeasure);
 
-//Scale initialScale = new(new int[] { 0, 4, 7 });
-////RandomWalkMeasureHarmonizer measureHarmonizer = new(initialScale);
-//PathWalkMeasureHarmonizer measureHarmonizer = new(initialScale, initialScale, 4);
-//BeatBox beatBox = new BeatBox(rhythmMaker, measureHarmonizer);
-//List<Measure> melodyMeasures = beatBox.MakeMeasures();
-//beatBox.WriteMeasuresToMidi(melodyMeasures, folderPath, "beat_box_test", true);
+//TODO add logger for scales used (and other random outcomes during generation)
+int timeDivision = 24;
+int numberOfMeasures = 32;
+int beatsPerMeasure = 8;
+SimpleIsochronicRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, beatsPerMeasure);
 
-//ChordMeasureHarmonizer chordHarmonizer = new(measureHarmonizer.ChordPerMeasure, 4);
-//List<Measure> chordMeasures = chordHarmonizer.MeasuresFromVelocities(rhythmMaker.VelocityMeasures);
-//beatBox.WriteMeasuresToMidi(chordMeasures, folderPath, "beat_box_chord_test", true);
+Scale initialScale = new(new int[] { 0, 4, 7 });
+//RandomWalkMeasureHarmonizer measureHarmonizer = new(initialScale);
+PathWalkMeasureHarmonizer measureHarmonizer = new(initialScale, initialScale, 4);
+BeatBox beatBox = new BeatBox(rhythmMaker, measureHarmonizer);
+List<Measure> melodyMeasures = beatBox.MakeMeasures();
+beatBox.WriteMeasuresToMidi(melodyMeasures, folderPath, "beat_box_test", true);
+
+ChordMeasureHarmonizer chordHarmonizer = new(measureHarmonizer.ChordPerMeasure, 4, scaleCalculator);
+List<Measure> chordMeasures = chordHarmonizer.MeasuresFromVelocities(rhythmMaker.VelocityMeasures);
+beatBox.WriteMeasuresToMidi(chordMeasures, folderPath, "beat_box_chord_test", true);
 
 
 //TODO: Check for patterns in complex chords, e.g. in 3/2, 5/4 the 3/2 interval loops twice, cutting 5/4 in "half" and creating a mirrored version -
@@ -101,7 +103,6 @@ Log.Logger = new LoggerConfiguration()
 
 ////PrintScalesWithDesiredBase();
 ////WriteAllScaleClassesToMidi(folderPath);
-ScaleCalculator scaleCalculator = new();
 
 //Scale chord = new(new int[] { 0, 6, 8 });
 //List<List<(int keySteps, Scale legalBaseScale)>> chordProgressionsPerSuperClass = scaleCalculator.CalculateChordProgressionsPerSuperClass(chord);
@@ -187,11 +188,36 @@ ScaleCalculator scaleCalculator = new();
 //    }
 //}
 
-//PrintAllSuperClassHierarchies();
-Scale chord = new(new int[] { 0, 4, 6, 7, 10 });
-PrintChordSuperClasses(scaleCalculator, chord);
+////Print all scaleclasses with multiple legal bases
+//int scaleClassIndex = 0;
+//foreach (int length in scaleCalculator.ScaleClassesOfLength.Keys.OrderByDescending(key => key))
+//{
+//    Console.WriteLine($"-- Scale Length {length} --");
+//    foreach (var scaleClass in scaleCalculator.ScaleClassesOfLength[length])
+//    {
+//        Console.WriteLine($"- Scale Class #{scaleClassIndex}");
+//        List<Scale> scalesWithLegalBase = new();
+//        foreach (var scale in scaleClass)
+//        {
+//            if (ScaleCalculator.LEGAL_BASES.Contains(scale.GetBase()))
+//                scalesWithLegalBase.Add(scale);
+//        }
+//        if (scalesWithLegalBase.Count > 1)
+//        {
+//            foreach (var scale in scalesWithLegalBase)
+//            {
+//                Console.WriteLine($"{scale} - {scale.GetBase()}");
+//            }
+//        }
+//        scaleClassIndex++;
+//    }
+//}
 
-QueryKeySetCompatiblePatternLengths(30);
+//PrintAllSuperClassHierarchies(scaleCalculator);
+//Scale chord = new(new int[] { 0, 2, 3, 7, 10 });
+//PrintChordSuperClasses(scaleCalculator, chord);
+
+//QueryKeySetCompatiblePatternLengths(40);
 
 //Print all fractions of interest
 //HashSet<Fraction> fractions = new HashSet<Fraction>();
@@ -566,7 +592,7 @@ void PrintAllSuperClassHierarchies(ScaleCalculator scaleCalculator)
         int? superClassIndex = null;
         for (int previousIndex = 0; previousIndex < scaleClassIndex; previousIndex++)
         {
-            if (scaleClasses[previousIndex].Any(scale => scaleClass[0].isSubClassTo(scale) && scale.GetBase() <= 24))
+            if (scaleClasses[previousIndex].Any(scale => scaleClass[0].IsSubClassTo(scale) && scale.GetBase() <= 24))
             {
                 superClassIndex = previousIndex;
                 break;

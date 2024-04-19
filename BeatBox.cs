@@ -5,6 +5,8 @@ using Melanchall.DryWetMidi.MusicTheory;
 using MusicTheory;
 using Serilog;
 using System;
+using System.Linq;
+using System.Numerics;
 using Scale = MusicTheory.Scale;
 
 public class BeatBox(IRhythmMeasureMaker rhythmMeasureMaker, IMeasureHarmonizer measureHarmonizer)
@@ -164,7 +166,7 @@ public class PathWalkMeasureHarmonizer(Scale originScale, Scale destinationScale
         Queue<ChordPath> chordPaths = pathFinder.FindPathsFrom(CurrentScale, TargetSteps);
         List<ChordPath> legalPaths = new();
         foreach (ChordPath chordPath in chordPaths)
-        {            
+        {
             if (chordPath.PathSteps.Sum() % 12 == 0)
             {
                 legalPaths.Add(chordPath);
@@ -245,12 +247,17 @@ public class PathWalkMeasureHarmonizer(Scale originScale, Scale destinationScale
 }
 
 //Supply with chords from melody to generate measures with block chords at measure start
-public class ChordMeasureHarmonizer(List<(int fundamentalNoteNumber, Scale scale)> chordProgressionsPerMeasure, int initialOctave) : IMeasureHarmonizer
+public class ChordMeasureHarmonizer(
+    List<(int fundamentalNoteNumber, Scale scale)> chordProgressionsPerMeasure,
+    int initialOctave,
+    ScaleCalculator scaleCalculator
+    ) : IMeasureHarmonizer
 {
     public int CurrentOctave = initialOctave;
     Scale _currentScale;
     int _currentFundamentalNoteNumber;
     public List<(int fundamentalNoteNumber, Scale scale)> ChordProgressionsPerMeasure { get; } = chordProgressionsPerMeasure;
+    ScaleCalculator _scaleCalculator = scaleCalculator;
 
     public List<Measure> MeasuresFromVelocities(List<int?[]> velocities)
     {
@@ -273,24 +280,49 @@ public class ChordMeasureHarmonizer(List<(int fundamentalNoteNumber, Scale scale
                 }
             }
 
-            //Create chord
-            int previousNoteNumber = 0;
+            //Create chord            
+            if (_currentScale.HasSemitoneInterval())
+            {
+                //power set of scale size
+                List<int> allSubscalePermutations = new();
+                for (int i = 1; i < BigInteger.Pow(2, _currentScale.NumberOfKeys()) - 1; i++)
+                {
+                    allSubscalePermutations.Add(i);
+                }
+                //all subscale progressions
+                List<(int keyStep, Scale subscale)> subscaleProgressions = new();
+                List<int> currentScaleIntervals = _currentScale.ToIntervals();
+                foreach (int permutation in allSubscalePermutations)
+                {
+                    //create the new scale
+                    List<int> newScaleIntervals = new();
+                    for (int i = 0; i < currentScaleIntervals.Count; i++)
+                    {
+                        if (((permutation >> i) & 1) == 1) // is interval included?
+                            newScaleIntervals.Add(currentScaleIntervals[i]);
+                    }
+                    int smallestInterval = newScaleIntervals.First();
+                    newScaleIntervals = newScaleIntervals.Select(interval => interval - smallestInterval).ToList(); //normalize scale to start at interval 0
+                    Scale newScale = new(newScaleIntervals.ToArray());
+
+                    //check for semitone
+                    if (newScale.HasSemitoneInterval())
+                    {
+                        break;
+                    }
+                    subscaleProgressions.Add((smallestInterval, newScale));
+                }
+                var progression = subscaleProgressions.TakeRandom();
+                _currentScale = progression.subscale;
+                _currentFundamentalNoteNumber += progression.keyStep;
+            }
+
             foreach (int interval in _currentScale.ToIntervals())
             {
                 int currentNoteNumber = _currentFundamentalNoteNumber + interval - 12; //put the chords one octave below the melody
                 int velocity = 64; //This particular harmonizer cares not for actual velocities
-                //Voice chord
-                //Avoid beating from voicing adjacent semitones                
-                if (Math.Abs(currentNoteNumber - previousNoteNumber) < 2)
-                {
-                    measureNoteValues[0]![currentNoteNumber + 12] = velocity;
-                    previousNoteNumber = currentNoteNumber + 12;
-                }
-                else
-                {
-                    measureNoteValues[0]![currentNoteNumber] = velocity;
-                    previousNoteNumber = currentNoteNumber;
-                }
+
+                measureNoteValues[0]![currentNoteNumber] = velocity;
             }
 
             Measure measure = new(measureNoteValues);
