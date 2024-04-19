@@ -258,6 +258,8 @@ public class ChordMeasureHarmonizer(
     int _currentFundamentalNoteNumber;
     public List<(int fundamentalNoteNumber, Scale scale)> ChordProgressionsPerMeasure { get; } = chordProgressionsPerMeasure;
     ScaleCalculator _scaleCalculator = scaleCalculator;
+    Scale semitoneScale = new(new[] { 0, 1 }); //no good in chord
+    Scale tripleWholeToneScale = new(new[] { 0, 2, 4 }); //also seems tense
 
     public List<Measure> MeasuresFromVelocities(List<int?[]> velocities)
     {
@@ -281,7 +283,7 @@ public class ChordMeasureHarmonizer(
             }
 
             //Create chord            
-            if (_currentScale.HasSemitoneInterval())
+            if (semitoneScale.IsSubClassTo(_currentScale) || tripleWholeToneScale.IsSubClassTo(_currentScale))
             {
                 //power set of scale size
                 List<int> allSubscalePermutations = new();
@@ -289,8 +291,7 @@ public class ChordMeasureHarmonizer(
                 {
                     allSubscalePermutations.Add(i);
                 }
-                //all subscale progressions
-                //TODO fix bug - when provided with scale 0 6 7 8 10 the resulting chord was 0 8 but largest should be 0 6 8 10 
+                //all subscale progressions                
                 List<(int keyStep, Scale subscale)> subscaleProgressions = new();
                 List<int> currentScaleIntervals = _currentScale.ToIntervals();
                 foreach (int permutation in allSubscalePermutations)
@@ -306,8 +307,8 @@ public class ChordMeasureHarmonizer(
                     newScaleIntervals = newScaleIntervals.Select(interval => interval - smallestInterval).ToList(); //normalize scale to start at interval 0
                     Scale newScale = new(newScaleIntervals.ToArray());
 
-                    //check for semitone
-                    if (newScale.HasSemitoneInterval())
+                    //check for semitone                    
+                    if (semitoneScale.IsSubClassTo(newScale) || tripleWholeToneScale.IsSubClassTo(newScale))
                         continue;
 
                     subscaleProgressions.Add((smallestInterval, newScale));

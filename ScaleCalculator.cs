@@ -447,19 +447,6 @@ namespace MusicTheory
             return (this & superScale) == KeySet;
         }
 
-        public bool HasSemitoneInterval()
-        {
-            List<int> scaleIntervals = ToIntervals();
-            int previousInterval = scaleIntervals.Last();
-            foreach (int interval in scaleIntervals)
-            {
-                if (Math.Abs(interval - previousInterval) == 1)
-                    return true;
-                previousInterval = interval;
-            }
-            return false;
-        }
-
         public static Tet12KeySet operator <<(Scale left, int right)
         {
             return new Tet12KeySet(left.KeySet.BinaryRepresentation << right);
