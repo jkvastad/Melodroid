@@ -285,11 +285,12 @@ public class ChordMeasureHarmonizer(
             {
                 //power set of scale size
                 List<int> allSubscalePermutations = new();
-                for (int i = 1; i < BigInteger.Pow(2, _currentScale.NumberOfKeys()) - 1; i++)
+                for (int i = 1; i < BigInteger.Pow(2, _currentScale.NumberOfKeys()); i++)
                 {
                     allSubscalePermutations.Add(i);
                 }
                 //all subscale progressions
+                //TODO fix bug - when provided with scale 0 6 7 8 10 the resulting chord was 0 8 but largest should be 0 6 8 10 
                 List<(int keyStep, Scale subscale)> subscaleProgressions = new();
                 List<int> currentScaleIntervals = _currentScale.ToIntervals();
                 foreach (int permutation in allSubscalePermutations)
@@ -307,12 +308,14 @@ public class ChordMeasureHarmonizer(
 
                     //check for semitone
                     if (newScale.HasSemitoneInterval())
-                    {
-                        break;
-                    }
+                        continue;
+
                     subscaleProgressions.Add((smallestInterval, newScale));
                 }
-                var progression = subscaleProgressions.TakeRandom();
+                //Take the largest progression scale at random. Mr. speaker, we are for the big.
+                int largestProgressionScaleSize = subscaleProgressions.Max(progression => progression.subscale.NumberOfKeys());
+                var largestProgressions = subscaleProgressions.Where(progression => progression.subscale.NumberOfKeys() == largestProgressionScaleSize);
+                var progression = largestProgressions.TakeRandom();
                 _currentScale = progression.subscale;
                 _currentFundamentalNoteNumber += progression.keyStep;
             }
