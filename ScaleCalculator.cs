@@ -30,7 +30,7 @@ namespace MusicTheory
             {
                 foreach (var scale in scaleClass)
                 {
-                    int baseValue = scale.GetBase();
+                    int baseValue = scale.CalculateBase();
                     if (!ScalesWithBase.ContainsKey(baseValue))
                         ScalesWithBase[baseValue] = new();
                     ScalesWithBase[baseValue].Add(scale);
@@ -120,7 +120,7 @@ namespace MusicTheory
                     if (chord.IsSubScaleTo(rotatedScale))
                         superScaleRotations.Add(rotations); // Found superscale to our chord at current rotations
 
-                    if (LEGAL_BASES.Contains(rotatedScale.GetBase()))
+                    if (LEGAL_BASES.Contains(rotatedScale.CalculateBase()))
                         legalBasesAndRotations.Add((rotations, rotatedScale)); // Found legal base in superclass
                 }
 
@@ -394,12 +394,12 @@ namespace MusicTheory
             return Bit12Int.Bit12IntToIntervals(KeySet.BinaryRepresentation);
         }
 
-        public int GetBase()
+        public int CalculateBase()
         {
-            return GetBase(TET12_STANDARD_FRACTION_APPROXIMATIONS);
+            return CalculateBase(TET12_STANDARD_FRACTION_APPROXIMATIONS);
         }
 
-        public int GetBase(Fraction[] keyFractionApproximations)
+        public int CalculateBase(Fraction[] keyFractionApproximations)
         {
             if (keyFractionApproximations.Length != 12) throw new ArgumentException("fraction approximations must equal number of keys in the scale");
             List<long> denominators = new();
@@ -482,7 +482,7 @@ namespace MusicTheory
         public ScaleNode(Scale scale)
         {
             Scale = scale;
-            Base = scale.GetBase();
+            Base = scale.CalculateBase();
         }
     }
 

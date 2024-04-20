@@ -239,7 +239,7 @@ public class PathWalkMeasureHarmonizer(Scale originScale, Scale destinationScale
 
             CurrentScale = currentPath.Nodes[indexInsidePath].Scale;
             int keyStep = currentPath.PathSteps[indexInsidePath];
-            Log.Information($"{keyStep,-2} - {CurrentScale.GetBase(),-2} - {CurrentScale}");
+            Log.Information($"{keyStep,-2} - {CurrentScale.CalculateBase(),-2} - {CurrentScale}");
             _currentFundamentalNoteNumber = ((_currentFundamentalNoteNumber + keyStep) % 12) + LowestOctaveNoteNumber;
         }
         return measures;

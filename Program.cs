@@ -39,23 +39,22 @@ Log.Logger = new LoggerConfiguration()
 
 ScaleCalculator scaleCalculator = new();
 
+////TODO add logger for scales used (and other random outcomes during generation)
+//int timeDivision = 24;
+//int numberOfMeasures = 32;
+//int beatsPerMeasure = 8;
+//SimpleIsochronicRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, beatsPerMeasure);
 
-//TODO add logger for scales used (and other random outcomes during generation)
-int timeDivision = 24;
-int numberOfMeasures = 32;
-int beatsPerMeasure = 8;
-SimpleIsochronicRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, beatsPerMeasure);
+//Scale initialScale = new(new int[] { 0, 4, 7 });
+////RandomWalkMeasureHarmonizer measureHarmonizer = new(initialScale);
+//PathWalkMeasureHarmonizer measureHarmonizer = new(initialScale, initialScale, 4);
+//BeatBox beatBox = new BeatBox(rhythmMaker, measureHarmonizer);
+//List<Measure> melodyMeasures = beatBox.MakeMeasures();
+//beatBox.WriteMeasuresToMidi(melodyMeasures, folderPath, "beat_box_test", true);
 
-Scale initialScale = new(new int[] { 0, 4, 7 });
-//RandomWalkMeasureHarmonizer measureHarmonizer = new(initialScale);
-PathWalkMeasureHarmonizer measureHarmonizer = new(initialScale, initialScale, 4);
-BeatBox beatBox = new BeatBox(rhythmMaker, measureHarmonizer);
-List<Measure> melodyMeasures = beatBox.MakeMeasures();
-beatBox.WriteMeasuresToMidi(melodyMeasures, folderPath, "beat_box_test", true);
-
-ChordMeasureHarmonizer chordHarmonizer = new(measureHarmonizer.ChordPerMeasure, 4, scaleCalculator);
-List<Measure> chordMeasures = chordHarmonizer.MeasuresFromVelocities(rhythmMaker.VelocityMeasures);
-beatBox.WriteMeasuresToMidi(chordMeasures, folderPath, "beat_box_chord_test", true);
+//ChordMeasureHarmonizer chordHarmonizer = new(measureHarmonizer.ChordPerMeasure, 4, scaleCalculator);
+//List<Measure> chordMeasures = chordHarmonizer.MeasuresFromVelocities(rhythmMaker.VelocityMeasures);
+//beatBox.WriteMeasuresToMidi(chordMeasures, folderPath, "beat_box_chord_test", true);
 
 
 //TODO: Check for patterns in complex chords, e.g. in 3/2, 5/4 the 3/2 interval loops twice, cutting 5/4 in "half" and creating a mirrored version -
@@ -213,11 +212,67 @@ beatBox.WriteMeasuresToMidi(chordMeasures, folderPath, "beat_box_chord_test", tr
 //    }
 //}
 
+//Print all scales with superclasses (including self) of lesser/equal base
+foreach (int length in scaleCalculator.ScaleClassesOfLength.Keys.OrderByDescending(key => key))
+{
+    Console.WriteLine($"-- Scale Length {length} --");
+    foreach (var scaleClass in scaleCalculator.ScaleClassesOfLength[length])
+    {
+        //Console.WriteLine($"- Scale Class #{scaleClassIndex}");        
+        foreach (var scale in scaleClass)
+        {
+            int scaleBase = scale.CalculateBase();
+            //start out with scaleclass legal bases less or equal to current base
+            List<Scale> leqBaseScales = scaleClass.Where(otherScale =>
+                ScaleCalculator.LEGAL_BASES.Contains(otherScale.CalculateBase()) &&
+                otherScale.CalculateBase() <= scaleBase &&
+                otherScale != scale).ToList();
+            //find all superclasses' legal bases less or equal to current base
+            foreach (var superClass in scaleCalculator.CalculateScaleSuperClasses(scale))
+            {
+                foreach (var superScale in superClass)
+                {
+                    if (ScaleCalculator.LEGAL_BASES.Contains(superScale.CalculateBase()) && superScale.CalculateBase() <= scaleBase)
+                        leqBaseScales.Add(superScale);
+                }
+            }
+            //If we got something, print it
+            if (leqBaseScales.Count > 0)
+            {
+                //only print the largest superscale per base
+                List<Scale> noSubscales = new();
+                Dictionary<int, List<Scale>> baseAndScales = new();
+                foreach (var leqScale in leqBaseScales)
+                {
+                    var leqBase = leqScale.CalculateBase();
+                    if (!baseAndScales.ContainsKey(leqBase))
+                        baseAndScales[leqBase] = new();
+                    baseAndScales[leqBase].Add(leqScale);
+                }
+                foreach (var baseValue in baseAndScales.Keys)
+                {
+                    foreach (var leqScale in baseAndScales[baseValue])
+                    {
+                        if (!baseAndScales[baseValue].Any(otherScale => otherScale != leqScale && leqScale.IsSubScaleTo(otherScale)))
+                            noSubscales.Add(leqScale);
+                    }
+                }
+                //print it
+                Console.WriteLine($"{scaleBase,-2} - {scale}:");
+                foreach (var leqScale in noSubscales.OrderByDescending(leqScale => leqScale.CalculateBase()).ThenByDescending(leqScale => leqScale.NumberOfKeys()))
+                {
+                    Console.WriteLine($" - {leqScale.CalculateBase(),-2} - {leqScale}");
+                }
+            }
+        }
+    }
+}
+
 //PrintAllSuperClassHierarchies(scaleCalculator);
 //Scale chord = new(new int[] { 0, 2, 3, 7, 10 });
 //PrintChordSuperClasses(scaleCalculator, chord);
 
-//QueryKeySetCompatiblePatternLengths(40);
+QueryKeySetCompatiblePatternLengths(40);
 
 //Print all fractions of interest
 //HashSet<Fraction> fractions = new HashSet<Fraction>();
@@ -267,7 +322,7 @@ void QueryChordInProgression(Dictionary<Tet12KeySet, List<(int keySteps, Scale l
                 Console.Write($"{$"{progression.ToIntervalString()}",-20} : ");
                 foreach ((int keySteps, Scale legalBaseScale) origin in chordProgressionsAndOrigins[progression])
                 {
-                    Console.Write($"{$"({origin.legalBaseScale.GetBase()}, {origin.keySteps}, {origin.legalBaseScale})",-25} - ");
+                    Console.Write($"{$"({origin.legalBaseScale.CalculateBase()}, {origin.keySteps}, {origin.legalBaseScale})",-25} - ");
                 }
                 Console.WriteLine();
             }
@@ -504,7 +559,7 @@ void WriteScalesOfBaseToMidi(List<Scale> scales, string folderPath)
 
         Measure measure = new(noteValues);
         List<Measure> measureList = [measure];
-        WriteMeasuresToMidi(measureList, folderPath, $"base_{scale.GetBase()}_keys_{scale.NumberOfKeys()}_number_{i}", true);
+        WriteMeasuresToMidi(measureList, folderPath, $"base_{scale.CalculateBase()}_keys_{scale.NumberOfKeys()}_number_{i}", true);
     }
 }
 void WriteAllScaleClassesToMidi(string folderPath)
@@ -552,7 +607,7 @@ static void PrintScalesWithUpperLimitOnBase()
             bool scaleClassGood = true;
             foreach (var scale in scaleClass)
             {
-                int baseValue = scale.GetBase();
+                int baseValue = scale.CalculateBase();
                 Console.WriteLine($"{length}_{scaleClassIndex}_{scaleIndex}: {baseValue}");
                 if (baseValue > maxBaseValue)
                     scaleClassGood = false;
@@ -570,7 +625,7 @@ static void PrintScalesWithUpperLimitOnBase()
     {
         foreach (var scale in scaleClass)
         {
-            Console.WriteLine($"{scale}:{scale.GetBase()}");
+            Console.WriteLine($"{scale}:{scale.CalculateBase()}");
         }
         Console.WriteLine();
     }
@@ -592,7 +647,7 @@ void PrintAllSuperClassHierarchies(ScaleCalculator scaleCalculator)
         int? superClassIndex = null;
         for (int previousIndex = 0; previousIndex < scaleClassIndex; previousIndex++)
         {
-            if (scaleClasses[previousIndex].Any(scale => scaleClass[0].IsSubClassTo(scale) && scale.GetBase() <= 24))
+            if (scaleClasses[previousIndex].Any(scale => scaleClass[0].IsSubClassTo(scale) && scale.CalculateBase() <= 24))
             {
                 superClassIndex = previousIndex;
                 break;
@@ -604,7 +659,7 @@ void PrintAllSuperClassHierarchies(ScaleCalculator scaleCalculator)
         else
             Console.WriteLine($"-Scale index: {scaleClassIndex}");
 
-        if (scaleClass.Any(scale => scale.GetBase() <= 24
+        if (scaleClass.Any(scale => scale.CalculateBase() <= 24
                 //&& superClassIndex == null
                 //&& scale.GetBase() != 24
                 //&& scale.GetBase() != 20
@@ -619,7 +674,7 @@ void PrintAllSuperClassHierarchies(ScaleCalculator scaleCalculator)
         {
             foreach (Scale scale in scaleClass)
             {
-                Console.WriteLine($"{scale} - {scale.GetBase()}");
+                Console.WriteLine($"{scale} - {scale.CalculateBase()}");
             }
         }
 
@@ -646,7 +701,7 @@ void PrintChordSuperClasses(ScaleCalculator scaleCalculator, Scale chord, int ma
         }
         Console.WriteLine($"Scale class index: {scaleClassIndex}");
 
-        if (scaleClass.Any(scale => scale.GetBase() <= maxBase && scale.GetBase() >= minBase
+        if (scaleClass.Any(scale => scale.CalculateBase() <= maxBase && scale.CalculateBase() >= minBase
             //&& superClassIndex == null
             //&& scale.GetBase() != 24
             //&& scale.GetBase() != 20
@@ -661,7 +716,7 @@ void PrintChordSuperClasses(ScaleCalculator scaleCalculator, Scale chord, int ma
         {
             foreach (Scale scale in scaleClass)
             {
-                int baseValue = scale.GetBase();
+                int baseValue = scale.CalculateBase();
                 if (!availableBases.Contains(baseValue))
                 {
                     availableBases.Add(baseValue);
@@ -705,7 +760,7 @@ void PrintDissonantSets(ScaleCalculator scaleCalculator)
             //if (scaleClass.Any(scale => illegalBases.Contains(scale.GetBase())))
             if (superClasses.Any(
                     superClass => superClass.Any(
-                        scale => illegalBases.Contains(scale.GetBase())
+                        scale => illegalBases.Contains(scale.CalculateBase())
                     )
                 )
             )
@@ -722,7 +777,7 @@ void PrintDissonantSets(ScaleCalculator scaleCalculator)
         {
             foreach (Scale scale in scaleClass)
             {
-                Console.WriteLine($"{scale} - {scale.GetBase()}");
+                Console.WriteLine($"{scale} - {scale.CalculateBase()}");
             }
             Console.WriteLine("---");
         }
@@ -776,7 +831,7 @@ Dictionary<Tet12KeySet, List<(int keySteps, Scale legalBaseScale)>> CollapseChor
                             isBaseAndKeyStepsSame = false;
                             break;
                         }
-                        if (currentOrigins[i].legalBaseScale.GetBase() != referenceOrigins[i].legalBaseScale.GetBase())
+                        if (currentOrigins[i].legalBaseScale.CalculateBase() != referenceOrigins[i].legalBaseScale.CalculateBase())
                         {
                             isBaseAndKeyStepsSame = false;
                             break;
@@ -799,13 +854,13 @@ static void PrintChordProgressionsAndOrigins(Scale chord, Dictionary<Tet12KeySet
     Console.WriteLine($"Number of progressions: {chordProgressionsAndOrigins.Keys.Count}");
     //foreach (Tet12KeySet chordProgression in chordProgressionsAndOrigins.Keys.OrderByDescending(cp => cp.ToIntervalString()).ThenByDescending(cp => cp.NumberOfKeys()))
     foreach (Tet12KeySet chordProgression in chordProgressionsAndOrigins.Keys.
-        OrderByDescending(cp => chordProgressionsAndOrigins[cp].OrderBy(origin => origin.legalBaseScale.GetBase()).First().legalBaseScale.GetBase()).
+        OrderByDescending(cp => chordProgressionsAndOrigins[cp].OrderBy(origin => origin.legalBaseScale.CalculateBase()).First().legalBaseScale.CalculateBase()).
         ThenByDescending(cp => cp.NumberOfKeys()))
     {
         Console.Write($"{$"{chordProgression.ToIntervalString()}",-20} : ");
-        foreach ((int keySteps, Scale legalBaseScale) origin in chordProgressionsAndOrigins[chordProgression].OrderBy(origin => origin.legalBaseScale.GetBase()))
+        foreach ((int keySteps, Scale legalBaseScale) origin in chordProgressionsAndOrigins[chordProgression].OrderBy(origin => origin.legalBaseScale.CalculateBase()))
         {
-            Console.Write($"{$"({origin.legalBaseScale.GetBase()}, {origin.keySteps}, {origin.legalBaseScale})",-25} - ");
+            Console.Write($"{$"({origin.legalBaseScale.CalculateBase()}, {origin.keySteps}, {origin.legalBaseScale})",-25} - ");
         }
         Console.WriteLine();
     }
