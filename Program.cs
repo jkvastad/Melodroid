@@ -261,7 +261,18 @@ foreach (int length in scaleCalculator.ScaleClassesOfLength.Keys.OrderByDescendi
                 Console.WriteLine($"{scaleBase,-2} - {scale}:");
                 foreach (var leqScale in noSubscales.OrderByDescending(leqScale => leqScale.CalculateBase()).ThenByDescending(leqScale => leqScale.NumberOfKeys()))
                 {
-                    Console.WriteLine($" - {leqScale.CalculateBase(),-2} - {leqScale}");
+                    //print which keys in the leq scale the original scale matches to
+                    List<int> scaleIntervalsInLeqScale = new();
+                    for (int i = 0; i < 12; i++)
+                    {
+                        if (((leqScale.KeySet.BinaryRepresentation >> i) & scale.KeySet.BinaryRepresentation) == scale.KeySet.BinaryRepresentation)
+                        {
+                            scaleIntervalsInLeqScale = scale.ToIntervals().Select(interval => (interval + i) % 12).OrderBy(interval => interval).ToList();
+                            break;
+                        }
+                    }
+
+                    Console.WriteLine($" - {leqScale.CalculateBase(),-2} - {leqScale,-17} - {string.Join(" ", scaleIntervalsInLeqScale)}");
                 }
             }
         }
