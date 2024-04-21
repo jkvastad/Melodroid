@@ -277,17 +277,19 @@ foreach (var scale in leqScalesPerScale.Keys.OrderByDescending(key => key.Number
     Console.WriteLine($"{scale.CalculateBase(),-2} - {scale}:");
     foreach (var leqScale in leqScalesPerScale[scale].OrderByDescending(leqScale => leqScale.CalculateBase()).ThenByDescending(leqScale => leqScale.NumberOfKeys()))
     {
-        //print which keys in the leq scale the original scale matches to
+        //print which keys in the leq scale the original scale matches to, and the fundamental note shift
         List<int> scaleIntervalsInLeqScale = new();
+        int fundamentalShift = 0;
         for (int i = 0; i < 12; i++)
         {
             if (((leqScale.KeySet.BinaryRepresentation >> i) & scale.KeySet.BinaryRepresentation) == scale.KeySet.BinaryRepresentation)
             {
                 scaleIntervalsInLeqScale = scale.ToIntervals().Select(interval => (interval + i) % 12).OrderBy(interval => interval).ToList();
+                fundamentalShift = i;
                 break;
             }
         }
-        Console.WriteLine($" - {leqScale.CalculateBase(),-2} - {leqScale,-17} - {string.Join(" ", scaleIntervalsInLeqScale)}");
+        Console.WriteLine($" - {leqScale.CalculateBase(),-2} - {leqScale,-17}  -> {fundamentalShift} : {string.Join(" ", scaleIntervalsInLeqScale)}");
     }
 }
 
@@ -346,17 +348,19 @@ void QueryLEQSuperclass(Dictionary<Scale, List<Scale>> leqScalesPerScale)
                 Console.WriteLine($"{scale.CalculateBase(),-2} - {scale}:");
                 foreach (var leqScale in leqScalesPerScale[scale].OrderByDescending(leqScale => leqScale.CalculateBase()).ThenByDescending(leqScale => leqScale.NumberOfKeys()))
                 {
-                    //print which keys in the leq scale the original scale matches to
+                    //print which keys in the leq scale the original scale matches to, and the fundamental note shift
                     List<int> scaleIntervalsInLeqScale = new();
+                    int fundamentalShift = 0;
                     for (int i = 0; i < 12; i++)
                     {
                         if (((leqScale.KeySet.BinaryRepresentation >> i) & scale.KeySet.BinaryRepresentation) == scale.KeySet.BinaryRepresentation)
                         {
                             scaleIntervalsInLeqScale = scale.ToIntervals().Select(interval => (interval + i) % 12).OrderBy(interval => interval).ToList();
+                            fundamentalShift = i;
                             break;
                         }
                     }
-                    Console.WriteLine($" - {leqScale.CalculateBase(),-2} - {leqScale,-17} - {string.Join(" ", scaleIntervalsInLeqScale)}");
+                    Console.WriteLine($" - {leqScale.CalculateBase(),-2} - {leqScale,-17}  -> {fundamentalShift} : {string.Join(" ", scaleIntervalsInLeqScale)}");
                 }
             }
         }
