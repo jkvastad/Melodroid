@@ -389,6 +389,11 @@ namespace MusicTheory
             KeySet = new Tet12KeySet(tet12Keys);
         }
 
+        public bool Contains(Tet12KeySet keySet)
+        {
+            return (KeySet.BinaryRepresentation & keySet.BinaryRepresentation) == keySet.BinaryRepresentation;
+        }
+
         public List<int> ToIntervals()
         {
             return Bit12Int.Bit12IntToIntervals(KeySet.BinaryRepresentation);

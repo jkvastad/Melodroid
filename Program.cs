@@ -215,7 +215,7 @@ ScaleCalculator scaleCalculator = new();
 //Print all scales with superclasses (including self) of lesser/equal base
 Dictionary<Scale, List<Scale>> leqScalesPerScale = new();
 foreach (int length in scaleCalculator.ScaleClassesOfLength.Keys.OrderByDescending(key => key))
-{    
+{
     foreach (var scaleClass in scaleCalculator.ScaleClassesOfLength[length])
     {
         //Console.WriteLine($"- Scale Class #{scaleClassIndex}");        
@@ -266,14 +266,14 @@ foreach (int length in scaleCalculator.ScaleClassesOfLength.Keys.OrderByDescendi
 
 //print it
 int scaleLength = 1;
-foreach (var scale in leqScalesPerScale.Keys.OrderByDescending(key => key.NumberOfKeys()))
+foreach (var scale in leqScalesPerScale.Keys.OrderByDescending(key => key.NumberOfKeys()).ThenByDescending(key => key.ToString()))
 {
-    if(scale.NumberOfKeys() > scaleLength)
+    if (scale.NumberOfKeys() > scaleLength)
     {
         Console.WriteLine($"-- Scale Length {scaleLength} --");
         scaleLength = scale.NumberOfKeys();
     }
-        
+
     Console.WriteLine($"{scale.CalculateBase(),-2} - {scale}:");
     foreach (var leqScale in leqScalesPerScale[scale].OrderByDescending(leqScale => leqScale.CalculateBase()).ThenByDescending(leqScale => leqScale.NumberOfKeys()))
     {
@@ -291,11 +291,13 @@ foreach (var scale in leqScalesPerScale.Keys.OrderByDescending(key => key.Number
     }
 }
 
+QueryLEQSuperclass(leqScalesPerScale);
+
 //PrintAllSuperClassHierarchies(scaleCalculator);
 //Scale chord = new(new int[] { 0, 2, 3, 7, 10 });
 //PrintChordSuperClasses(scaleCalculator, chord);
 
-QueryKeySetCompatiblePatternLengths(40);
+//QueryKeySetCompatiblePatternLengths(40);
 
 //Print all fractions of interest
 //HashSet<Fraction> fractions = new HashSet<Fraction>();
@@ -326,6 +328,40 @@ QueryKeySetCompatiblePatternLengths(40);
 //e.g.:
 //BeatBox beatBox = new BeatBox();
 //WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, "melodroid testing");
+
+void QueryLEQSuperclass(Dictionary<Scale, List<Scale>> leqScalesPerScale)
+{
+    while (true)
+    {
+        Console.WriteLine($"Input space separated tet12 keys for all LEQ occurences. (empty input to exit)");
+        string input = Console.ReadLine();
+
+        if (input.Length == 0) return;
+        Tet12KeySet inputKeys = new(Array.ConvertAll(input.Split(' '), int.Parse));
+
+        foreach (Scale scale in leqScalesPerScale.Keys.OrderByDescending(key => key.NumberOfKeys()).ThenByDescending(key => key.ToString()))
+        {
+            if (scale.Contains(inputKeys) || leqScalesPerScale[scale].Any(leqScale => leqScale.Contains(inputKeys)))
+            {
+                Console.WriteLine($"{scale.CalculateBase(),-2} - {scale}:");
+                foreach (var leqScale in leqScalesPerScale[scale].OrderByDescending(leqScale => leqScale.CalculateBase()).ThenByDescending(leqScale => leqScale.NumberOfKeys()))
+                {
+                    //print which keys in the leq scale the original scale matches to
+                    List<int> scaleIntervalsInLeqScale = new();
+                    for (int i = 0; i < 12; i++)
+                    {
+                        if (((leqScale.KeySet.BinaryRepresentation >> i) & scale.KeySet.BinaryRepresentation) == scale.KeySet.BinaryRepresentation)
+                        {
+                            scaleIntervalsInLeqScale = scale.ToIntervals().Select(interval => (interval + i) % 12).OrderBy(interval => interval).ToList();
+                            break;
+                        }
+                    }
+                    Console.WriteLine($" - {leqScale.CalculateBase(),-2} - {leqScale,-17} - {string.Join(" ", scaleIntervalsInLeqScale)}");
+                }
+            }
+        }
+    }
+}
 
 //Use with printing all chord progressions and origins for faster than manual lookup
 void QueryChordInProgression(Dictionary<Tet12KeySet, List<(int keySteps, Scale legalBaseScale)>> chordProgressionsAndOrigins)
