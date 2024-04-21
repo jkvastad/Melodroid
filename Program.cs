@@ -213,9 +213,9 @@ ScaleCalculator scaleCalculator = new();
 //}
 
 //Print all scales with superclasses (including self) of lesser/equal base
+Dictionary<Scale, List<Scale>> leqScalesPerScale = new();
 foreach (int length in scaleCalculator.ScaleClassesOfLength.Keys.OrderByDescending(key => key))
-{
-    Console.WriteLine($"-- Scale Length {length} --");
+{    
     foreach (var scaleClass in scaleCalculator.ScaleClassesOfLength[length])
     {
         //Console.WriteLine($"- Scale Class #{scaleClassIndex}");        
@@ -236,10 +236,10 @@ foreach (int length in scaleCalculator.ScaleClassesOfLength.Keys.OrderByDescendi
                         leqBaseScales.Add(superScale);
                 }
             }
-            //If we got something, print it
+            //If we got something, filter it
             if (leqBaseScales.Count > 0)
             {
-                //only print the largest superscale per base
+                //only save the largest superscale per base
                 List<Scale> noSubscales = new();
                 Dictionary<int, List<Scale>> baseAndScales = new();
                 foreach (var leqScale in leqBaseScales)
@@ -257,25 +257,37 @@ foreach (int length in scaleCalculator.ScaleClassesOfLength.Keys.OrderByDescendi
                             noSubscales.Add(leqScale);
                     }
                 }
-                //print it
-                Console.WriteLine($"{scaleBase,-2} - {scale}:");
-                foreach (var leqScale in noSubscales.OrderByDescending(leqScale => leqScale.CalculateBase()).ThenByDescending(leqScale => leqScale.NumberOfKeys()))
-                {
-                    //print which keys in the leq scale the original scale matches to
-                    List<int> scaleIntervalsInLeqScale = new();
-                    for (int i = 0; i < 12; i++)
-                    {
-                        if (((leqScale.KeySet.BinaryRepresentation >> i) & scale.KeySet.BinaryRepresentation) == scale.KeySet.BinaryRepresentation)
-                        {
-                            scaleIntervalsInLeqScale = scale.ToIntervals().Select(interval => (interval + i) % 12).OrderBy(interval => interval).ToList();
-                            break;
-                        }
-                    }
-
-                    Console.WriteLine($" - {leqScale.CalculateBase(),-2} - {leqScale,-17} - {string.Join(" ", scaleIntervalsInLeqScale)}");
-                }
+                //Store superscales                
+                leqScalesPerScale[scale] = noSubscales;
             }
         }
+    }
+}
+
+//print it
+int scaleLength = 1;
+foreach (var scale in leqScalesPerScale.Keys.OrderByDescending(key => key.NumberOfKeys()))
+{
+    if(scale.NumberOfKeys() > scaleLength)
+    {
+        Console.WriteLine($"-- Scale Length {scaleLength} --");
+        scaleLength = scale.NumberOfKeys();
+    }
+        
+    Console.WriteLine($"{scale.CalculateBase(),-2} - {scale}:");
+    foreach (var leqScale in leqScalesPerScale[scale].OrderByDescending(leqScale => leqScale.CalculateBase()).ThenByDescending(leqScale => leqScale.NumberOfKeys()))
+    {
+        //print which keys in the leq scale the original scale matches to
+        List<int> scaleIntervalsInLeqScale = new();
+        for (int i = 0; i < 12; i++)
+        {
+            if (((leqScale.KeySet.BinaryRepresentation >> i) & scale.KeySet.BinaryRepresentation) == scale.KeySet.BinaryRepresentation)
+            {
+                scaleIntervalsInLeqScale = scale.ToIntervals().Select(interval => (interval + i) % 12).OrderBy(interval => interval).ToList();
+                break;
+            }
+        }
+        Console.WriteLine($" - {leqScale.CalculateBase(),-2} - {leqScale,-17} - {string.Join(" ", scaleIntervalsInLeqScale)}");
     }
 }
 
