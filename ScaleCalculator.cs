@@ -299,6 +299,18 @@ namespace MusicTheory
             BinaryRepresentation = new(keysAsBinary);
         }
 
+        public List<Scale> CalculateFundamentalClass()
+        {
+            List<Scale> fundamentalClass = new();
+            for (int i = 0; i < 12; i++)
+            {
+                Tet12KeySet keySet = new Tet12KeySet((BinaryRepresentation >> i) | 1); //make sure there is a (virtual) fundamental for the scale
+                Scale scale = new(keySet);
+                fundamentalClass.Add(scale);
+            }
+            return fundamentalClass;
+        }
+
         public int CalculateBase()
         {
             return CalculateBase(Scale.TET12_STANDARD_FRACTION_APPROXIMATIONS);
@@ -436,7 +448,7 @@ namespace MusicTheory
 
         public int CalculateBase(Fraction[] keyFractionApproximations)
         {
-            return KeySet.CalculateBase(keyFractionApproximations);            
+            return KeySet.CalculateBase(keyFractionApproximations);
         }
 
         public int NumberOfKeys()
