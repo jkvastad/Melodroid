@@ -212,39 +212,45 @@ ScaleCalculator scaleCalculator = new();
 //    }
 //}
 
-//Print all scales with superclasses (including self) of lesser/equal base
-Dictionary<Scale, List<Scale>> leqScalesPerScale = CalculateAllLEQScalesPerScale(scaleCalculator);
-
-//print it
-int scaleLength = 1;
-foreach (var scale in leqScalesPerScale.Keys.OrderByDescending(key => key.NumberOfKeys()).ThenByDescending(key => key.ToString()))
+Scale majorChord = new(new[] { 0, 4, 7 });
+foreach (Scale scale in majorChord.KeySet.CalculateFundamentalClass().OrderByDescending(scale => scale.CalculateBase()))
 {
-    if (scale.NumberOfKeys() > scaleLength)
-    {
-        Console.WriteLine($"-- Scale Length {scaleLength} --");
-        scaleLength = scale.NumberOfKeys();
-    }
-
-    Console.WriteLine($"{scale.CalculateBase(),-2} - {scale}:");
-    foreach (var leqScale in leqScalesPerScale[scale].OrderByDescending(leqScale => leqScale.CalculateBase()).ThenByDescending(leqScale => leqScale.NumberOfKeys()))
-    {
-        //print which keys in the leq scale the original scale matches to, and the fundamental note shift
-        List<int> scaleIntervalsInLeqScale = new();
-        int fundamentalShift = 0;
-        for (int i = 0; i < 12; i++)
-        {
-            if (((leqScale.KeySet.BinaryRepresentation >> i) & scale.KeySet.BinaryRepresentation) == scale.KeySet.BinaryRepresentation)
-            {
-                scaleIntervalsInLeqScale = scale.ToIntervals().Select(interval => (interval + i) % 12).OrderBy(interval => interval).ToList();
-                fundamentalShift = (12 - i) % 12; //rotations of leq scale fundamental to match up with scale fundamental
-                break;
-            }
-        }
-        Console.WriteLine($" - {leqScale.CalculateBase(),-2} - {leqScale,-17}  -> {fundamentalShift} : {string.Join(" ", scaleIntervalsInLeqScale)}");
-    }
+    Console.WriteLine($"{scale.CalculateBase()} - {scale}");
 }
 
-QueryLEQSuperclass(leqScalesPerScale);
+////Print all scales with superclasses (including self) of lesser/equal base
+//Dictionary<Scale, List<Scale>> leqScalesPerScale = CalculateAllLEQScalesPerScale(scaleCalculator);
+
+////print it
+//int scaleLength = 1;
+//foreach (var scale in leqScalesPerScale.Keys.OrderByDescending(key => key.NumberOfKeys()).ThenByDescending(key => key.ToString()))
+//{
+//    if (scale.NumberOfKeys() > scaleLength)
+//    {
+//        Console.WriteLine($"-- Scale Length {scaleLength} --");
+//        scaleLength = scale.NumberOfKeys();
+//    }
+
+//    Console.WriteLine($"{scale.CalculateBase(),-2} - {scale}:");
+//    foreach (var leqScale in leqScalesPerScale[scale].OrderByDescending(leqScale => leqScale.CalculateBase()).ThenByDescending(leqScale => leqScale.NumberOfKeys()))
+//    {
+//        //print which keys in the leq scale the original scale matches to, and the fundamental note shift
+//        List<int> scaleIntervalsInLeqScale = new();
+//        int fundamentalShift = 0;
+//        for (int i = 0; i < 12; i++)
+//        {
+//            if (((leqScale.KeySet.BinaryRepresentation >> i) & scale.KeySet.BinaryRepresentation) == scale.KeySet.BinaryRepresentation)
+//            {
+//                scaleIntervalsInLeqScale = scale.ToIntervals().Select(interval => (interval + i) % 12).OrderBy(interval => interval).ToList();
+//                fundamentalShift = (12 - i) % 12; //rotations of leq scale fundamental to match up with scale fundamental
+//                break;
+//            }
+//        }
+//        Console.WriteLine($" - {leqScale.CalculateBase(),-2} - {leqScale,-17}  -> {fundamentalShift} : {string.Join(" ", scaleIntervalsInLeqScale)}");
+//    }
+//}
+
+//QueryLEQSuperclass(leqScalesPerScale);
 
 //PrintAllSuperClassHierarchies(scaleCalculator);
 //Scale chord = new(new int[] { 0, 2, 3, 7, 10 });
