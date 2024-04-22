@@ -213,56 +213,7 @@ ScaleCalculator scaleCalculator = new();
 //}
 
 //Print all scales with superclasses (including self) of lesser/equal base
-Dictionary<Scale, List<Scale>> leqScalesPerScale = new();
-foreach (int length in scaleCalculator.ScaleClassesOfLength.Keys.OrderByDescending(key => key))
-{
-    foreach (var scaleClass in scaleCalculator.ScaleClassesOfLength[length])
-    {
-        //Console.WriteLine($"- Scale Class #{scaleClassIndex}");        
-        foreach (var scale in scaleClass)
-        {
-            int scaleBase = scale.CalculateBase();
-            //start out with scaleclass legal bases less or equal to current base
-            List<Scale> leqBaseScales = scaleClass.Where(otherScale =>
-                ScaleCalculator.LEGAL_BASES.Contains(otherScale.CalculateBase()) &&
-                otherScale.CalculateBase() <= scaleBase &&
-                otherScale != scale).ToList();
-            //find all superclasses' legal bases less or equal to current base
-            foreach (var superClass in scaleCalculator.CalculateScaleSuperClasses(scale))
-            {
-                foreach (var superScale in superClass)
-                {
-                    if (ScaleCalculator.LEGAL_BASES.Contains(superScale.CalculateBase()) && superScale.CalculateBase() <= scaleBase)
-                        leqBaseScales.Add(superScale);
-                }
-            }
-            //If we got something, filter it
-            if (leqBaseScales.Count > 0)
-            {
-                //only save the largest superscale per base
-                List<Scale> noSubscales = new();
-                Dictionary<int, List<Scale>> baseAndScales = new();
-                foreach (var leqScale in leqBaseScales)
-                {
-                    var leqBase = leqScale.CalculateBase();
-                    if (!baseAndScales.ContainsKey(leqBase))
-                        baseAndScales[leqBase] = new();
-                    baseAndScales[leqBase].Add(leqScale);
-                }
-                foreach (var baseValue in baseAndScales.Keys)
-                {
-                    foreach (var leqScale in baseAndScales[baseValue])
-                    {
-                        if (!baseAndScales[baseValue].Any(otherScale => otherScale != leqScale && leqScale.IsSubScaleTo(otherScale)))
-                            noSubscales.Add(leqScale);
-                    }
-                }
-                //Store superscales                
-                leqScalesPerScale[scale] = noSubscales;
-            }
-        }
-    }
-}
+Dictionary<Scale, List<Scale>> leqScalesPerScale = CalculateAllLEQScalesPerScale(scaleCalculator);
 
 //print it
 int scaleLength = 1;
@@ -927,4 +878,60 @@ static void PrintChordProgressionsAndOrigins(Scale chord, Dictionary<Tet12KeySet
         }
         Console.WriteLine();
     }
+}
+
+static Dictionary<Scale, List<Scale>> CalculateAllLEQScalesPerScale(ScaleCalculator scaleCalculator)
+{
+    Dictionary<Scale, List<Scale>> leqScalesPerScale = new();
+    foreach (int length in scaleCalculator.ScaleClassesOfLength.Keys.OrderByDescending(key => key))
+    {
+        foreach (var scaleClass in scaleCalculator.ScaleClassesOfLength[length])
+        {
+            //Console.WriteLine($"- Scale Class #{scaleClassIndex}");        
+            foreach (var scale in scaleClass)
+            {
+                int scaleBase = scale.CalculateBase();
+                //start out with scaleclass legal bases less or equal to current base
+                List<Scale> leqBaseScales = scaleClass.Where(otherScale =>
+                    ScaleCalculator.LEGAL_BASES.Contains(otherScale.CalculateBase()) &&
+                    otherScale.CalculateBase() <= scaleBase &&
+                    otherScale != scale).ToList();
+                //find all superclasses' legal bases less or equal to current base
+                foreach (var superClass in scaleCalculator.CalculateScaleSuperClasses(scale))
+                {
+                    foreach (var superScale in superClass)
+                    {
+                        if (ScaleCalculator.LEGAL_BASES.Contains(superScale.CalculateBase()) && superScale.CalculateBase() <= scaleBase)
+                            leqBaseScales.Add(superScale);
+                    }
+                }
+                //If we got something, filter it
+                if (leqBaseScales.Count > 0)
+                {
+                    //only save the largest superscale per base
+                    List<Scale> noSubscales = new();
+                    Dictionary<int, List<Scale>> baseAndScales = new();
+                    foreach (var leqScale in leqBaseScales)
+                    {
+                        var leqBase = leqScale.CalculateBase();
+                        if (!baseAndScales.ContainsKey(leqBase))
+                            baseAndScales[leqBase] = new();
+                        baseAndScales[leqBase].Add(leqScale);
+                    }
+                    foreach (var baseValue in baseAndScales.Keys)
+                    {
+                        foreach (var leqScale in baseAndScales[baseValue])
+                        {
+                            if (!baseAndScales[baseValue].Any(otherScale => otherScale != leqScale && leqScale.IsSubScaleTo(otherScale)))
+                                noSubscales.Add(leqScale);
+                        }
+                    }
+                    //Store superscales                
+                    leqScalesPerScale[scale] = noSubscales;
+                }
+            }
+        }
+    }
+
+    return leqScalesPerScale;
 }
