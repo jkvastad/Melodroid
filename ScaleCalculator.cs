@@ -218,6 +218,16 @@ namespace MusicTheory
             return intervals;
         }
 
+        public static int operator |(Bit12Int left, int right)
+        {
+            return left._value | right;
+        }
+
+        public static Bit12Int operator |(Bit12Int left, Bit12Int right)
+        {
+            return new Bit12Int(left._value | (int)right);
+        }
+
         public static int operator &(Bit12Int left, int right)
         {
             return left._value & right;
@@ -287,6 +297,26 @@ namespace MusicTheory
                 keysAsBinary += 1 << key;
             }
             BinaryRepresentation = new(keysAsBinary);
+        }
+
+        public int CalculateBase()
+        {
+            return CalculateBase(Scale.TET12_STANDARD_FRACTION_APPROXIMATIONS);
+        }
+
+        public int CalculateBase(Fraction[] keyFractionApproximations)
+        {
+            if (keyFractionApproximations.Length != 12)
+                throw new ArgumentException("fraction approximations must equal number of keys in the scale");
+
+            Bit12Int binaryRepresentation = new(BinaryRepresentation | 1); //set first bit to represent (possibly virtual) fundamental
+            List<long> denominators = new();
+            for (int i = 0; i < 12; i++)
+            {
+                if (((binaryRepresentation >> i) & 1) == 1)
+                    denominators.Add((long)keyFractionApproximations[i].Denominator);
+            }
+            return (int)LCM(denominators.ToArray());
         }
 
         public Tet12KeySet RotateBinaryLeft()
@@ -406,14 +436,7 @@ namespace MusicTheory
 
         public int CalculateBase(Fraction[] keyFractionApproximations)
         {
-            if (keyFractionApproximations.Length != 12) throw new ArgumentException("fraction approximations must equal number of keys in the scale");
-            List<long> denominators = new();
-            for (int i = 0; i < 12; i++)
-            {
-                if (((KeySet.BinaryRepresentation >> i) & 1) == 1)
-                    denominators.Add((long)keyFractionApproximations[i].Denominator);
-            }
-            return (int)LCM(denominators.ToArray());
+            return KeySet.CalculateBase(keyFractionApproximations);            
         }
 
         public int NumberOfKeys()
