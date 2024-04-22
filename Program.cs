@@ -285,7 +285,7 @@ foreach (var scale in leqScalesPerScale.Keys.OrderByDescending(key => key.Number
             if (((leqScale.KeySet.BinaryRepresentation >> i) & scale.KeySet.BinaryRepresentation) == scale.KeySet.BinaryRepresentation)
             {
                 scaleIntervalsInLeqScale = scale.ToIntervals().Select(interval => (interval + i) % 12).OrderBy(interval => interval).ToList();
-                fundamentalShift = i;
+                fundamentalShift = (12 - i) % 12; //rotations of leq scale fundamental to match up with scale fundamental
                 break;
             }
         }
@@ -356,7 +356,7 @@ void QueryLEQSuperclass(Dictionary<Scale, List<Scale>> leqScalesPerScale)
                         if (((leqScale.KeySet.BinaryRepresentation >> i) & scale.KeySet.BinaryRepresentation) == scale.KeySet.BinaryRepresentation)
                         {
                             scaleIntervalsInLeqScale = scale.ToIntervals().Select(interval => (interval + i) % 12).OrderBy(interval => interval).ToList();
-                            fundamentalShift = i;
+                            fundamentalShift = (12 - i) % 12; //rotations of leq scale fundamental to match up with scale fundamental
                             break;
                         }
                     }
