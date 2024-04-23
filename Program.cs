@@ -212,10 +212,31 @@ ScaleCalculator scaleCalculator = new();
 //    }
 //}
 
-Scale majorChord = new(new[] { 0, 4, 7 });
-foreach (Scale scale in majorChord.KeySet.CalculateFundamentalClass().OrderByDescending(scale => scale.CalculateBase()))
+QueryFundamentalClassPerScale();
+
+void QueryFundamentalClassPerScale()
 {
-    Console.WriteLine($"{scale.CalculateBase()} - {scale}");
+    while (true)
+    {
+        Console.WriteLine($"Input space separated tet12 keys for fundamental class. (empty input to exit)");
+        string input = Console.ReadLine();
+
+        if (input.Length == 0) return;
+        Scale inputKeys = new(Array.ConvertAll(input.Split(' '), int.Parse));
+        foreach (Scale scale in inputKeys.KeySet.CalculateFundamentalClass().OrderByDescending(scale => scale.CalculateBase()))
+        {
+            int fundamentalShift = 0;
+            for (int i = 0; i < 12; i++)
+            {
+                if (((scale.KeySet.BinaryRepresentation >> i) & inputKeys.KeySet.BinaryRepresentation) == inputKeys.KeySet.BinaryRepresentation)
+                {
+                    fundamentalShift = (12 - i) % 12;
+                    break;
+                }
+            }
+            Console.WriteLine($"{scale.CalculateBase(),-2} - {fundamentalShift}: {scale}");
+        }
+    }
 }
 
 ////Print all scales with superclasses (including self) of lesser/equal base
