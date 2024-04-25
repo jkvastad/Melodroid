@@ -216,13 +216,13 @@ QueryFundamentalClassPerScale(scaleCalculator);
 
 void QueryFundamentalClassPerScale(ScaleCalculator scaleCalculator)
 {
-    Dictionary<Scale, List<Scale>> FundamentalClassForScale = new();
+    Dictionary<Scale, List<(int shift, Scale scale)>> FundamentalClassForScale = new();
     foreach (List<Scale> scaleClass in scaleCalculator.ScaleClasses)
     {
         foreach (Scale scale in scaleClass)
         {
             FundamentalClassForScale[scale] = scale.KeySet.CalculateFundamentalClass().
-                OrderByDescending(scale => scale.CalculateBase()).ThenByDescending(scale => scale.ToString()).ToList();
+                OrderByDescending(item => item.scale.CalculateBase()).ThenByDescending(item => item.scale.ToString()).ToList();
         }
     }
     while (true)
@@ -231,28 +231,19 @@ void QueryFundamentalClassPerScale(ScaleCalculator scaleCalculator)
         string input = Console.ReadLine();
 
         if (input.Length == 0)
-            return;        
+            return;
         //Reverse lookup - print all scale classes containing input keys
         else if (input.Split(' ').First() == "-")
         {
             Scale inputKeys = new(Array.ConvertAll(input.Split(' ')[1..], int.Parse));
-            foreach (List<Scale> scaleClass in FundamentalClassForScale.Values)
+            foreach (List<(int shift, Scale scale)> scaleClass in FundamentalClassForScale.Values)
             {
-                if (scaleClass.Contains(inputKeys))
+                if (scaleClass.Select(item => item.scale).Contains(inputKeys))
                 {
                     Console.WriteLine($"Fundamental class containing {inputKeys} found");
-                    foreach (Scale scale in scaleClass)
+                    foreach (var item in scaleClass)
                     {
-                        int fundamentalShift = 0;
-                        for (int i = 0; i < 12; i++)
-                        {
-                            if (((scale.KeySet.BinaryRepresentation >> i) & inputKeys.KeySet.BinaryRepresentation) == inputKeys.KeySet.BinaryRepresentation)
-                            {
-                                fundamentalShift = (12 - i) % 12;
-                                break;
-                            }
-                        }
-                        Console.WriteLine($"{scale.CalculateBase(),-3} - {(fundamentalShift.ToString() + ":"),-3} {scale}");
+                        Console.WriteLine($"{item.scale.CalculateBase(),-3} - {(item.shift.ToString() + ":"),-3} {item.scale}");
                     }
                 }
             }
@@ -261,28 +252,22 @@ void QueryFundamentalClassPerScale(ScaleCalculator scaleCalculator)
         else
         {
             Scale inputKeys = new(Array.ConvertAll(input.Split(' '), int.Parse));
-            Dictionary<HashSet<Scale>, HashSet<Scale>> scalesByScaleClass = new(HashSet<Scale>.CreateSetComparer());
-            foreach (Scale scale in FundamentalClassForScale[inputKeys])
+            //sort fundamental class by scale classes
+            Dictionary<HashSet<Scale>, HashSet<(int shift, Scale scale)>> scalesByScaleClass = new(HashSet<Scale>.CreateSetComparer());
+            foreach ((int shift, Scale scale) item in FundamentalClassForScale[inputKeys])
             {
-                var scaleClass = scale.CalculateScaleClass();
+                var scaleClass = item.scale.CalculateScaleClass();
                 if (!scalesByScaleClass.ContainsKey(scaleClass))
                     scalesByScaleClass[scaleClass] = new();
-                scalesByScaleClass[scaleClass].Add(scale);
+                scalesByScaleClass[scaleClass].Add(item);
             }
-            foreach (var scaleClass in scalesByScaleClass.Values.OrderByDescending(scaleClass => scaleClass.First().NumberOfKeys()))
+            foreach (HashSet<(int shift, Scale scale)>? scaleClass in
+                scalesByScaleClass.Values.OrderByDescending(item => item.First().scale.NumberOfKeys()))
             {
-                foreach (Scale scale in scaleClass.OrderByDescending(scale => scale.CalculateBase()).ThenByDescending(scale => scale.ToString()).ToList())
+                foreach ((int shift, Scale scale) item in
+                    scaleClass.OrderByDescending(item => item.scale.CalculateBase()).ThenByDescending(item => item.scale.ToString()).ToList())
                 {
-                    int fundamentalShift = 0;
-                    for (int i = 0; i < 12; i++)
-                    {
-                        if (((scale.KeySet.BinaryRepresentation >> i) & inputKeys.KeySet.BinaryRepresentation) == inputKeys.KeySet.BinaryRepresentation)
-                        {
-                            fundamentalShift = (12 - i) % 12;
-                            break;
-                        }
-                    }
-                    Console.WriteLine($"{scale.CalculateBase(),-3} - {(fundamentalShift.ToString() + ":"),-3} {scale}");
+                    Console.WriteLine($"{item.scale.CalculateBase(),-3} - {(item.shift.ToString() + ":"),-3} {item.scale}");
                 }
                 Console.WriteLine();
             }

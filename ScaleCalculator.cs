@@ -299,14 +299,15 @@ namespace MusicTheory
             BinaryRepresentation = new(keysAsBinary);
         }
 
-        public List<Scale> CalculateFundamentalClass()
+        //calculates scale and fundamental shift
+        public List<(int shift, Scale scale)> CalculateFundamentalClass()
         {
-            List<Scale> fundamentalClass = new();
+            List<(int shift, Scale scale)> fundamentalClass = new();
             for (int i = 0; i < 12; i++)
             {
                 Tet12KeySet keySet = new Tet12KeySet((BinaryRepresentation >> i) | 1); //make sure there is a (virtual) fundamental for the scale
-                Scale scale = new(keySet);
-                fundamentalClass.Add(scale);
+                
+                fundamentalClass.Add((i,new(keySet)));
             }
             return fundamentalClass;
         }
