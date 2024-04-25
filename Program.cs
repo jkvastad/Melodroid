@@ -259,10 +259,10 @@ void QueryFundamentalClassPerScale(ScaleCalculator scaleCalculator)
         }
         //ordinary lookup, print the fundamental class for input keys
         else
-        {
+        {            
             Scale inputKeys = new(Array.ConvertAll(input.Split(' '), int.Parse));
             foreach (Scale scale in FundamentalClassForScale[inputKeys])
-            {
+            {                
                 int fundamentalShift = 0;
                 for (int i = 0; i < 12; i++)
                 {

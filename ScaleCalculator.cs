@@ -461,9 +461,9 @@ namespace MusicTheory
             return Bit12Int.Bit12IntToIntervalString(KeySet.BinaryRepresentation);
         }
 
-        public List<Scale> CalculateScaleClass()
+        public HashSet<Scale> CalculateScaleClass()
         {
-            List<Scale> scaleClass = new();
+            HashSet<Scale> scaleClass = new();
             for (int i = 0; i < 12; i++)
             {
                 Tet12KeySet keySet = this >> i;
@@ -475,7 +475,7 @@ namespace MusicTheory
 
         public bool IsSubClassTo(Scale superClassScale)
         {
-            List<Scale> superClass = superClassScale.CalculateScaleClass();
+            HashSet<Scale> superClass = superClassScale.CalculateScaleClass();
 
             if (superClass.Any(IsSubScaleTo))
                 return true;
@@ -510,6 +510,16 @@ namespace MusicTheory
         public static bool operator !=(Scale left, Scale right)
         {
             return !(left == right);
+        }
+
+        public override bool Equals(object? obj)
+        {
+            return obj is Scale other && Equals(other);
+        }
+
+        public bool Equals(Scale other)
+        {
+            return KeySet == other.KeySet;
         }
     }
 
