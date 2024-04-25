@@ -212,6 +212,26 @@ ScaleCalculator scaleCalculator = new();
 //    }
 //}
 
+Dictionary<int, List<Scale>> scalePerBase = new();
+foreach (var scaleClass in scaleCalculator.ScaleClasses)
+{
+    foreach (Scale scale in scaleClass)
+    {
+        int scaleBase = scale.CalculateBase();
+        if (!scalePerBase.ContainsKey(scaleBase))
+            scalePerBase[scaleBase] = new();
+        scalePerBase[scaleBase].Add(scale);
+    }
+}
+foreach (var baseSize in scalePerBase.Keys.OrderByDescending(key => key))
+{
+    Console.WriteLine($"Base size {baseSize}");
+    foreach (var scale in scalePerBase[baseSize].OrderByDescending(scale => scale.ToString()))
+    {
+        Console.WriteLine(scale);
+    }
+}
+
 QueryFundamentalClassPerScale(scaleCalculator);
 
 void QueryFundamentalClassPerScale(ScaleCalculator scaleCalculator)
