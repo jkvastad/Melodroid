@@ -11,7 +11,7 @@ namespace MusicTheory
         public HashSet<List<Scale>> ScaleClasses = new();
         public Dictionary<Scale, List<Scale>> ScaleClassForScale = new();
         public Dictionary<int, List<List<Scale>>> ScaleClassesOfLength = new();
-        public Dictionary<int, List<Scale>> ScalesWithBase = new();
+        public Dictionary<int, HashSet<Scale>> ScalesWithBase = new();
 
         public static List<int> LEGAL_BASES = new() { 1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 24 };
         //public static List<int> LEGAL_BASES = new() { 1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 24 };
