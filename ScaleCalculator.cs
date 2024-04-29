@@ -306,8 +306,8 @@ namespace MusicTheory
             for (int i = 0; i < 12; i++)
             {
                 Tet12KeySet keySet = new Tet12KeySet((BinaryRepresentation >> i) | 1); //make sure there is a (virtual) fundamental for the scale
-                
-                fundamentalClass.Add((i,new(keySet)));
+
+                fundamentalClass.Add((i, new(keySet)));
             }
             return fundamentalClass;
         }
@@ -435,6 +435,11 @@ namespace MusicTheory
         public bool Contains(Tet12KeySet keySet)
         {
             return (KeySet.BinaryRepresentation & keySet.BinaryRepresentation) == keySet.BinaryRepresentation;
+        }
+
+        public bool Contains(Scale scale)
+        {
+            return Contains(scale.KeySet);
         }
 
         public List<int> ToIntervals()
