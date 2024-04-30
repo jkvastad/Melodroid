@@ -83,6 +83,33 @@ namespace MusicTheory
             }
         }
 
+        public Scale ScaleFromChords(List<(int fundamental, Scale scale)> chords)
+        {
+            HashSet<int> intervals = new();
+            foreach (var chord in chords)
+            {
+                foreach (var interval in chord.scale.ToIntervals())
+                {
+                    intervals.Add((interval + chord.fundamental) % 12);
+                }
+            }
+            return new(intervals.ToArray());
+        }
+
+        public List<(int, Scale)> ChordsInScale(Scale scale, List<Scale> chords)
+        {
+            List<(int, Scale)> chordsInScale = new();
+            for (int i = 0; i < 12; i++)
+            {
+                foreach (var chord in chords)
+                {
+                    if (((scale.KeySet.BinaryRepresentation >> i) & chord.KeySet.BinaryRepresentation) == chord.KeySet.BinaryRepresentation)
+                        chordsInScale.Add((i, chord));
+                }
+            }
+            return chordsInScale;
+        }
+
         public List<List<Scale>> CalculateScaleSuperClasses(Scale scale)
         {
             List<List<Scale>> superClasses = new();
@@ -412,7 +439,7 @@ namespace MusicTheory
                 new(3, 2),
                 new(8, 5),
                 new(5, 3),
-                new(9, 5), //perhaps it is 9/5, perhaps both? 9/5 produces more interesting results.
+                new(9, 5), //9/5, 7/4, 16/9? 9/5 seems good but some inconsistencies, e.g. 0 4 5 7 8 9 11 - seems like either 9 or 7 works but not both.
                 new(15, 8)
             ];
 

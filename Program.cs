@@ -252,8 +252,23 @@ foreach (var scaleClass in scaleCalculator.ScaleClassesOfLength[3].OrderByDescen
 }
 Console.WriteLine();
 
+(int, Scale) chord1 = (0, new([0, 5, 9]));
+(int, Scale) chord2 = (0, new([0, 4, 7]));
+(int, Scale) chord3 = (0, new([0, 3, 8]));
 
-QueryScaleClassProgressionsFromScale(scaleCalculator);
+List<(int, Scale)> chords = new() { chord1, chord2, chord3 };
+
+Scale scaleFromChords = scaleCalculator.ScaleFromChords(chords);
+Console.WriteLine(scaleFromChords);
+
+List<Scale> allowedChords = [new([0, 3, 6]), new([0, 3, 7]), new([0, 4, 7]), new([0, 4, 8])];
+List<(int fundamental, Scale scale)> chordsFromScale = scaleCalculator.ChordsInScale(scaleFromChords, allowedChords);
+foreach (var chord in chordsFromScale)
+{
+    Console.WriteLine($"{chord.fundamental} : {chord.scale}");
+}
+
+//QueryScaleClassProgressionsFromScale(scaleCalculator);
 
 QueryFundamentalClassPerScale(scaleCalculator);
 
