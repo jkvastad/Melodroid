@@ -1,5 +1,7 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using Fractions;
+using MathNet.Numerics.LinearAlgebra;
+using MathNet.Numerics.LinearAlgebra.Double;
 using Melanchall.DryWetMidi.Common;
 using Melanchall.DryWetMidi.Core;
 using Melanchall.DryWetMidi.Interaction;
@@ -38,6 +40,15 @@ Log.Logger = new LoggerConfiguration()
     .CreateLogger();
 
 ScaleCalculator scaleCalculator = new();
+
+
+Matrix<double> MajorChordMatrix = DenseMatrix.OfArray(new double[,] {
+        {0,8,5},
+        {4,0,9},
+        {7,3,0}});
+
+Console.WriteLine(MajorChordMatrix.ToString());
+
 
 ////TODO add logger for scales used (and other random outcomes during generation)
 //int timeDivision = 24;
@@ -212,96 +223,53 @@ ScaleCalculator scaleCalculator = new();
 //    }
 //}
 
-//Show only keys resulting from collapsed scales:
-//Deep copy
-Dictionary<int, HashSet<Scale>> keysWithBase = new();
-foreach (var key in scaleCalculator.ScalesWithBase.Keys)
-{
-    keysWithBase[key] = [.. scaleCalculator.ScalesWithBase[key]];
-}
-//Remove subscales
-foreach (var key in scaleCalculator.ScalesWithBase.Keys)
-{
-    foreach (Scale value in scaleCalculator.ScalesWithBase[key])
-    {
-        if (keysWithBase[key].Any(scale => scale.Contains(value) && scale != value))
-        {
-            keysWithBase[key].Remove(value);
-        }
-    }
-}
-//print results
-foreach (var baseSize in keysWithBase.Keys.OrderByDescending(key => key))
-{
-    Console.WriteLine($"Base size {baseSize}");
-    foreach (var scale in keysWithBase[baseSize].OrderByDescending(scale => scale.ToString()))
-    {
-        Console.WriteLine(scale);
-    }
-}
+////Show only keys resulting from collapsed scales:
+////Deep copy
+//Dictionary<int, HashSet<Scale>> keysWithBase = new();
+//foreach (var key in scaleCalculator.ScalesWithBase.Keys)
+//{
+//    keysWithBase[key] = [.. scaleCalculator.ScalesWithBase[key]];
+//}
+////Remove subscales
+//foreach (var key in scaleCalculator.ScalesWithBase.Keys)
+//{
+//    foreach (Scale value in scaleCalculator.ScalesWithBase[key])
+//    {
+//        if (keysWithBase[key].Any(scale => scale.Contains(value) && scale != value))
+//        {
+//            keysWithBase[key].Remove(value);
+//        }
+//    }
+//}
+////print results
+//foreach (var baseSize in keysWithBase.Keys.OrderByDescending(key => key))
+//{
+//    Console.WriteLine($"Base size {baseSize}");
+//    foreach (var scale in keysWithBase[baseSize].OrderByDescending(scale => scale.ToString()))
+//    {
+//        Console.WriteLine(scale);
+//    }
+//}
 
-Console.WriteLine();
-Console.WriteLine("Scales classes of length 3");
-foreach (var scaleClass in scaleCalculator.ScaleClassesOfLength[3].OrderByDescending(scaleClass => scaleClass.MinBy(scale => scale.CalculateBase()).CalculateBase()))
-{
-    foreach (var scale in scaleClass.OrderBy(scale => scale.CalculateBase()))
-    {
-        Console.Write($"{scale.CalculateBase(),-3}: {scale,-8} / ");
-    }
-    Console.WriteLine();
-}
-Console.WriteLine();
-
-(int, Scale) chord1 = (0, new([0, 5, 9]));
-(int, Scale) chord2 = (0, new([0, 4, 7]));
-(int, Scale) chord3 = (0, new([0, 3, 8]));
-
-List<(int, Scale)> chords = new() { chord1, chord2, chord3 };
-
-Scale scaleFromChords = scaleCalculator.ScaleFromChords(chords);
-Console.WriteLine(scaleFromChords);
-
-List<Scale> allowedChords = [new([0, 3, 6]), new([0, 3, 7]), new([0, 4, 7]), new([0, 4, 8])];
-List<(int fundamental, Scale scale)> chordsFromScale = scaleCalculator.ChordsInScale(scaleFromChords, allowedChords);
-foreach (var chord in chordsFromScale)
-{
-    Console.WriteLine($"{chord.fundamental} : {chord.scale}");
-}
+//Console.WriteLine();
+//Console.WriteLine("Scales classes of length 3");
+//foreach (var scaleClass in scaleCalculator.ScaleClassesOfLength[3].OrderByDescending(scaleClass => scaleClass.MinBy(scale => scale.CalculateBase()).CalculateBase()))
+//{
+//    foreach (var scale in scaleClass.OrderBy(scale => scale.CalculateBase()))
+//    {
+//        Console.Write($"{scale.CalculateBase(),-3}: {scale,-8} / ");
+//    }
+//    Console.WriteLine();
+//}
+//Console.WriteLine();
 
 //QueryScaleClassProgressionsFromScale(scaleCalculator);
 
-QueryFundamentalClassPerScale(scaleCalculator);
+//QueryFundamentalClassPerScale(scaleCalculator);
 
-void QueryScaleClassProgressionsFromScale(ScaleCalculator scaleCalculator)
-{
-    while (true)
-    {
-        Console.WriteLine($"Input space separated tet12 keys for scale class progressions. (empty input to exit)");
-        string input = Console.ReadLine();
+//QueryChordsInScale(scaleCalculator);
 
-        if (input.Length == 0)
-            return;
 
-        Scale inputScale = new(Array.ConvertAll(input.Split(' '), int.Parse));
-        int formatLength = inputScale.NumberOfKeys() * 3;
-        //Get scale class of input scale with fundamental shifts
-        IEnumerable<(int shift, Scale scale)> scaleClass =
-            inputScale.KeySet.CalculateFundamentalClass().Where(shiftAndScale => shiftAndScale.scale.NumberOfKeys() == inputScale.NumberOfKeys());
-        foreach (var outerScale in scaleClass)
-        {
-            Console.Write($"{outerScale.shift,-2}{$"({outerScale.scale.CalculateBase()})",-4}: {outerScale.scale.ToString().PadRight(formatLength)} - ");
-            foreach (var innerScale in scaleClass)
-            {
-                if (outerScale == innerScale)
-                    continue;
-                //inner scale progression from outer scale expressed as input scale
-                int scaleShift = (12 + (outerScale.shift - innerScale.shift)) % 12;
-                Console.Write($"{scaleShift,-2}{$"({innerScale.scale.CalculateBase()})",-4}: {innerScale.scale.ToString().PadRight(formatLength)} / ");
-            }
-            Console.WriteLine();
-        }
-    }
-}
 
 ////Print all scales with superclasses (including self) of lesser/equal base
 //Dictionary<Scale, List<Scale>> leqScalesPerScale = CalculateAllLEQScalesPerScale(scaleCalculator);
@@ -372,6 +340,56 @@ void QueryScaleClassProgressionsFromScale(ScaleCalculator scaleCalculator)
 //e.g.:
 //BeatBox beatBox = new BeatBox();
 //WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, "melodroid testing");
+void QueryChordsInScale(ScaleCalculator scaleCalculator)
+{
+    while (true)
+    {
+        Console.WriteLine($"Input space separated tet12 keys for chords in scale. (empty input to exit)");
+        string input = Console.ReadLine();
+
+        if (input.Length == 0)
+            return;
+
+        Scale inputScale = new(Array.ConvertAll(input.Split(' '), int.Parse));
+
+        List<Scale> chordsOfInterest = [new([0, 2, 5]), new([0, 2, 7]), new([0, 3, 6]), new([0, 3, 7]), new([0, 4, 7]), new([0, 4, 8])];
+
+        foreach ((int fundamental, Scale scale) chord in scaleCalculator.ChordsInScale(inputScale, chordsOfInterest))
+        {
+            Console.WriteLine($"{chord.fundamental} : {chord.scale}");
+        }
+    }
+}
+void QueryScaleClassProgressionsFromScale(ScaleCalculator scaleCalculator)
+{
+    while (true)
+    {
+        Console.WriteLine($"Input space separated tet12 keys for scale class progressions. (empty input to exit)");
+        string input = Console.ReadLine();
+
+        if (input.Length == 0)
+            return;
+
+        Scale inputScale = new(Array.ConvertAll(input.Split(' '), int.Parse));
+        int formatLength = inputScale.NumberOfKeys() * 3;
+        //Get scale class of input scale with fundamental shifts
+        IEnumerable<(int shift, Scale scale)> scaleClass =
+            inputScale.KeySet.CalculateFundamentalClass().Where(shiftAndScale => shiftAndScale.scale.NumberOfKeys() == inputScale.NumberOfKeys());
+        foreach (var outerScale in scaleClass)
+        {
+            Console.Write($"{outerScale.shift,-2}{$"({outerScale.scale.CalculateBase()})",-4}: {outerScale.scale.ToString().PadRight(formatLength)} - ");
+            foreach (var innerScale in scaleClass)
+            {
+                if (outerScale == innerScale)
+                    continue;
+                //inner scale progression from outer scale expressed as input scale
+                int scaleShift = (12 + (outerScale.shift - innerScale.shift)) % 12;
+                Console.Write($"{scaleShift,-2}{$"({innerScale.scale.CalculateBase()})",-4}: {innerScale.scale.ToString().PadRight(formatLength)} / ");
+            }
+            Console.WriteLine();
+        }
+    }
+}
 
 void QueryFundamentalClassPerScale(ScaleCalculator scaleCalculator)
 {

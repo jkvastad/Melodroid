@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="Fractions" Version="7.3.0" />
+    <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
     <PackageReference Include="Melanchall.DryWetMidi" Version="7.0.1" />
     <PackageReference Include="morelinq" Version="4.1.0" />
     <PackageReference Include="Serilog" Version="3.1.1" />
