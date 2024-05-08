@@ -484,7 +484,7 @@ void QueryFundamentalClassPerScale(ScaleCalculator scaleCalculator)
                     scalesByScaleClass[scaleClass] = new();
                 scalesByScaleClass[scaleClass].Add(item);
             }
-            //print scales grouped by scale classes
+            //print scales grouped by scale classes            
             foreach (HashSet<(int shift, Scale scale)>? scaleClass in
                 scalesByScaleClass.Values.OrderByDescending(item => item.First().scale.NumberOfKeys()))
             {
@@ -497,7 +497,7 @@ void QueryFundamentalClassPerScale(ScaleCalculator scaleCalculator)
                         $"{item.scale.ToString().PadRight(3 * item.scale.NumberOfKeys())} - " +
                         $"{item.scale.Transpose().CalculateBase(),-3} " +
                         $"{item.scale.Transpose().ToString().PadRight(3 * item.scale.NumberOfKeys())} " +
-                        $"({$"{new Tet12KeySet(item.scale.Transpose().ToIntervals().Select(interval => (interval + 4) % 12).ToArray())
+                        $"({$"{new Tet12KeySet(item.scale.Transpose().ToIntervals().Select(interval => (interval + item.shift) % 12).ToArray())
                         .ToIntervalString()})"
                         .PadRight(3 * item.scale.NumberOfKeys())}");
                 }
