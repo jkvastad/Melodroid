@@ -321,7 +321,13 @@ namespace MusicTheory
             int keysAsBinary = 0;
             foreach (int key in keysAsIntervals)
             {
-                keysAsBinary += 1 << key;
+                int transposedKey = key;
+                while (transposedKey < 0)
+                    transposedKey += 12;
+                while (transposedKey > 12)
+                    transposedKey -= 12;
+
+                keysAsBinary += 1 << transposedKey;
             }
             BinaryRepresentation = new(keysAsBinary);
         }
@@ -469,6 +475,11 @@ namespace MusicTheory
             return Contains(scale.KeySet);
         }
 
+        public override string ToString()
+        {
+            return Bit12Int.Bit12IntToIntervalString(KeySet.BinaryRepresentation);
+        }
+
         public List<int> ToIntervals()
         {
             return Bit12Int.Bit12IntToIntervals(KeySet.BinaryRepresentation);
@@ -489,9 +500,9 @@ namespace MusicTheory
             return KeySet.NumberOfKeys();
         }
 
-        public override string ToString()
+        public Scale Transpose()
         {
-            return Bit12Int.Bit12IntToIntervalString(KeySet.BinaryRepresentation);
+            return new(ToIntervals().Select(interval => -interval).ToArray());
         }
 
         public HashSet<Scale> CalculateScaleClass()
