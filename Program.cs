@@ -495,7 +495,11 @@ void QueryFundamentalClassPerScale(ScaleCalculator scaleCalculator)
                         $"{item.scale.CalculateBase(),-3} - " +
                         $"{item.shift.ToString() + ":",-3} " +
                         $"{item.scale.ToString().PadRight(3 * item.scale.NumberOfKeys())} - " +
-                        $"{item.scale.Transpose().ToString().PadRight(3 * item.scale.NumberOfKeys())}");
+                        $"{item.scale.Transpose().CalculateBase(),-3} " +
+                        $"{item.scale.Transpose().ToString().PadRight(3 * item.scale.NumberOfKeys())} " +
+                        $"({$"{new Tet12KeySet(item.scale.Transpose().ToIntervals().Select(interval => (interval + 4) % 12).ToArray())
+                        .ToIntervalString()})"
+                        .PadRight(3 * item.scale.NumberOfKeys())}");
                 }
                 Console.WriteLine();
             }
