@@ -309,9 +309,9 @@ Console.WriteLine();
 
 //QueryScaleClassProgressionsFromScale(scaleCalculator);
 
-QueryFundamentalClassPerScale(scaleCalculator);
+//QueryFundamentalClassPerScale(scaleCalculator);
 
-//QueryChordsInScale(scaleCalculator);
+QueryChordsInScale(scaleCalculator);
 
 
 
@@ -386,21 +386,38 @@ QueryFundamentalClassPerScale(scaleCalculator);
 //WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, "melodroid testing");
 void QueryChordsInScale(ScaleCalculator scaleCalculator)
 {
+    List<Scale> scalesOfInterest = [new([0, 1, 3, 5, 6, 8, 9, 10]), new([0, 2, 4, 5, 7, 9, 11]), new([0, 3, 4, 6, 7, 8, 10])];
+    Console.WriteLine("Matching input against scales:");
+    foreach (Scale scale in scalesOfInterest)
+    {
+        Console.WriteLine($"{scale.CalculateBase(),-2}: {scale}");
+    }
+
     while (true)
     {
-        Console.WriteLine($"Input space separated tet12 keys for chords in scale. (empty input to exit)");
+        Console.WriteLine($"Input space separated tet12 keys for chord placements in scales. (empty input to exit)");
         string input = Console.ReadLine();
 
         if (input.Length == 0)
             return;
 
-        Scale inputScale = new(Array.ConvertAll(input.Split(' '), int.Parse));
-
-        List<Scale> chordsOfInterest = [new([0, 2, 5]), new([0, 2, 7]), new([0, 3, 6]), new([0, 3, 7]), new([0, 4, 7]), new([0, 4, 8])];
-
-        foreach ((int fundamental, Scale scale) chord in scaleCalculator.ChordsInScale(inputScale, chordsOfInterest))
+        Scale inputChord = new(Array.ConvertAll(input.Split(' '), int.Parse));
+        foreach (Scale scale in scalesOfInterest)
         {
-            Console.WriteLine($"{chord.fundamental} : {chord.scale}");
+            for (int i = 0; i < 12; i++)
+            {
+                //Check if rotated scale is still a scale
+                Tet12KeySet rotatedKeys = scale >> i;
+                if ((rotatedKeys.BinaryRepresentation & 1) == 1)
+                {
+                    Scale rotatedScale = new(rotatedKeys);
+                    if (rotatedScale.Contains(inputChord))
+                    {
+                        Console.Write($"{i} ");
+                    }
+                }
+            }
+            Console.WriteLine();
         }
     }
 }
