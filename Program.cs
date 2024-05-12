@@ -12,6 +12,7 @@ using Serilog.Core;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Text;
 using static MusicTheory.MusicTheoryUtils;
 using static System.Formats.Asn1.AsnWriter;
 using Scale = MusicTheory.Scale;
@@ -395,13 +396,22 @@ void QueryChordsInScale(ScaleCalculator scaleCalculator)
 
     while (true)
     {
-        Console.WriteLine($"Input space separated tet12 keys for chord placements in scales. (empty input to exit)");
-        string input = Console.ReadLine();
+        Console.WriteLine($"Input space separated tet12 keys for chord progression source. (empty input to exit)");
+        string sourceChordInput = Console.ReadLine();
 
-        if (input.Length == 0)
+        if (sourceChordInput.Length == 0)
             return;
 
-        Scale inputChord = new(Array.ConvertAll(input.Split(' '), int.Parse));
+        Scale sourceChord = new(Array.ConvertAll(sourceChordInput.Split(' '), int.Parse));
+
+        Console.WriteLine($"Input space separated tet12 keys for chord progression target. (empty input to exit)");
+        string targetChordInput = Console.ReadLine();
+
+        if (targetChordInput.Length == 0)
+            return;
+
+        Scale targetChord = new(Array.ConvertAll(targetChordInput.Split(' '), int.Parse));
+
         foreach (Scale scale in scalesOfInterest)
         {
             for (int i = 0; i < 12; i++)
@@ -411,9 +421,25 @@ void QueryChordsInScale(ScaleCalculator scaleCalculator)
                 if ((rotatedKeys.BinaryRepresentation & 1) == 1)
                 {
                     Scale rotatedScale = new(rotatedKeys);
-                    if (rotatedScale.Contains(inputChord))
+                    if (rotatedScale.Contains(sourceChord))
                     {
-                        Console.Write($"{i} ");
+                        Console.Write($"{i} (");
+                        StringBuilder sb = new();
+                        //look for targets
+                        for (int j = 0; j < 12; j++)
+                        {
+                            Tet12KeySet rotatedKeys2 = rotatedScale >> j;
+                            if ((rotatedKeys2.BinaryRepresentation & 1) == 1)
+                            {
+                                Scale rotatedScale2 = new(rotatedKeys2);
+                                if (rotatedScale2.Contains(targetChord))
+                                {
+                                    sb.Append($"{j} ");
+                                }
+                            }
+                        }
+                        sb.Length--;
+                        Console.Write(sb.ToString() + ") ");
                     }
                 }
             }
