@@ -307,14 +307,13 @@ foreach (var scaleClass in scaleCalculator.ScaleClassesOfLength[scaleLength].Ord
 }
 Console.WriteLine();
 
-
 //QueryScaleClassProgressionsFromScale(scaleCalculator);
 
 //QueryFundamentalClassPerScale(scaleCalculator);
 
-QueryChordsInScale(scaleCalculator);
+//QueryChordsInScale(scaleCalculator);
 
-
+QueryChordMultiplicityScale(scaleCalculator);
 
 ////Print all scales with superclasses (including self) of lesser/equal base
 //Dictionary<Scale, List<Scale>> leqScalesPerScale = CalculateAllLEQScalesPerScale(scaleCalculator);
@@ -385,6 +384,64 @@ QueryChordsInScale(scaleCalculator);
 //e.g.:
 //BeatBox beatBox = new BeatBox();
 //WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, "melodroid testing");
+
+void QueryChordMultiplicityScale(ScaleCalculator scaleCalculator)
+{
+    List<Scale> scalesOfInterest = [new([0, 1, 3, 5, 6, 8, 9, 10]), new([0, 2, 4, 5, 7, 9, 11]), new([0, 3, 4, 6, 7, 8, 10])];
+
+    Console.WriteLine("Matching input against scales:");
+    foreach (Scale scale in scalesOfInterest)
+    {
+        Console.WriteLine($"{scale.CalculateBase(),-2}: {scale}");
+    }
+
+    while (true)
+    {
+        Console.WriteLine($"Input space separated tet12 keys for chord multiplicity scale. (empty input to exit)");
+        string sourceChordInput = Console.ReadLine();
+
+        if (sourceChordInput.Length == 0)
+            return;
+
+        Scale sourceChord = new(Array.ConvertAll(sourceChordInput.Split(' '), int.Parse));
+
+
+        foreach (Scale scale in scalesOfInterest)
+        {
+            List<Scale> scalesMatchingChord = new();
+            for (int i = 0; i < 12; i++)
+            {
+                //Check if rotated scale is still a scale
+                Tet12KeySet rotatedKeys = scale >> i;
+                if ((rotatedKeys.BinaryRepresentation & 1) == 1)
+                {
+                    Scale rotatedScale = new(rotatedKeys);
+                    if (rotatedScale.Contains(sourceChord))
+                    {
+                        scalesMatchingChord.Add(rotatedScale);
+                    }
+                }
+            }
+            int[] keyMultiplicity = new int[12];
+            for (int i = 0; i < 12; i++)
+            {
+                foreach (Scale match in scalesMatchingChord)
+                {
+                    Bit12Int key = new(1 << i);
+                    if ((key & match.KeySet.BinaryRepresentation) == key)
+                        keyMultiplicity[i]++;
+                }
+            }
+            foreach (int multiplicity in keyMultiplicity)
+            {
+                Console.Write($"{multiplicity} ");
+            }
+
+            Console.WriteLine();
+        }
+    }
+}
+
 void QueryChordsInScale(ScaleCalculator scaleCalculator)
 {
     List<Scale> scalesOfInterest = [new([0, 1, 3, 5, 6, 8, 9, 10]), new([0, 2, 4, 5, 7, 9, 11]), new([0, 3, 4, 6, 7, 8, 10])];
