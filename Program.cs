@@ -404,11 +404,10 @@ void QueryChordMultiplicityScale(ScaleCalculator scaleCalculator)
             return;
 
         Scale sourceChord = new(Array.ConvertAll(sourceChordInput.Split(' '), int.Parse));
-
-
+        //Find all matches for source chord per scale of interest
         foreach (Scale scale in scalesOfInterest)
         {
-            List<Scale> scalesMatchingChord = new();
+            List<int> scaleOffsets = new();
             for (int i = 0; i < 12; i++)
             {
                 //Check if rotated scale is still a scale
@@ -418,23 +417,49 @@ void QueryChordMultiplicityScale(ScaleCalculator scaleCalculator)
                     Scale rotatedScale = new(rotatedKeys);
                     if (rotatedScale.Contains(sourceChord))
                     {
-                        scalesMatchingChord.Add(rotatedScale);
+                        scaleOffsets.Add(i);
                     }
                 }
             }
-            int[] keyMultiplicity = new int[12];
+            //From matching scales, find superposition of all keys after octave normalization (key multiplicity)            
+            Dictionary<int, Scale> rotatedScales = new();
+            foreach (int offset in scaleOffsets)
+            {
+                rotatedScales[offset] = new(scale >> offset); //always legal scale
+            }
+
+            List<int>[] keyMultiplicity = new List<int>[12];
+            for (int i = 0; i < keyMultiplicity.Length; i++)
+            {
+                keyMultiplicity[i] = new();
+            }
+
             for (int i = 0; i < 12; i++)
             {
-                foreach (Scale match in scalesMatchingChord)
+                foreach (var pairOffsetScale in rotatedScales)
                 {
-                    Bit12Int key = new(1 << i);
-                    if ((key & match.KeySet.BinaryRepresentation) == key)
-                        keyMultiplicity[i]++;
+                    //Check if key on octave is in the scale
+                    if (((pairOffsetScale.Value >> i).BinaryRepresentation & 1) == 1)
+                        keyMultiplicity[i].Add(pairOffsetScale.Key);
                 }
             }
-            foreach (int multiplicity in keyMultiplicity)
+            //Print results
+            for (int i = 0; i < 12; i++)
             {
-                Console.Write($"{multiplicity} ");
+                Console.Write($"{i}".PadRight(3));
+            }
+            Console.WriteLine();
+            Console.WriteLine();
+            for (int row = 0; row < keyMultiplicity.Max(columnValues => columnValues.Count); row++)
+            {
+                for (int column = 0; column < 12; column++)
+                {
+                    if (row < keyMultiplicity[column].Count)
+                        Console.Write($"{keyMultiplicity[column][row]}".PadRight(3));
+                    else
+                        Console.Write("   ");
+                }
+                Console.WriteLine();
             }
 
             Console.WriteLine();
