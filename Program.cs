@@ -150,8 +150,8 @@ Console.WriteLine(result);
 ////PrintScalesWithDesiredBase();
 ////WriteAllScaleClassesToMidi(folderPath);
 
-//Scale chord = new(new int[] { 0, 6, 8 });
-//List<List<(int keySteps, Scale legalBaseScale)>> chordProgressionsPerSuperClass = scaleCalculator.CalculateChordProgressionsPerSuperClass(chord);
+Scale chord = new(new int[] { 0, 4, 7 });
+List<List<(int keySteps, Scale legalBaseScale)>> chordProgressionsPerSuperClass = scaleCalculator.CalculateSuperClassProgressionsPerSuperClass(chord);
 //int superClassIndex = 0;
 //foreach (var superClass in chordProgressionsPerSuperClass)
 //{
@@ -162,20 +162,20 @@ Console.WriteLine(result);
 //    }
 //}
 
-////Order progressions by physical keys, noting the origin (scale and key steps causing the keys)
-//Dictionary<Tet12KeySet, List<(int keySteps, Scale legalBaseScale)>> chordProgressionsAndOrigins = OrderChordProgressionsByPhysicalKeys(chordProgressionsPerSuperClass);
-////PrintChordProgressionsAndOrigins(chord, chordProgressionsAndOrigins);
+//Order progressions by physical keys, noting the origin (scale and key steps causing the keys)
+Dictionary<Tet12KeySet, List<(int keySteps, Scale legalBaseScale)>> chordProgressionsAndOrigins = OrderChordProgressionsByPhysicalKeys(chordProgressionsPerSuperClass);
+//PrintChordProgressionsAndOrigins(chord, chordProgressionsAndOrigins);
 
 ////Console.WriteLine();
 
-//// Collapse subscales into superscales if origin keys steps and base is preserved
-//Dictionary<Tet12KeySet, List<(int keySteps, Scale legalBaseScale)>> chordProgressionsAndOriginsCollapsed = CollapseChordProgressionsByPhysicalKeys(chordProgressionsAndOrigins);
-//PrintChordProgressionsAndOrigins(chord, chordProgressionsAndOriginsCollapsed);
+// Collapse subscales into superscales if origin keys steps and base is preserved
+Dictionary<Tet12KeySet, List<(int keySteps, Scale legalBaseScale)>> chordProgressionsAndOriginsCollapsed = CollapseChordProgressionsByPhysicalKeys(chordProgressionsAndOrigins);
+PrintChordProgressionsAndOrigins(chord, chordProgressionsAndOriginsCollapsed);
 
 //QueryChordInProgression(chordProgressionsAndOriginsCollapsed);
 
 //// Order progressions by key step length
-//Dictionary<int, HashSet<Scale>> chordProgressionsPerKeyStep = new();
+Dictionary<int, HashSet<Scale>> chordProgressionsPerKeyStep = new();
 //foreach (List<(int keySteps, Scale legalKeys)> chordProgressions in chordProgressionsPerSuperClass)
 //{
 //    foreach ((int keySteps, Scale legalKeys) chordProgression in chordProgressions)
@@ -197,42 +197,42 @@ Console.WriteLine(result);
 //    }
 //}
 
-////Order progressions by steps then by base then by scale size, keeping only unique supersets
-//foreach (int keySteps in chordProgressionsPerKeyStep.Keys.OrderByDescending(keyStep => keyStep))
-//{
-//    Dictionary<int, HashSet<Scale>> largestProgressionScalesPerBase = new();
-//    foreach (Scale scale in chordProgressionsPerKeyStep[keySteps])
-//    {
-//        int scaleBase = scale.GetBase();
+//Order progressions by steps then by base then by scale size, keeping only unique supersets
+foreach (int keySteps in chordProgressionsPerKeyStep.Keys.OrderByDescending(keyStep => keyStep))
+{
+    Dictionary<int, HashSet<Scale>> largestProgressionScalesPerBase = new();
+    foreach (Scale scale in chordProgressionsPerKeyStep[keySteps])
+    {
+        int scaleBase = scale.CalculateBase();
 
-//        if (!largestProgressionScalesPerBase.ContainsKey(scaleBase))
-//            largestProgressionScalesPerBase[scaleBase] = new();
+        if (!largestProgressionScalesPerBase.ContainsKey(scaleBase))
+            largestProgressionScalesPerBase[scaleBase] = new();
 
-//        HashSet<Scale> largestScalesForBase = largestProgressionScalesPerBase[scaleBase];
-//        bool isScaleUnique = true;
-//        foreach (Scale largestScale in largestScalesForBase)
-//        {
-//            if (largestScale.isSubscaleTo(scale))
-//            {
-//                largestScalesForBase.Remove(largestScale);
-//                largestScalesForBase.Add(scale);
-//                break;
-//            }
-//            if (scale.isSubscaleTo(largestScale)) //Scales are subscales to themselves
-//                isScaleUnique = false;
-//        }
-//        if (isScaleUnique)
-//            largestScalesForBase.Add(scale);
-//    }
-//    Console.WriteLine($"- {keySteps} -");
-//    foreach (int scaleBase in largestProgressionScalesPerBase.Keys.OrderByDescending(scaleBase => scaleBase))
-//    {
-//        foreach (Scale scale in largestProgressionScalesPerBase[scaleBase])
-//        {
-//            Console.WriteLine($"{$"{scale.GetBase()}:".PadRight(3)}{scale}");
-//        }
-//    }
-//}
+        HashSet<Scale> largestScalesForBase = largestProgressionScalesPerBase[scaleBase];
+        bool isScaleUnique = true;
+        foreach (Scale largestScale in largestScalesForBase)
+        {
+            if (largestScale.IsSubScaleTo(scale))
+            {
+                largestScalesForBase.Remove(largestScale);
+                largestScalesForBase.Add(scale);
+                break;
+            }
+            if (scale.IsSubScaleTo(largestScale)) //Scales are subscales to themselves
+                isScaleUnique = false;
+        }
+        if (isScaleUnique)
+            largestScalesForBase.Add(scale);
+    }
+    Console.WriteLine($"- {keySteps} -");
+    foreach (int scaleBase in largestProgressionScalesPerBase.Keys.OrderByDescending(scaleBase => scaleBase))
+    {
+        foreach (Scale scale in largestProgressionScalesPerBase[scaleBase])
+        {
+            Console.WriteLine($"{$"{scale.CalculateBase()}:".PadRight(3)}{scale}");
+        }
+    }
+}
 
 ////Print all scaleclasses with multiple legal bases
 //int scaleClassIndex = 0;
@@ -309,11 +309,11 @@ Console.WriteLine();
 
 //QueryScaleClassProgressionsFromScale(scaleCalculator);
 
-//QueryFundamentalClassPerScale(scaleCalculator);
+QueryFundamentalClassPerScale(scaleCalculator);
 
 //QueryChordsInScale(scaleCalculator);
 
-QueryChordMultiplicityScale(scaleCalculator);
+//QueryChordMultiplicityScale(scaleCalculator);
 
 ////Print all scales with superclasses (including self) of lesser/equal base
 //Dictionary<Scale, List<Scale>> leqScalesPerScale = CalculateAllLEQScalesPerScale(scaleCalculator);
@@ -454,8 +454,9 @@ void QueryChordMultiplicityScale(ScaleCalculator scaleCalculator)
             {
                 for (int column = 0; column < 12; column++)
                 {
+                    //print scale root
                     if (row < keyMultiplicity[column].Count)
-                        Console.Write($"{keyMultiplicity[column][row]}".PadRight(3));
+                        Console.Write($"{(12 - keyMultiplicity[column][row]) % 12}".PadRight(3));
                     else
                         Console.Write("   ");
                 }
