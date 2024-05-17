@@ -308,9 +308,9 @@ ScaleCalculator scaleCalculator = new();
 //}
 //Console.WriteLine();
 
-Console.WriteLine(scaleCalculator.ScaleClasses.Count);
-
 //QueryScaleClassProgressionsFromScale(scaleCalculator);
+
+PrintScaleClassUniqueness(scaleCalculator);
 
 QueryFundamentalClassPerScale(scaleCalculator);
 
@@ -387,6 +387,31 @@ QueryFundamentalClassPerScale(scaleCalculator);
 //e.g.:
 //BeatBox beatBox = new BeatBox();
 //WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, "melodroid testing");
+
+void PrintScaleClassUniqueness(ScaleCalculator scaleCalculator)
+{
+    Dictionary<int, List<HashSet<Scale>>> scaleClassByUniqueness = new();
+    foreach (var scaleClass in scaleCalculator.ScaleClasses)
+    {
+        HashSet<Scale> uniqueScales = [.. scaleClass];
+
+        if (!scaleClassByUniqueness.ContainsKey(uniqueScales.Count))
+            scaleClassByUniqueness[uniqueScales.Count] = new();
+        scaleClassByUniqueness[uniqueScales.Count].Add(uniqueScales);
+    }
+    foreach (int uniqueness in scaleClassByUniqueness.Keys.OrderByDescending(key => key))
+    {
+        Console.WriteLine($"Uniqueness {uniqueness}:");
+        foreach (var uniqueScales in scaleClassByUniqueness[uniqueness].OrderByDescending(scaleClass => scaleClass.First().NumberOfKeys()))
+        {
+            Console.WriteLine();
+            foreach (var uniqueScale in uniqueScales)
+            {
+                Console.WriteLine(uniqueScale);
+            }
+        }
+    }
+}
 
 void PrintAllSymmetricScaleClasses(ScaleCalculator scaleCalculator)
 {
