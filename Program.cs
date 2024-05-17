@@ -388,7 +388,7 @@ QueryFundamentalClassPerScale(scaleCalculator);
 //BeatBox beatBox = new BeatBox();
 //WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, "melodroid testing");
 
-void PrintScaleClassUniqueness(ScaleCalculator scaleCalculator)
+void PrintScaleClassUniqueness(ScaleCalculator scaleCalculator, bool printBase = true)
 {
     Dictionary<int, List<HashSet<Scale>>> scaleClassByUniqueness = new();
     foreach (var scaleClass in scaleCalculator.ScaleClasses)
@@ -407,6 +407,8 @@ void PrintScaleClassUniqueness(ScaleCalculator scaleCalculator)
             Console.WriteLine();
             foreach (var uniqueScale in uniqueScales)
             {
+                if (printBase)
+                    Console.Write($"{uniqueScale.CalculateBase(),-4} ");
                 Console.WriteLine(uniqueScale);
             }
         }
