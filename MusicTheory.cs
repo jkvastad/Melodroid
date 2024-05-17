@@ -17,8 +17,7 @@ namespace MusicTheory
 
     public class Measure
     {
-        public int TimeDivision { get; }
-        //TODO add support for simultaneous note values. Simply convert to array of lists? How does MIDI handle multiple simultaneous notes with note on/off?
+        public int TimeDivision { get; }       
         public Dictionary<int, int>?[] Velocities { get; } //array position is time division steps in measure, key is MIDI note, value is velocity
 
         public Measure(NoteValue?[] noteValues) : this(noteValues.Select(noteValue =>
