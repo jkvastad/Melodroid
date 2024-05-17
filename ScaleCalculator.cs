@@ -445,7 +445,7 @@ namespace MusicTheory
                 new(3, 2),
                 new(8, 5),
                 new(5, 3),
-                new(9, 5), //9/5, 7/4, 16/9? 9/5 seems good but some inconsistencies, e.g. 0 4 5 7 8 9 11 - seems like either 9 or 7 works but not both. 16/9 has symmetry with 9/8.
+                new(16, 9), //9/5, 7/4, 16/9? 9/5 seems good but some inconsistencies, e.g. 0 4 5 7 8 9 11 - seems like either 9 or 7 works but not both. 16/9 has symmetry with 9/8.
                 new(15, 8)
             ];
 
