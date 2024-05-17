@@ -308,15 +308,15 @@ ScaleCalculator scaleCalculator = new();
 //}
 //Console.WriteLine();
 
+Console.WriteLine(scaleCalculator.ScaleClasses.Count);
+
 //QueryScaleClassProgressionsFromScale(scaleCalculator);
 
-//QueryFundamentalClassPerScale(scaleCalculator);
+QueryFundamentalClassPerScale(scaleCalculator);
 
 //QueryChordsInScale(scaleCalculator);
 
 //QueryChordMultiplicityScale(scaleCalculator);
-
-PrintAllSymetricScaleClasses(scaleCalculator);
 
 ////Print all scales with superclasses (including self) of lesser/equal base
 //Dictionary<Scale, List<Scale>> leqScalesPerScale = CalculateAllLEQScalesPerScale(scaleCalculator);
@@ -388,21 +388,21 @@ PrintAllSymetricScaleClasses(scaleCalculator);
 //BeatBox beatBox = new BeatBox();
 //WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, "melodroid testing");
 
-void PrintAllSymetricScaleClasses(ScaleCalculator scaleCalculator)
+void PrintAllSymmetricScaleClasses(ScaleCalculator scaleCalculator)
 {
     foreach (var scaleClass in scaleCalculator.ScaleClasses)
     {
         Scale firstScale = scaleClass.First();
-        bool isSymetric = true;
+        bool isSymmetric = true;
         foreach (var scale in scaleClass)
         {
             if (firstScale != scale)
             {
-                isSymetric = false;
+                isSymmetric = false;
                 break;
             }
         }
-        if (isSymetric)
+        if (isSymmetric)
         {
             Console.WriteLine(firstScale);
         }
