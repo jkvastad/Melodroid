@@ -105,10 +105,9 @@ BeatBox beatBox = new BeatBox(rhythmMaker, scaleClassRotationHarmonizer);
 List<Measure> melodyMeasures = beatBox.MakeMeasures();
 beatBox.WriteMeasuresToMidi(melodyMeasures, folderPath, "scale_class_rotation_test", true);
 
-//ChordMeasureHarmonizer chordHarmonizer = new(measureHarmonizer.ChordPerMeasure, 4, scaleCalculator);
-//List<Measure> chordMeasures = chordHarmonizer.MeasuresFromVelocities(rhythmMaker.VelocityMeasures);
-
-//beatBox.WriteMeasuresToMidi(chordMeasures, folderPath, "beat_box_chord_test", true);
+ChordMeasureHarmonizer chordHarmonizer = new(scaleClassRotationHarmonizer.ChordPerMeasure, 4);
+List<Measure> chordMeasures = chordHarmonizer.MeasuresFromVelocities(rhythmMaker.VelocityMeasures);
+beatBox.WriteMeasuresToMidi(chordMeasures, folderPath, "scale_class_rotation_chord_test", true);
 
 
 //TODO: Check for patterns in complex chords, e.g. in 3/2, 5/4 the 3/2 interval loops twice, cutting 5/4 in "half" and creating a mirrored version -
