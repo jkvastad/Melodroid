@@ -83,10 +83,6 @@ namespace MusicTheory
             short songTimeDivision = (short)MusicTheoryUtils.LCM(_measures.Select((measure, index) => (long)measure.TimeDivision).ToArray());
             int totalMidiTicks = 0;
 
-            //NoteValue initialNoteValue = NoteValue.SilentNote;
-            //int initialNoteStart = totalMidiTicks;
-            //currentNotes[(initialNoteValue.Name, initialNoteValue.Octave)] = (initialNoteValue, initialNoteStart);
-
             foreach (Measure measure in _measures)
             {
                 foreach (Dictionary<int, int>? velocitiesAtTimeDivision in measure.Velocities)
@@ -95,7 +91,7 @@ namespace MusicTheory
                     {
                         foreach (int noteNumber in velocitiesAtTimeDivision.Keys)
                         {
-                            if (activeNotes.ContainsKey(noteNumber)) //&& currentNotes[(noteNumber.Name, noteNumber.Octave)].noteValue.Velocity > 0)
+                            if (activeNotes.ContainsKey(noteNumber))
                             {
                                 AddCurrentNote(noteNumber);
                                 activeNotes.Remove(noteNumber);
