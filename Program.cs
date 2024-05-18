@@ -88,20 +88,26 @@ ScaleCalculator scaleCalculator = new();
 
 
 ////TODO add logger for scales used (and other random outcomes during generation)
-//int timeDivision = 24;
-//int numberOfMeasures = 32;
-//int beatsPerMeasure = 8;
-//SimpleIsochronicRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, beatsPerMeasure);
+int timeDivision = 24;
+int numberOfMeasures = 32;
+int beatsPerMeasure = 8;
+SimpleIsochronicRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, beatsPerMeasure);
 
-//Scale initialScale = new(new int[] { 0, 4, 7 });
+Scale initialScale = new(new int[] { 0, 4, 7 });
+
+ScaleClassRotationHarmonizer scaleClassRotationHarmonizer = new(initialScale);
+BeatBox beatBox = new BeatBox(rhythmMaker, scaleClassRotationHarmonizer);
+
 ////RandomWalkMeasureHarmonizer measureHarmonizer = new(initialScale);
 //PathWalkMeasureHarmonizer measureHarmonizer = new(initialScale, initialScale, 4);
 //BeatBox beatBox = new BeatBox(rhythmMaker, measureHarmonizer);
-//List<Measure> melodyMeasures = beatBox.MakeMeasures();
-//beatBox.WriteMeasuresToMidi(melodyMeasures, folderPath, "beat_box_test", true);
+
+List<Measure> melodyMeasures = beatBox.MakeMeasures();
+beatBox.WriteMeasuresToMidi(melodyMeasures, folderPath, "scale_class_rotation_test", true);
 
 //ChordMeasureHarmonizer chordHarmonizer = new(measureHarmonizer.ChordPerMeasure, 4, scaleCalculator);
 //List<Measure> chordMeasures = chordHarmonizer.MeasuresFromVelocities(rhythmMaker.VelocityMeasures);
+
 //beatBox.WriteMeasuresToMidi(chordMeasures, folderPath, "beat_box_chord_test", true);
 
 
@@ -310,9 +316,13 @@ ScaleCalculator scaleCalculator = new();
 
 //QueryScaleClassProgressionsFromScale(scaleCalculator);
 
-PrintScaleClassUniqueness(scaleCalculator);
+//PrintScaleClassUniqueness(scaleCalculator);
 
-QueryFundamentalClassPerScale(scaleCalculator);
+
+//TODO nånting händer med 0 1 8 och 0 7 11 - känns väldigt annorlunda om man inleder med 0 7 (11) eller 0 8 (1). Som om första intervallet 
+//PrintScaleClassAmbiguity(scaleCalculator, true);
+
+//QueryFundamentalClassPerScale(scaleCalculator);
 
 //QueryChordsInScale(scaleCalculator);
 
@@ -388,6 +398,35 @@ QueryFundamentalClassPerScale(scaleCalculator);
 //BeatBox beatBox = new BeatBox();
 //WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, "melodroid testing");
 
+//Ambiguity is the number of fundamental note placements in the scaleclass producing identical scales - e.g. 0 3 6 9 has ambiguity 4, while 0 4 7 has ambiguity 1
+void PrintScaleClassAmbiguity(ScaleCalculator scaleCalculator, bool printBase = true)
+{
+    Dictionary<int, List<HashSet<Scale>>> scaleClassesByAmbiguity = new();
+    foreach (var scaleClass in scaleCalculator.ScaleClasses)
+    {
+        HashSet<Scale> uniqueScales = [.. scaleClass];
+        int ambiguity = 1 + scaleClass.First().NumberOfKeys() - uniqueScales.Count;
+
+        if (!scaleClassesByAmbiguity.ContainsKey(ambiguity))
+            scaleClassesByAmbiguity[ambiguity] = new();
+        scaleClassesByAmbiguity[ambiguity].Add(uniqueScales);
+    }
+    foreach (int ambiguity in scaleClassesByAmbiguity.Keys.OrderByDescending(key => key))
+    {
+        Console.WriteLine($"Ambiguity {ambiguity} ({scaleClassesByAmbiguity[ambiguity].Count}): ");
+        foreach (var uniqueScales in scaleClassesByAmbiguity[ambiguity].OrderByDescending(scaleClass => scaleClass.First().NumberOfKeys()))
+        {
+            Console.WriteLine();
+            foreach (var uniqueScale in uniqueScales)
+            {
+                if (printBase)
+                    Console.Write($"{uniqueScale.CalculateBase(),-4} ");
+                Console.WriteLine(uniqueScale);
+            }
+        }
+    }
+}
+//Uniqueness is the number of distinct scales in a scale class, e.g. 0 3 6 9 has uniqueness 1 despite having 4 rotations.
 void PrintScaleClassUniqueness(ScaleCalculator scaleCalculator, bool printBase = true)
 {
     Dictionary<int, List<HashSet<Scale>>> scaleClassByUniqueness = new();
@@ -438,7 +477,7 @@ void PrintAllSymmetricScaleClasses(ScaleCalculator scaleCalculator)
 
 void QueryChordMultiplicityScale(ScaleCalculator scaleCalculator)
 {
-    List<Scale> scalesOfInterest = [new([0, 1, 3, 5, 6, 8, 9, 10]), new([0, 2, 4, 5, 7, 9, 11]), new([0, 3, 4, 6, 7, 8, 10])];
+    List<Scale> scalesOfInterest = [new([0, 1, 3, 5, 6, 8, 9]), new([0, 2, 4, 5, 7, 9, 11])];
 
     Console.WriteLine("Matching input against scales:");
     foreach (Scale scale in scalesOfInterest)
@@ -521,7 +560,7 @@ void QueryChordMultiplicityScale(ScaleCalculator scaleCalculator)
 
 void QueryChordsInScale(ScaleCalculator scaleCalculator)
 {
-    List<Scale> scalesOfInterest = [new([0, 1, 3, 5, 6, 8, 9, 10]), new([0, 2, 4, 5, 7, 9, 11]), new([0, 3, 4, 6, 7, 8, 10])];
+    List<Scale> scalesOfInterest = [new([0, 1, 3, 5, 6, 8, 9]), new([0, 2, 4, 5, 7, 9, 11])];
     Console.WriteLine("Matching input against scales:");
     foreach (Scale scale in scalesOfInterest)
     {

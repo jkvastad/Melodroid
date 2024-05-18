@@ -62,8 +62,8 @@ public interface IMeasureHarmonizer
     //Velocity 0 is note off
     //Else note on
     //Cannot represent crescendo - how to differ between change of velocity for old note and new note with new velocity value?
-    // - Midi has no explicit support for crescendo - must use expression/volume messages, so perhaps the problem is elsewhere in any way.
-    public List<Measure> MeasuresFromVelocities(List<int?[]> velocities);
+    // - Midi has no explicit support for crescendo - must use expression/volume messages, so perhaps the problem is elsewhere any way.
+    public List<Measure> MeasuresFromVelocities(List<int?[]> velocityMeasures);
 }
 
 //Creates rhythms (lists with time division number of nullable velocities) according to some heuristic (e.g. simply isochrony or triplet swing time)
@@ -72,6 +72,11 @@ public interface IRhythmMeasureMaker
     public List<int?[]> MakeVelocities();
 }
 
+//Example Usage:
+//int timeDivision = 24;
+//int numberOfMeasures = 32;
+//int beatsPerMeasure = 8;
+//SimpleIsochronicRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, beatsPerMeasure);
 public class SimpleIsochronicRhythmMaker(int timeDivision, int numberOfMeasures, int beatsPerMeasure, int velocity = 64) : IRhythmMeasureMaker
 {
     public int TimeDivision = timeDivision;
@@ -94,6 +99,49 @@ public class SimpleIsochronicRhythmMaker(int timeDivision, int numberOfMeasures,
             VelocityMeasures.Add(velocities);
         }
         return VelocityMeasures;
+    }
+}
+
+public class ScaleClassRotationHarmonizer(Scale initialChord) : IMeasureHarmonizer
+{
+    public Scale CurrentChord = initialChord;
+    public NoteName CurrentFundamental = 0;
+    public int CurrentOctave = 4;
+
+    public List<Measure> MeasuresFromVelocities(List<int?[]> velocityMeasures)
+    {
+        List<Measure> measures = new();
+        //get scale class with fundamental shifts, but skip self movement
+        List<(int shift, Scale scale)> scaleClass = CurrentChord.KeySet.CalculateFundamentalClass().Where(
+            item => item.scale.NumberOfKeys() == CurrentChord.NumberOfKeys() &&
+            item.scale != CurrentChord)
+            .ToList();
+        List<int> currentIntervals = CurrentChord.ToIntervals();
+        foreach (var velocityMeasure in velocityMeasures)
+        {            
+            Dictionary<int, int>?[] measureNoteValues = new Dictionary<int, int>?[velocityMeasure.Length];
+            for (int i = 0; i < velocityMeasure.Length; i++)
+            {
+                if (velocityMeasure[i] == null)
+                    continue;
+
+                measureNoteValues[i] = new();
+
+                //play random interval from current intervals and fundamental 
+                int noteNameNumber = ((int)(CurrentFundamental + currentIntervals.TakeRandom())) % 12; //C is 0
+                int noteNumber = ((CurrentOctave + 1) * 12) + noteNameNumber;
+                int velocity = (int)velocityMeasure[i]!; //checked for null on the lines above                
+                measureNoteValues[i]![noteNumber] = velocity; //created the dictionary on the lines above
+            }
+            Measure measure = new(measureNoteValues);
+            measures.Add(measure);
+
+            //Update current chord and fundamental
+            //Chord to any other scale class chord
+            //Normalize chord by moving fundamental - chord stays the same, fundamental changes            
+            CurrentFundamental = (NoteName)(((int)CurrentFundamental + scaleClass.TakeRandom().shift) % 12);
+        }
+        return measures;
     }
 }
 
