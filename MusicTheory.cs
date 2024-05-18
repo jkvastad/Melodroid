@@ -18,7 +18,7 @@ namespace MusicTheory
     public class Measure
     {
         public int TimeDivision { get; }       
-        public Dictionary<int, int>?[] Velocities { get; } //array position is time division steps in measure, key is MIDI note, value is velocity
+        public Dictionary<int, int>?[] MIDIKeys { get; } //array position is time division steps in measure, key is MIDI note, value is velocity
 
         public Measure(NoteValue?[] noteValues) : this(noteValues.Select(noteValue =>
         {
@@ -29,7 +29,7 @@ namespace MusicTheory
         { }
         public Measure(Dictionary<int, int>?[] noteValues)
         {
-            Velocities = noteValues;
+            MIDIKeys = noteValues;
             TimeDivision = noteValues.Length;
         }
     }
@@ -85,7 +85,7 @@ namespace MusicTheory
 
             foreach (Measure measure in _measures)
             {
-                foreach (Dictionary<int, int>? velocitiesAtTimeDivision in measure.Velocities)
+                foreach (Dictionary<int, int>? velocitiesAtTimeDivision in measure.MIDIKeys)
                 {
                     if (velocitiesAtTimeDivision != null)
                     {

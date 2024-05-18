@@ -30,7 +30,7 @@ public class ChordMeasureHarmonizer(
             //close notes from previous measure
             if (measureIndex > 0)
             {
-                foreach (int noteNumber in measures[^1].Velocities[0]!.Keys)
+                foreach (int noteNumber in measures[^1].MIDIKeys[0]!.Keys)
                 {
                     measureNoteValues[0]![noteNumber] = 0;
                 }

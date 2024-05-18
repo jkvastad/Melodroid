@@ -15,6 +15,7 @@ public class ScaleClassRotationHarmonizer(Scale initialChord) : IMeasureHarmoniz
         ChordPerMeasure.Clear();
 
         List<Measure> measures = new();
+        int measureIndex = 0;
         //get scale class with fundamental shifts, but skip self movement
         List<(int shift, Scale scale)> scaleClass = CurrentChord.KeySet.CalculateFundamentalClass().Where(
             item => item.scale.NumberOfKeys() == CurrentChord.NumberOfKeys() &&
@@ -22,7 +23,6 @@ public class ScaleClassRotationHarmonizer(Scale initialChord) : IMeasureHarmoniz
             .ToList();
         List<int> currentIntervals = CurrentChord.ToIntervals();
 
-        int measureIndex = 0;
         foreach (var velocityMeasure in velocityMeasures)
         {
             ChordPerMeasure.Add((CurrentFundamental, CurrentChord)); //used by chord harmonizers
@@ -33,7 +33,7 @@ public class ScaleClassRotationHarmonizer(Scale initialChord) : IMeasureHarmoniz
             measureNoteValues[0] = new();
             if (measureIndex > 0)
             {
-                foreach (int noteNumber in measures[^1].Velocities[0]!.Keys)
+                foreach (int noteNumber in measures[^1].MIDIKeys.Where(item => item != null).SelectMany(item => item!.Keys).ToHashSet())
                 {
                     measureNoteValues[0]![noteNumber] = 0;
                 }
@@ -44,7 +44,8 @@ public class ScaleClassRotationHarmonizer(Scale initialChord) : IMeasureHarmoniz
                 if (velocityMeasure[i] == null)
                     continue;
 
-                measureNoteValues[i] = new();
+                if (measureNoteValues[i] == null) //might be created earlier for i = 0 when closing old notes
+                    measureNoteValues[i] = new();
 
                 //play random interval from current intervals and fundamental 
                 int noteNameNumber = ((int)(CurrentFundamental + currentIntervals.TakeRandom())) % 12; //C is 0
