@@ -89,12 +89,14 @@ ScaleCalculator scaleCalculator = new();
 
 
 ////TODO add logger for scales used (and other random outcomes during generation)
-int timeDivision = 24;
+int timeDivision = 16;
 int numberOfMeasures = 32;
 int beatsPerMeasure = 8;
-SimpleIsochronicRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, beatsPerMeasure);
+int deviationsPerMeasure = 1;
+//SimpleIsochronicRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, beatsPerMeasure);
+SimpleGrooveRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, beatsPerMeasure, deviationsPerMeasure);
 
-Scale initialScale = new(new int[] { 0, 3, 7 });
+Scale initialScale = new(new int[] { 0, 4, 7 });
 
 //ScaleClassRotationHarmonizer scaleClassRotationHarmonizer = new(initialScale);
 //BeatBox beatBox = new BeatBox(rhythmMaker, scaleClassRotationHarmonizer);
@@ -110,11 +112,11 @@ BeatBox beatBox = new BeatBox(rhythmMaker, randomChordNoteHarmonizer);
 //BeatBox beatBox = new BeatBox(rhythmMaker, measureHarmonizer);
 
 List<Measure> melodyMeasures = beatBox.MakeMeasures();
-beatBox.WriteMeasuresToMidi(melodyMeasures, folderPath, "random_minor_note_test", true);
+beatBox.WriteMeasuresToMidi(melodyMeasures, folderPath, "random_note_groove_test", true);
 
 ChordMeasureHarmonizer chordHarmonizer = new(randomChordNoteHarmonizer.ChordPerMeasure, 4);
 List<Measure> chordMeasures = chordHarmonizer.MeasuresFromVelocities(rhythmMaker.VelocityMeasures);
-beatBox.WriteMeasuresToMidi(chordMeasures, folderPath, "random_minor_note_chord_test", true);
+beatBox.WriteMeasuresToMidi(chordMeasures, folderPath, "random_note_groove_chord_test", true);
 
 
 //TODO: Check for patterns in complex chords, e.g. in 3/2, 5/4 the 3/2 interval loops twice, cutting 5/4 in "half" and creating a mirrored version -

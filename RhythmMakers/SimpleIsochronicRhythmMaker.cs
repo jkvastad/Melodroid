@@ -1,5 +1,4 @@
-﻿
-//Example Usage:
+﻿//Example Usage:
 //int timeDivision = 24;
 //int numberOfMeasures = 32;
 //int beatsPerMeasure = 8;
@@ -17,10 +16,10 @@ public class SimpleIsochronicRhythmMaker(int timeDivision, int numberOfMeasures,
         for (int i = 0; i < NumberOfMeasures; i++)
         {
             int?[] velocities = new int?[TimeDivision];
-            int beatsPerDivision = TimeDivision / BeatsPerMeasure;
+            int divisionsPerBeat = TimeDivision / BeatsPerMeasure;
             for (int j = 0; j < velocities.Length; j++)
             {
-                if (j % beatsPerDivision == 0)
+                if (j % divisionsPerBeat == 0)
                     velocities[j] = Velocity;
             }
             VelocityMeasures.Add(velocities);
