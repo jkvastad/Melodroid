@@ -233,9 +233,9 @@ namespace MusicTheory
             return sb.ToString();
         }
 
-        public static List<int> Bit12IntToIntervals(Bit12Int binaryKeySet)
+        public static HashSet<int> Bit12IntToIntervals(Bit12Int binaryKeySet)
         {
-            List<int> intervals = new();
+            HashSet<int> intervals = new();
             for (int i = 0; i < 12; i++)
             {
                 if (((binaryKeySet >> i) & 1) == 1)
@@ -424,6 +424,11 @@ namespace MusicTheory
             return Bit12Int.Bit12IntToIntervalString(BinaryRepresentation);
         }
 
+        public HashSet<int> ToIntervals()
+        {
+            return Bit12Int.Bit12IntToIntervals(BinaryRepresentation);
+        }
+
         internal bool IsSubsetTo(Tet12KeySet superSet)
         {
             return (BinaryRepresentation & superSet.BinaryRepresentation) == BinaryRepresentation;
@@ -480,7 +485,7 @@ namespace MusicTheory
             return Bit12Int.Bit12IntToIntervalString(KeySet.BinaryRepresentation);
         }
 
-        public List<int> ToIntervals()
+        public HashSet<int> ToIntervals()
         {
             return Bit12Int.Bit12IntToIntervals(KeySet.BinaryRepresentation);
         }

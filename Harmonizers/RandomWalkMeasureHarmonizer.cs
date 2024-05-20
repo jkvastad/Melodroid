@@ -18,7 +18,7 @@ public class RandomWalkMeasureHarmonizer(Scale currentScale) : IMeasureHarmonize
         ChordPerMeasure.Clear();
         foreach (int?[] velocityMeasure in velocities)
         {
-            List<int> currentIntervals = CurrentScale.ToIntervals();
+            List<int> currentIntervals = CurrentScale.ToIntervals().OrderBy(interval => interval).ToList();
             ChordPerMeasure.Add((CurrentFundamental, CurrentScale));
             Dictionary<int, int>?[] measureNoteValues = new Dictionary<int, int>?[velocityMeasure.Length];
             for (int i = 0; i < velocityMeasure.Length; i++)

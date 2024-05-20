@@ -10,18 +10,18 @@ public class ScaleClassRotationHarmonizer(Scale initialChord) : IMeasureHarmoniz
 
     public List<(int fundamentalNoteNumber, Scale scale)> ChordPerMeasure = new();
 
+    //TODO use relative scale class rotations as well - e.g. for 0 4 7 there is 4 8 11, i.e. 0 4 7 from 0 3 8.
+    //TODO create class for transpose motion (e.g. 0 4 7 has transpose 0 5 8). Also use relative transpose similar to relative scale class rotations.
     public List<Measure> MeasuresFromVelocities(List<int?[]> velocityMeasures)
     {
         ChordPerMeasure.Clear();
 
         List<Measure> measures = new();
         int measureIndex = 0;
-        //get scale class with fundamental shifts, but skip self movement
-        List<(int shift, Scale scale)> scaleClass = CurrentChord.KeySet.CalculateFundamentalClass().Where(
-            item => item.scale.NumberOfKeys() == CurrentChord.NumberOfKeys() &&
-            item.scale != CurrentChord)
-            .ToList();
-        List<int> currentIntervals = CurrentChord.ToIntervals();
+        //get all scale translations, same as the set of all interval values for the scale class
+        HashSet<int> scaleTranslations = CurrentChord.CalculateScaleClass().SelectMany(scale => scale.ToIntervals()).ToHashSet();        
+        
+        HashSet<int> currentIntervals = CurrentChord.ToIntervals();
 
         foreach (var velocityMeasure in velocityMeasures)
         {
@@ -60,7 +60,7 @@ public class ScaleClassRotationHarmonizer(Scale initialChord) : IMeasureHarmoniz
             //Update current chord and fundamental
             //Chord to any other scale class chord
             //Normalize chord by moving fundamental - chord stays the same, fundamental changes            
-            CurrentFundamental = (CurrentFundamental + scaleClass.TakeRandom().shift) % 12;
+            CurrentFundamental = (CurrentFundamental + scaleTranslations.TakeRandom()) % 12;
         }
         return measures;
     }

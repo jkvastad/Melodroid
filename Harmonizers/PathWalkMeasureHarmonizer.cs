@@ -41,7 +41,7 @@ public class PathWalkMeasureHarmonizer(Scale originScale, Scale destinationScale
         HashSet<int> activeNotes = new();
         foreach (int?[] velocityMeasure in velocities)
         {
-            List<int> currentIntervals = CurrentScale.ToIntervals();
+            List<int> currentIntervals = CurrentScale.ToIntervals().OrderBy(interval => interval).ToList();
             ChordPerMeasure.Add((_currentFundamentalNoteNumber, CurrentScale));
             Dictionary<int, int>?[] measureNoteValues = new Dictionary<int, int>?[velocityMeasure.Length];
 
