@@ -4,14 +4,14 @@ using Scale = MusicTheory.Scale;
 
 //Supply with chords from melody to generate measures with block chords at measure start
 public class ChordMeasureHarmonizer(
-    List<(int fundamentalNoteNumber, Tet12KeySet scale)> chordProgressionsPerMeasure,
+    List<(int fundamentalNoteNumber, Scale scale)> chordProgressionsPerMeasure,
     int initialOctave
     ) : IMeasureHarmonizer
 {
     public int CurrentOctave = initialOctave;
     Scale _currentScale;
     int _currentFundamentalNoteNumber;
-    public List<(int fundamentalNoteNumber, Tet12KeySet chordKeys)> ChordProgressionsPerMeasure { get; } = chordProgressionsPerMeasure;
+    public List<(int fundamentalNoteNumber, Scale scale)> ChordProgressionsPerMeasure { get; } = chordProgressionsPerMeasure;
     Scale semitoneScale = new(new[] { 0, 1 }); //no good in chord
     Scale tripleWholeToneScale = new(new[] { 0, 2, 4 }); //also seems tense
 
@@ -22,11 +22,8 @@ public class ChordMeasureHarmonizer(
 
         foreach (int?[] velocityMeasure in velocities)
         {
-            var chordIntervals = ChordProgressionsPerMeasure[measureIndex].chordKeys.ToIntervals();
-            var smallestChordInterval = chordIntervals.Min();
-            _currentScale = new(chordIntervals.Select(interval => interval - smallestChordInterval).ToArray());
-            _currentFundamentalNoteNumber = (ChordProgressionsPerMeasure[measureIndex].fundamentalNoteNumber - smallestChordInterval + 12) % 12;
-
+            _currentScale = ChordProgressionsPerMeasure[measureIndex].scale;
+            _currentFundamentalNoteNumber = ChordProgressionsPerMeasure[measureIndex].fundamentalNoteNumber;
             Dictionary<int, int>?[] measureNoteValues = new Dictionary<int, int>?[velocityMeasure.Length];
             measureNoteValues[0] = new();
 

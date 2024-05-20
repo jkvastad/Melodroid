@@ -10,11 +10,11 @@ namespace Melodroid.Harmonizers
     //TODO completely random notes
     //Random chords
     public class RandomNoteHarmonizer : IMeasureHarmonizer
-    {        
+    {
         public int CurrentFundamental = 0;
         public int CurrentOctave = 4;
 
-        public List<(int fundamentalNoteNumber, Tet12KeySet scale)> ChordPerMeasure = new();
+        public List<(int fundamentalNoteNumber, Scale scale)> ChordPerMeasure = new();
         public List<Measure> MeasuresFromVelocities(List<int?[]> velocityMeasures)
         {
             ChordPerMeasure.Clear();
@@ -61,8 +61,11 @@ namespace Melodroid.Harmonizers
                 measureIndex++;
 
                 //Save used notes
-                Tet12KeySet chord = new Tet12KeySet(usedNotes.ToArray());
-                ChordPerMeasure.Add((CurrentFundamental, chord)); //used by chord harmonizers
+                var usedIntervals = usedNotes.OrderBy(i => i).ToList();
+                var effectiveFundamental = usedIntervals.Min();
+                var effectiveChordIntervals = usedIntervals.Select(interval => interval - effectiveFundamental);
+                Scale chord = new(effectiveChordIntervals.ToArray());
+                ChordPerMeasure.Add((effectiveFundamental, chord)); //used by chord harmonizers
             }
             return measures;
         }
