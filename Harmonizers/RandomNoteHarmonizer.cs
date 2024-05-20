@@ -1,14 +1,8 @@
 ﻿using MusicTheory;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Melodroid.Harmonizers
 {
-    //TODO completely random notes
-    //Random chords
+    //TODO Random chords
     public class RandomNoteHarmonizer : IMeasureHarmonizer
     {
         public int CurrentFundamental = 0;
