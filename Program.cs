@@ -116,7 +116,7 @@ BeatBox beatBox = new BeatBox(rhythmMaker, randomNoteHarmonizer);
 Scale testScale = new();
 Console.WriteLine(testScale);
 Console.WriteLine(testScale.KeySet);
-Console.WriteLine(testScale.KeySet.BinaryRepresentation);
+Console.WriteLine(testScale.KeySet.BinaryRepresentation == 0);
 
 
 //TODO: Check for patterns in complex chords, e.g. in 3/2, 5/4 the 3/2 interval loops twice, cutting 5/4 in "half" and creating a mirrored version -

@@ -281,9 +281,19 @@ namespace MusicTheory
             return left._value == right._value;
         }
 
+        public static bool operator ==(Bit12Int left, int right)
+        {
+            return left._value == right;
+        }
+
         public static bool operator !=(Bit12Int left, Bit12Int right)
         {
             return left._value != right._value;
+        }
+
+        public static bool operator !=(Bit12Int left, int right)
+        {
+            return left._value != right;
         }
 
         public override string ToString()
