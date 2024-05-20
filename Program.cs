@@ -94,7 +94,7 @@ int numberOfMeasures = 32;
 int beatsPerMeasure = 8;
 SimpleIsochronicRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, beatsPerMeasure);
 
-Scale initialScale = new(new int[] { 0, 4, 7});
+Scale initialScale = new(new int[] { 0, 4, 7 });
 
 //ScaleClassRotationHarmonizer scaleClassRotationHarmonizer = new(initialScale);
 //BeatBox beatBox = new BeatBox(rhythmMaker, scaleClassRotationHarmonizer);
@@ -106,12 +106,17 @@ BeatBox beatBox = new BeatBox(rhythmMaker, randomNoteHarmonizer);
 //PathWalkMeasureHarmonizer measureHarmonizer = new(initialScale, initialScale, 4);
 //BeatBox beatBox = new BeatBox(rhythmMaker, measureHarmonizer);
 
-List<Measure> melodyMeasures = beatBox.MakeMeasures();
-beatBox.WriteMeasuresToMidi(melodyMeasures, folderPath, "random_note_test", true);
+//List<Measure> melodyMeasures = beatBox.MakeMeasures();
+//beatBox.WriteMeasuresToMidi(melodyMeasures, folderPath, "random_note_test", true);
 
-ChordMeasureHarmonizer chordHarmonizer = new(randomNoteHarmonizer.ChordPerMeasure, 4);
-List<Measure> chordMeasures = chordHarmonizer.MeasuresFromVelocities(rhythmMaker.VelocityMeasures);
-beatBox.WriteMeasuresToMidi(chordMeasures, folderPath, "random_note_chord_test", true);
+//ChordMeasureHarmonizer chordHarmonizer = new(randomNoteHarmonizer.ChordPerMeasure, 4);
+//List<Measure> chordMeasures = chordHarmonizer.MeasuresFromVelocities(rhythmMaker.VelocityMeasures);
+//beatBox.WriteMeasuresToMidi(chordMeasures, folderPath, "random_note_chord_test", true);
+
+Scale testScale = new();
+Console.WriteLine(testScale);
+Console.WriteLine(testScale.KeySet);
+Console.WriteLine(testScale.KeySet.BinaryRepresentation);
 
 
 //TODO: Check for patterns in complex chords, e.g. in 3/2, 5/4 the 3/2 interval loops twice, cutting 5/4 in "half" and creating a mirrored version -

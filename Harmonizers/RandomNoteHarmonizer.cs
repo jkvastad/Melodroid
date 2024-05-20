@@ -3,8 +3,9 @@
 namespace Melodroid.Harmonizers
 {
     //TODO Random chords
-    public class RandomNoteHarmonizer : IMeasureHarmonizer
+    public class RandomNoteHarmonizer(Scale chord = new()) : IMeasureHarmonizer
     {
+        private Scale _currentChord = chord;
         public int CurrentFundamental = 0;
         public int CurrentOctave = 4;
 

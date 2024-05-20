@@ -229,7 +229,8 @@ namespace MusicTheory
                 if (((binaryKeySet >> i) & 1) == 1)
                     sb.Append($"{i} ");
             }
-            sb.Remove(sb.Length - 1, 1);
+            if (sb.Length > 1)
+                sb.Remove(sb.Length - 1, 1);
             return sb.ToString();
         }
 
