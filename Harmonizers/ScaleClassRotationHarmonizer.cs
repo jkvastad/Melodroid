@@ -19,8 +19,9 @@ public class ScaleClassRotationHarmonizer(Scale initialChord) : IMeasureHarmoniz
         List<Measure> measures = new();
         int measureIndex = 0;
         //get all scale translations, same as the set of all interval values for the scale class
-        HashSet<int> scaleTranslations = CurrentChord.CalculateScaleClass().SelectMany(scale => scale.ToIntervals()).ToHashSet();        
-        
+        HashSet<int> scaleTranslations = CurrentChord.CalculateScaleClass().SelectMany(scale => scale.ToIntervals()).ToHashSet();
+        scaleTranslations.Remove(0); // no self movement - boring
+
         HashSet<int> currentIntervals = CurrentChord.ToIntervals();
 
         foreach (var velocityMeasure in velocityMeasures)

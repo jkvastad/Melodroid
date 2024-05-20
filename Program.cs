@@ -92,31 +92,37 @@ ScaleCalculator scaleCalculator = new();
 int timeDivision = 16;
 int numberOfMeasures = 32;
 int beatsPerMeasure = 8;
-int deviationsPerMeasure = 2;
+int deviationsPerMeasure = 4;
 //SimpleIsochronicRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, beatsPerMeasure);
 //SimpleGrooveRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, beatsPerMeasure, deviationsPerMeasure);
-List<List<PatternBlock>> measurePatternBlocks = [[new("A", 8), new("B", 8)], [new("A", 8), new("C", 8)]];
-SimpleMeasurePatternRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, beatsPerMeasure, measurePatternBlocks);
+List<List<PatternBlock>> measurePatternBlocks = [
+    [new("A", 8), new("B", 4), new("B", 4)],
+    [new("A", 8), new("B", 4), new("C", 4)],
+    [new("A", 8), new("B", 4), new("B", 4)],
+    [new("D", 8), new("B", 4), new("E", 4)]
+];
+SimpleMeasurePatternRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, beatsPerMeasure, deviationsPerMeasure, measurePatternBlocks);
 
 Scale initialScale = new(new int[] { 0, 4, 7 });
 
-//ScaleClassRotationHarmonizer scaleClassRotationHarmonizer = new(initialScale);
-//BeatBox beatBox = new BeatBox(rhythmMaker, scaleClassRotationHarmonizer);
+ScaleClassRotationHarmonizer harmonizer = new(initialScale);
 
 //RandomNoteHarmonizer randomNoteHarmonizer = new();
 //BeatBox beatBox = new BeatBox(rhythmMaker, randomNoteHarmonizer);
 
-RandomChordNoteHarmonizer randomChordNoteHarmonizer = new(initialScale);
-BeatBox beatBox = new BeatBox(rhythmMaker, randomChordNoteHarmonizer);
+//RandomChordNoteHarmonizer harmonizer = new(initialScale);
+
 
 ////RandomWalkMeasureHarmonizer measureHarmonizer = new(initialScale);
 //PathWalkMeasureHarmonizer measureHarmonizer = new(initialScale, initialScale, 4);
 //BeatBox beatBox = new BeatBox(rhythmMaker, measureHarmonizer);
 
+BeatBox beatBox = new BeatBox(rhythmMaker, harmonizer);
+
 List<Measure> melodyMeasures = beatBox.MakeMeasures();
 beatBox.WriteMeasuresToMidi(melodyMeasures, folderPath, "random_note_pattern_test", true);
 
-ChordMeasureHarmonizer chordHarmonizer = new(randomChordNoteHarmonizer.ChordPerMeasure, 4);
+ChordMeasureHarmonizer chordHarmonizer = new(harmonizer.ChordPerMeasure, 4);
 List<Measure> chordMeasures = chordHarmonizer.MeasuresFromVelocities(rhythmMaker.VelocityMeasures);
 beatBox.WriteMeasuresToMidi(chordMeasures, folderPath, "random_note_pattern_chord_test", true);
 
