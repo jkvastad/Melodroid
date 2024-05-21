@@ -103,14 +103,15 @@ List<List<PatternBlock>> measurePatternBlocks = [
 ];
 SimpleMeasurePatternRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, beatsPerMeasure, deviationsPerMeasure, measurePatternBlocks);
 
-Scale initialScale = new(new int[] { 0, 4, 7 });
+Scale initialScale = new(new int[] { 0, 4, 7});
 
-Scale majorChord = new(new int[] { 0, 4, 7 });
-Scale minorChord = new(new int[] { 0, 3, 7 });
-List<Scale> chordProgression = [majorChord, minorChord];
+//Scale majorChord = new(new int[] { 0, 4, 7 });
+//Scale minorChord = new(new int[] { 0, 3, 7 });
+//List<Scale> chordProgression = [majorChord, minorChord];
 
 //ScaleClassRotationHarmonizer harmonizer = new(initialScale);
-ChordMeasureProgressionHarmonizer harmonizer = new(chordProgression);
+//ChordMeasureProgressionHarmonizer harmonizer = new(chordProgression);
+ScaleClassRotationTransposeHarmonizer harmonizer = new(initialScale);
 
 //RandomNoteHarmonizer randomNoteHarmonizer = new();
 //BeatBox beatBox = new BeatBox(rhythmMaker, randomNoteHarmonizer);
@@ -125,11 +126,11 @@ ChordMeasureProgressionHarmonizer harmonizer = new(chordProgression);
 BeatBox beatBox = new BeatBox(rhythmMaker, harmonizer);
 
 List<Measure> melodyMeasures = beatBox.MakeMeasures();
-beatBox.WriteMeasuresToMidi(melodyMeasures, folderPath, "measure_progression_test", true);
+beatBox.WriteMeasuresToMidi(melodyMeasures, folderPath, "transpose_rotation_test", true);
 
 ChordMeasureHarmonizer chordHarmonizer = new(harmonizer.ChordPerMeasure, 4);
 List<Measure> chordMeasures = chordHarmonizer.MeasuresFromVelocities(rhythmMaker.VelocityMeasures);
-beatBox.WriteMeasuresToMidi(chordMeasures, folderPath, "measure_progression_chord_test", true);
+beatBox.WriteMeasuresToMidi(chordMeasures, folderPath, "transpose_rotation_chord_test", true);
 
 
 //TODO: Check for patterns in complex chords, e.g. in 3/2, 5/4 the 3/2 interval loops twice, cutting 5/4 in "half" and creating a mirrored version -

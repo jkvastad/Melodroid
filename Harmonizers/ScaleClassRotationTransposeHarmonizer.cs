@@ -1,12 +1,13 @@
-﻿using Melanchall.DryWetMidi.MusicTheory;
+﻿using MathNet.Numerics.Random;
 using MusicTheory;
 using Scale = MusicTheory.Scale;
 
-public class ScaleClassRotationHarmonizer(Scale initialChord) : IMeasureHarmonizer
+public class ScaleClassRotationTransposeHarmonizer(Scale initialChord) : IMeasureHarmonizer
 {
     public Scale CurrentChord = initialChord;
     public int CurrentFundamental = 0;
     public int CurrentOctave = 4;
+    private Random _random = new();
 
     public List<(int fundamentalNoteNumber, Scale scale)> ChordPerMeasure = new();
 
@@ -18,15 +19,12 @@ public class ScaleClassRotationHarmonizer(Scale initialChord) : IMeasureHarmoniz
 
         List<Measure> measures = new();
         int measureIndex = 0;
-        //get all scale translations, same as the set of all interval values for the scale class
-        HashSet<int> scaleTranslations = CurrentChord.CalculateScaleClass().SelectMany(scale => scale.ToIntervals()).ToHashSet();
-        scaleTranslations.Remove(0); // no self movement - boring
-
-        HashSet<int> currentIntervals = CurrentChord.ToIntervals();
 
         foreach (var velocityMeasure in velocityMeasures)
         {
             ChordPerMeasure.Add((CurrentFundamental, CurrentChord)); //used by chord harmonizers
+
+            HashSet<int> currentIntervals = CurrentChord.ToIntervals();
 
             Dictionary<int, int>?[] measureNoteValues = new Dictionary<int, int>?[velocityMeasure.Length];
 
@@ -59,9 +57,23 @@ public class ScaleClassRotationHarmonizer(Scale initialChord) : IMeasureHarmoniz
             measureIndex++;
 
             //Update current chord and fundamental
-            //Chord to any other scale class chord
-            //Normalize chord by moving fundamental - chord stays the same, fundamental changes            
-            CurrentFundamental = (CurrentFundamental + scaleTranslations.TakeRandom()) % 12;
+            //Chord to any other scale class chord or its transpose at any scale class position
+
+            //get all scale translations, same as the set of all interval values for the scale class            
+            HashSet<int> scaleTranslations = CurrentChord.CalculateScaleClass().SelectMany(scale => scale.ToIntervals()).ToHashSet();
+
+            bool isTransposeTime = _random.NextBoolean();
+            if (isTransposeTime)
+            {
+                CurrentChord = CurrentChord.Transpose();
+                //transpose fundamental is the last scale note instead of first
+                CurrentFundamental = (CurrentFundamental - CurrentChord.ToIntervals().Last() + scaleTranslations.TakeRandom()) % 12;
+            }
+            else
+            {
+                scaleTranslations.Remove(0); // no self movement - boring        
+                CurrentFundamental = (CurrentFundamental + scaleTranslations.TakeRandom()) % 12;
+            }
         }
         return measures;
     }
