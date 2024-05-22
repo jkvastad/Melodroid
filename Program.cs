@@ -520,7 +520,7 @@ void QueryChordInKeySetTranslations()
         {
             Tet12KeySet translatedKeySet = inputKeys >> i;
             if ((translatedKeySet.BinaryRepresentation & chord.KeySet.BinaryRepresentation) == chord.KeySet.BinaryRepresentation)
-                Console.WriteLine($"{i,-2}: {translatedKeySet}");
+                Console.WriteLine($"{i,-2}: {translatedKeySet.ToIntervalString()}");
         }
     }
 }
