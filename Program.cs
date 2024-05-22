@@ -104,7 +104,7 @@ List<List<PatternBlock>> measurePatternBlocks = [
 ];
 SimpleMeasurePatternRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, beatsPerMeasure, deviationsPerMeasure, measurePatternBlocks);
 
-Scale initialScale = new(new int[] { 0, 4, 7});
+Scale initialScale = new(new int[] { 0, 4, 7 });
 
 //Scale majorChord = new(new int[] { 0, 4, 7 });
 //Scale minorChord = new(new int[] { 0, 3, 7 });
@@ -319,23 +319,23 @@ Scale initialScale = new(new int[] { 0, 4, 7});
 
 //Console.WriteLine();
 
-//int scaleLength = 3;
-//Console.WriteLine($"Scales classes of length {scaleLength}");
-//foreach (var scaleClass in scaleCalculator.ScaleClassesOfLength[scaleLength].OrderByDescending(scaleClass => scaleClass.MinBy(scale => scale.CalculateBase()).CalculateBase()))
-//{
-//    int intervalOfInterest = 6;
-//    bool intervalDetected = false;
-//    foreach (var scale in scaleClass.OrderBy(scale => scale.CalculateBase()))
-//    {
-//        Console.Write($"{scale.CalculateBase(),-3}: {scale.ToString().PadRight(scaleLength * 3)} / ");
-//        if (scale.ToIntervals().Contains(intervalOfInterest))
-//            intervalDetected = true;
-//    }
-//    if (intervalDetected)
-//        Console.Write($"<- {intervalOfInterest}");
-//    Console.WriteLine();
-//}
-//Console.WriteLine();
+int scaleLength = 3;
+Console.WriteLine($"Scales classes of length {scaleLength}");
+foreach (var scaleClass in scaleCalculator.ScaleClassesOfLength[scaleLength].OrderByDescending(scaleClass => scaleClass.MinBy(scale => scale.CalculateBase()).CalculateBase()))
+{
+    int intervalOfInterest = 6;
+    bool intervalDetected = false;
+    foreach (var scale in scaleClass.OrderBy(scale => scale.CalculateBase()))
+    {
+        Console.Write($"{scale.CalculateBase(),-3}: {scale.ToString().PadRight(scaleLength * 3)} / ");
+        if (scale.ToIntervals().Contains(intervalOfInterest))
+            intervalDetected = true;
+    }
+    if (intervalDetected)
+        Console.Write($"<- {intervalOfInterest}");
+    Console.WriteLine();
+}
+Console.WriteLine();
 
 //QueryScaleClassProgressionsFromScale(scaleCalculator);
 
@@ -347,9 +347,11 @@ Scale initialScale = new(new int[] { 0, 4, 7});
 
 //QueryFundamentalClassPerScale(scaleCalculator);
 
+//Both of these seems bugged? try 0 3 6 9 in 0 2 4 5 7 9 11
 //QueryChordsInScale(scaleCalculator);
-
 //QueryChordMultiplicityScale(scaleCalculator);
+
+QueryChordInKeySetTranslations();
 
 ////Print all scales with superclasses (including self) of lesser/equal base
 //Dictionary<Scale, List<Scale>> leqScalesPerScale = CalculateAllLEQScalesPerScale(scaleCalculator);
@@ -494,6 +496,31 @@ void PrintAllSymmetricScaleClasses(ScaleCalculator scaleCalculator)
         if (isSymmetric)
         {
             Console.WriteLine(firstScale);
+        }
+    }
+}
+
+//Check if a chord is a subset of any key set translation in the octave
+void QueryChordInKeySetTranslations()
+{
+    while (true)
+    {
+        Console.WriteLine($"Input space separated tet12 keys for chord");
+        string input = Console.ReadLine();
+
+        Scale chord = new(Array.ConvertAll(input.Split(' '), int.Parse));
+
+        Console.WriteLine($"Input space separated tet12 keys for key set to find chord in. (empty input to exit)");
+        input = Console.ReadLine();
+
+        if (input.Length == 0) return;
+        Tet12KeySet inputKeys = new(Array.ConvertAll(input.Split(' '), int.Parse));
+
+        for (int i = 0; i < 12; i++)
+        {
+            Tet12KeySet translatedKeySet = inputKeys >> i;
+            if ((translatedKeySet.BinaryRepresentation & chord.KeySet.BinaryRepresentation) == chord.KeySet.BinaryRepresentation)
+                Console.WriteLine($"{i,-2}: {translatedKeySet}");
         }
     }
 }

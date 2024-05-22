@@ -399,6 +399,15 @@ namespace MusicTheory
             return keys;
         }
 
+        public static Tet12KeySet operator >>(Tet12KeySet left, int right)
+        {
+            return new(left.BinaryRepresentation >> right);
+        }
+        public static Tet12KeySet operator <<(Tet12KeySet left, int right)
+        {
+            return new(left.BinaryRepresentation << right);
+        }
+
         public static bool operator ==(Tet12KeySet left, Tet12KeySet right)
         {
 
