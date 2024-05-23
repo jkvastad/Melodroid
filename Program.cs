@@ -349,9 +349,9 @@ Console.WriteLine();
 
 //Both of these seems bugged? try 0 3 6 9 in 0 2 4 5 7 9 11
 //QueryChordsInScale(scaleCalculator);
-//QueryChordMultiplicityScale(scaleCalculator);
+QueryChordKeyMultiplicity(scaleCalculator);
 
-QueryChordInKeySetTranslations();
+//QueryChordInKeySetTranslations();
 
 ////Print all scales with superclasses (including self) of lesser/equal base
 //Dictionary<Scale, List<Scale>> leqScalesPerScale = CalculateAllLEQScalesPerScale(scaleCalculator);
@@ -525,7 +525,19 @@ void QueryChordInKeySetTranslations()
     }
 }
 
-void QueryChordMultiplicityScale(ScaleCalculator scaleCalculator)
+//A chord can belong to many scales.
+//e.g. for chord 0 4 7 and scale 0 2 4 5 7 9 11 the chord matches at positions 0, 5 and 7.
+//e.g. for chord 0 4 7 and scale 0 1 3 5 6 8 9 the chord matches at positions 1, 5 and 8.
+// - Given chord 0 4 7, it could belong to either of the above scales, and the scales' fundamentals could be at key 0, 7, 5 or key 11, 7, 4, respectively.
+//This is called chord multiplicity: a chord can belong to different scales, but also belong to different positions in a scale.
+// - Which different scales the chord belong to is called "chord scale multiplicity":
+// -- given a chord, there is a set (a multiplicity) of different scales containing that chord.
+// - Which positions the chord can hold in a scale is related to the "chord scale fundamental set":
+// -- given a chord and scale, there is a set of fundamentals for that scale so that the scale contains the chord.
+//Given a chord and scale, applying the chord scale fundamental set to the scale produces a key set for each fundamental.
+// - each key thus belongs to a number (possibly 0) of key sets, this is called "chord key multiplicity"
+// -- chord key multiplicity tells us which keys imply which scales, possibly the basis for melody
+void QueryChordKeyMultiplicity(ScaleCalculator scaleCalculator)
 {
     List<Scale> scalesOfInterest = [new([0, 1, 3, 5, 6, 8, 9]), new([0, 2, 4, 5, 7, 9, 11])];
 
@@ -537,37 +549,41 @@ void QueryChordMultiplicityScale(ScaleCalculator scaleCalculator)
 
     while (true)
     {
-        Console.WriteLine($"Input space separated tet12 keys for chord multiplicity scale. (empty input to exit)");
-        string sourceChordInput = Console.ReadLine();
+        Console.WriteLine($"Input space separated tet12 keys for chord to match against scales. (empty input to exit)");
+        string chordInput = Console.ReadLine();
 
-        if (sourceChordInput.Length == 0)
+        if (chordInput.Length == 0)
             return;
 
-        Scale sourceChord = new(Array.ConvertAll(sourceChordInput.Split(' '), int.Parse));
-        //Find all matches for source chord per scale of interest
+        Scale chord = new(Array.ConvertAll(chordInput.Split(' '), int.Parse));
+        //Find all matches for chord per scale of interest
         foreach (Scale scale in scalesOfInterest)
         {
-            List<int> scaleOffsets = new();
+            List<int> chordOffsetsMatchingScale = new();
             for (int i = 0; i < 12; i++)
             {
                 //Check if rotated scale is still a scale
                 Tet12KeySet rotatedKeys = scale >> i;
                 if ((rotatedKeys.BinaryRepresentation & 1) == 1)
-                {
+                {                    
+                    //Record if scale contains chord after rotation - rotating the scale is equivalent to offseting the chord via translation
                     Scale rotatedScale = new(rotatedKeys);
-                    if (rotatedScale.Contains(sourceChord))
+                    if (rotatedScale.Contains(chord))
                     {
-                        scaleOffsets.Add(i);
+                        chordOffsetsMatchingScale.Add(i);
                     }
                 }
             }
-            //From matching scales, find superposition of all keys after octave normalization (key multiplicity)            
-            Dictionary<int, Scale> rotatedScales = new();
-            foreach (int offset in scaleOffsets)
+            
+            //TODO seems superflous, should be created above? why save offsets separately first?
+            //From chord offsets, find superposition of all keys matching ??? after octave normalization (key multiplicity)            
+            Dictionary<int, Scale> scaleRotationsMatchingChord = new();
+            foreach (int offset in chordOffsetsMatchingScale)
             {
-                rotatedScales[offset] = new(scale >> offset); //always legal scale
+                scaleRotationsMatchingChord[offset] = new(scale >> offset); //always legal scale
             }
 
+            //Find how many scales each key can belong to
             List<int>[] keyMultiplicity = new List<int>[12];
             for (int i = 0; i < keyMultiplicity.Length; i++)
             {
@@ -576,7 +592,7 @@ void QueryChordMultiplicityScale(ScaleCalculator scaleCalculator)
 
             for (int i = 0; i < 12; i++)
             {
-                foreach (var pairOffsetScale in rotatedScales)
+                foreach (var pairOffsetScale in scaleRotationsMatchingChord)
                 {
                     //Check if key on octave is in the scale
                     if (((pairOffsetScale.Value >> i).BinaryRepresentation & 1) == 1)
