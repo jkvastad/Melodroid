@@ -535,7 +535,7 @@ void QueryChordInKeySetTranslations()
 // - Which positions the chord can hold in a scale is related to the "chord scale fundamental set":
 // -- given a chord and scale, there is a set of fundamentals for that scale so that the scale contains the chord.
 //Given a chord and scale, applying the chord scale fundamental set to the scale produces a key set for each fundamental.
-// - each key thus belongs to a number (possibly 0) of key sets, this is called "chord key multiplicity"
+// - each key thus belongs to a number (possibly 0) of fundamentals, this is called "chord key multiplicity"
 // -- chord key multiplicity tells us which keys imply which scales, possibly the basis for melody
 void QueryChordKeyMultiplicity(ScaleCalculator scaleCalculator)
 {
@@ -549,7 +549,7 @@ void QueryChordKeyMultiplicity(ScaleCalculator scaleCalculator)
 
     while (true)
     {
-        Console.WriteLine($"Input space separated tet12 keys for chord to match against scales. (empty input to exit)");
+        Console.WriteLine($"Input space separated tet12 keys for chord to calculate chord key multiplicity (see method comment for theory - empty input to exit)");
         string chordInput = Console.ReadLine();
 
         if (chordInput.Length == 0)
@@ -559,44 +559,35 @@ void QueryChordKeyMultiplicity(ScaleCalculator scaleCalculator)
         //Find all matches for chord per scale of interest
         foreach (Scale scale in scalesOfInterest)
         {
-            List<int> chordOffsetsMatchingScale = new();
+            Dictionary<int, Scale> leftTranslatedScales = new();
             for (int i = 0; i < 12; i++)
             {
                 //Check if rotated scale is still a scale
                 Tet12KeySet rotatedKeys = scale >> i;
                 if ((rotatedKeys.BinaryRepresentation & 1) == 1)
-                {                    
-                    //Record if scale contains chord after rotation - rotating the scale is equivalent to offseting the chord via translation
+                {
+                    //Record if scale contains chord after rotation
+                    // - rotating the scales binary representation right is equivalent to offseting the scale left via translation
                     Scale rotatedScale = new(rotatedKeys);
                     if (rotatedScale.Contains(chord))
-                    {
-                        chordOffsetsMatchingScale.Add(i);
-                    }
+                        leftTranslatedScales[i] = rotatedScale;
                 }
-            }
-            
-            //TODO seems superflous, should be created above? why save offsets separately first?
-            //From chord offsets, find superposition of all keys matching ??? after octave normalization (key multiplicity)            
-            Dictionary<int, Scale> scaleRotationsMatchingChord = new();
-            foreach (int offset in chordOffsetsMatchingScale)
-            {
-                scaleRotationsMatchingChord[offset] = new(scale >> offset); //always legal scale
             }
 
             //Find how many scales each key can belong to
-            List<int>[] keyMultiplicity = new List<int>[12];
-            for (int i = 0; i < keyMultiplicity.Length; i++)
+            List<int>[] chordKeyMultiplicity = new List<int>[12];
+            for (int i = 0; i < chordKeyMultiplicity.Length; i++)
             {
-                keyMultiplicity[i] = new();
+                chordKeyMultiplicity[i] = new();
             }
 
             for (int i = 0; i < 12; i++)
             {
-                foreach (var pairOffsetScale in scaleRotationsMatchingChord)
+                foreach (var translationAndScale in leftTranslatedScales)
                 {
-                    //Check if key on octave is in the scale
-                    if (((pairOffsetScale.Value >> i).BinaryRepresentation & 1) == 1)
-                        keyMultiplicity[i].Add(pairOffsetScale.Key);
+                    //Check if key is in the translated scale - if yes add the fundamental
+                    if (((translationAndScale.Value >> i).BinaryRepresentation & 1) == 1)
+                        chordKeyMultiplicity[i].Add((12 - translationAndScale.Key) % 12);
                 }
             }
             //Print results
@@ -606,13 +597,13 @@ void QueryChordKeyMultiplicity(ScaleCalculator scaleCalculator)
             }
             Console.WriteLine();
             Console.WriteLine();
-            for (int row = 0; row < keyMultiplicity.Max(columnValues => columnValues.Count); row++)
+            for (int row = 0; row < chordKeyMultiplicity.Max(columnValues => columnValues.Count); row++)
             {
                 for (int column = 0; column < 12; column++)
                 {
                     //print scale root
-                    if (row < keyMultiplicity[column].Count)
-                        Console.Write($"{(12 - keyMultiplicity[column][row]) % 12}".PadRight(3));
+                    if (row < chordKeyMultiplicity[column].Count)
+                        Console.Write($"{chordKeyMultiplicity[column][row]}".PadRight(3));
                     else
                         Console.Write("   ");
                 }
