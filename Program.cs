@@ -86,10 +86,8 @@ ScaleCalculator scaleCalculator = new();
 //Console.WriteLine(result);
 
 
-
-
-////TODO add logger for scales used (and other random outcomes during generation)
-//Select Rhythm Maker
+//TODO add logger for scales used (and other random outcomes during generation)
+////Select Rhythm Maker
 int timeDivision = 16;
 int numberOfMeasures = 32;
 int beatsPerMeasure = 8;
@@ -110,28 +108,30 @@ Scale initialScale = new(new int[] { 0, 4, 7 });
 //Scale minorChord = new(new int[] { 0, 3, 7 });
 //List<Scale> chordProgression = [majorChord, minorChord];
 
-//Select harmonizer
+////Select harmonizer
 //ScaleClassRotationHarmonizer harmonizer = new(initialScale);
 //ChordMeasureProgressionHarmonizer harmonizer = new(chordProgression);
 //ScaleClassRotationTransposeHarmonizer harmonizer = new(initialScale);
+//RandomKeyMultiplicityHarmonizer harmonizer = new();
+ChordPreferenceKeyMultiplicityHarmonizer harmonizer = new();
 
 //RandomNoteHarmonizer randomNoteHarmonizer = new();
 
 //RandomChordNoteHarmonizer harmonizer = new(initialScale);
 
-////RandomWalkMeasureHarmonizer measureHarmonizer = new(initialScale);
+//RandomWalkMeasureHarmonizer measureHarmonizer = new(initialScale);
 //PathWalkMeasureHarmonizer measureHarmonizer = new(initialScale, initialScale, 4);
 //BeatBox beatBox = new BeatBox(rhythmMaker, measureHarmonizer);
 
-//Write MIDI files
-//BeatBox beatBox = new BeatBox(rhythmMaker, harmonizer);
+////Write MIDI files
+BeatBox beatBox = new BeatBox(rhythmMaker, harmonizer);
 
-//List<Measure> melodyMeasures = beatBox.MakeMeasures();
-//beatBox.WriteMeasuresToMidi(melodyMeasures, folderPath, "transpose_rotation_test", true);
+List<Measure> melodyMeasures = beatBox.MakeMeasures();
+beatBox.WriteMeasuresToMidi(melodyMeasures, folderPath, "key_multiplicity_test", true);
 
-//ChordMeasureHarmonizer chordHarmonizer = new(harmonizer.ChordPerMeasure, 4);
-//List<Measure> chordMeasures = chordHarmonizer.MeasuresFromVelocities(rhythmMaker.VelocityMeasures);
-//beatBox.WriteMeasuresToMidi(chordMeasures, folderPath, "transpose_rotation_chord_test", true);
+ChordMeasureHarmonizer chordHarmonizer = new(harmonizer.ChordPerMeasure, 4);
+List<Measure> chordMeasures = chordHarmonizer.MeasuresFromVelocities(rhythmMaker.VelocityMeasures);
+beatBox.WriteMeasuresToMidi(chordMeasures, folderPath, "key_multiplicity_chord_test", true);
 
 
 //TODO: Check for patterns in complex chords, e.g. in 3/2, 5/4 the 3/2 interval loops twice, cutting 5/4 in "half" and creating a mirrored version -
