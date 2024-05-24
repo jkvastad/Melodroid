@@ -74,12 +74,14 @@ namespace Melodroid.Harmonizers
                 }
                 Measure measure = new(measureNoteValues);
                 measures.Add(measure);
-                measureIndex++;
 
                 ChordPerMeasure.Add((CurrentChordFundamental, currentChord)); //used by chord harmonizers
 
+                Log.Information($"Measure {measureIndex}");
                 Log.Information($"Scale fundamental {CurrentScaleFundamental,-2}, Scale {currentScale} ");
                 Log.Information($"Chord fundamental {CurrentChordFundamental,-2}, Chord {currentChord}");
+
+                measureIndex++;
             }
             return measures;
         }

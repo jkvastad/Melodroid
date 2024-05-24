@@ -91,16 +91,16 @@ ScaleCalculator scaleCalculator = new();
 int timeDivision = 16;
 int numberOfMeasures = 32;
 int beatsPerMeasure = 8;
-int deviationsPerMeasure = 4;
+int deviationsPerMeasure = 2;
 //SimpleIsochronicRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, beatsPerMeasure);
-//SimpleGrooveRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, beatsPerMeasure, deviationsPerMeasure);
-List<List<PatternBlock>> measurePatternBlocks = [
-    [new("A", 8), new("B", 4), new("B", 4)],
-    [new("A", 8), new("B", 4), new("C", 4)],
-    [new("A", 8), new("B", 4), new("B", 4)],
-    [new("D", 8), new("B", 4), new("E", 4)]
-];
-SimpleMeasurePatternRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, beatsPerMeasure, deviationsPerMeasure, measurePatternBlocks);
+SimpleGrooveRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, beatsPerMeasure, deviationsPerMeasure);
+//List<List<PatternBlock>> measurePatternBlocks = [
+//    [new("A", 8), new("B", 4), new("B", 4)],
+//    [new("A", 8), new("B", 4), new("C", 4)],
+//    [new("A", 8), new("B", 4), new("B", 4)],
+//    [new("D", 8), new("B", 4), new("E", 4)]
+//];
+//SimpleMeasurePatternRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, beatsPerMeasure, deviationsPerMeasure, measurePatternBlocks);
 
 Scale initialScale = new(new int[] { 0, 4, 7 });
 
