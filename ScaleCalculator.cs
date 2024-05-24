@@ -542,6 +542,55 @@ namespace MusicTheory
             return scaleClass;
         }
 
+
+        //A chord can belong to many scales.
+        //e.g. for chord 0 4 7 and scale 0 2 4 5 7 9 11 the chord matches at positions 0, 5 and 7.
+        //e.g. for chord 0 4 7 and scale 0 1 3 5 6 8 9 the chord matches at positions 1, 5 and 8.
+        // - Given chord 0 4 7, it could belong to either of the above scales, and the scales' fundamentals could be at key 0, 7, 5 or key 11, 7, 4, respectively.
+        //This is called chord multiplicity: a chord can belong to different scales, but also belong to different positions in a scale.
+        // - Which different scales the chord belong to is called "chord scale multiplicity":
+        // -- given a chord, there is a set (a multiplicity) of different scales containing that chord.
+        // - Which positions the chord can hold in a scale is related to the "chord scale fundamental set":
+        // -- given a chord and scale, there is a set of fundamentals for that scale so that the scale contains the chord.
+        //Given a chord and scale, applying the chord scale fundamental set to the scale produces a key set for each fundamental.
+        // - each key thus belongs to a number (possibly 0) of fundamentals, this is called "chord key multiplicity" or simply key multiplicity
+        // -- chord key multiplicity tells us which keys imply which scales, possibly the basis for melody
+        public List<int>[] CalculateKeyMultiplicity(Scale chord)
+        {
+            Dictionary<int, Scale> leftTranslatedScales = new();
+            for (int i = 0; i < 12; i++)
+            {
+                //Check if rotated scale is still a scale
+                Tet12KeySet rotatedKeys = this >> i;
+                if ((rotatedKeys.BinaryRepresentation & 1) == 1)
+                {
+                    //Record if scale contains chord after rotation
+                    // - rotating the scale's binary representation right is equivalent to offseting the scale left via translation
+                    Scale rotatedScale = new(rotatedKeys);
+                    if (rotatedScale.Contains(chord))
+                        leftTranslatedScales[i] = rotatedScale;
+                }
+            }
+
+            //Find how many scales each key can belong to
+            List<int>[] keyMultiplicity = new List<int>[12];
+            for (int i = 0; i < keyMultiplicity.Length; i++)
+            {
+                keyMultiplicity[i] = new();
+            }
+
+            for (int i = 0; i < 12; i++)
+            {
+                foreach (var translationAndScale in leftTranslatedScales)
+                {
+                    //Check if key is in the translated scale - if yes add the fundamental
+                    if (((translationAndScale.Value >> i).BinaryRepresentation & 1) == 1)
+                        keyMultiplicity[i].Add((12 - translationAndScale.Key) % 12);
+                }
+            }
+            return keyMultiplicity;
+        }
+
         public bool IsSubClassTo(Scale superClassScale)
         {
             HashSet<Scale> superClass = superClassScale.CalculateScaleClass();

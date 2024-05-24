@@ -535,7 +535,7 @@ void QueryChordInKeySetTranslations()
 // - Which positions the chord can hold in a scale is related to the "chord scale fundamental set":
 // -- given a chord and scale, there is a set of fundamentals for that scale so that the scale contains the chord.
 //Given a chord and scale, applying the chord scale fundamental set to the scale produces a key set for each fundamental.
-// - each key thus belongs to a number (possibly 0) of fundamentals, this is called "chord key multiplicity"
+// - each key thus belongs to a number (possibly 0) of fundamentals, this is called "chord key multiplicity" or simply key multiplicity
 // -- chord key multiplicity tells us which keys imply which scales, possibly the basis for melody
 void QueryChordKeyMultiplicity(ScaleCalculator scaleCalculator)
 {
@@ -559,37 +559,7 @@ void QueryChordKeyMultiplicity(ScaleCalculator scaleCalculator)
         //Find all matches for chord per scale of interest
         foreach (Scale scale in scalesOfInterest)
         {
-            Dictionary<int, Scale> leftTranslatedScales = new();
-            for (int i = 0; i < 12; i++)
-            {
-                //Check if rotated scale is still a scale
-                Tet12KeySet rotatedKeys = scale >> i;
-                if ((rotatedKeys.BinaryRepresentation & 1) == 1)
-                {
-                    //Record if scale contains chord after rotation
-                    // - rotating the scales binary representation right is equivalent to offseting the scale left via translation
-                    Scale rotatedScale = new(rotatedKeys);
-                    if (rotatedScale.Contains(chord))
-                        leftTranslatedScales[i] = rotatedScale;
-                }
-            }
-
-            //Find how many scales each key can belong to
-            List<int>[] chordKeyMultiplicity = new List<int>[12];
-            for (int i = 0; i < chordKeyMultiplicity.Length; i++)
-            {
-                chordKeyMultiplicity[i] = new();
-            }
-
-            for (int i = 0; i < 12; i++)
-            {
-                foreach (var translationAndScale in leftTranslatedScales)
-                {
-                    //Check if key is in the translated scale - if yes add the fundamental
-                    if (((translationAndScale.Value >> i).BinaryRepresentation & 1) == 1)
-                        chordKeyMultiplicity[i].Add((12 - translationAndScale.Key) % 12);
-                }
-            }
+            List<int>[] chordKeyMultiplicity = scale.CalculateKeyMultiplicity(chord);
             //Print results
             for (int i = 0; i < 12; i++)
             {
@@ -609,7 +579,6 @@ void QueryChordKeyMultiplicity(ScaleCalculator scaleCalculator)
                 }
                 Console.WriteLine();
             }
-
             Console.WriteLine();
         }
     }
