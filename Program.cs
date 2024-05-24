@@ -148,7 +148,7 @@ Scale initialScale = new(new int[] { 0, 4, 7 });
 
 //TODO:
 // look at base15: 0 1 3 6 8 10 vs. 0 1 3 6 8 9 10 and 0 1 3 5 6 8 10
-// - 5/3 sounds very harsh and leaves only 1 compatible interpretation for pax pattern length 24
+// - 5/3 sounds very harsh and leaves only 1 compatible interpretation for max pattern length 24
 // - 4/3 "only" removes 4 interpretations, and only "blacks out" the base 7 scale (and also itself)
 //TODO: Check translation + rotation - e.g. rotate scale from base 15 to 12, then translate 12 back to 15 using 12/15=4/5.
 // - something interesting happens when the base of the rotation (e.g. base 5 for key 4 in 0 4 7) is rotated to match the fundamental (e.g. multiply with 5/4 for 0 4 7) but the rotated pattern is kept
@@ -319,23 +319,23 @@ Scale initialScale = new(new int[] { 0, 4, 7 });
 
 //Console.WriteLine();
 
-int scaleLength = 3;
-Console.WriteLine($"Scales classes of length {scaleLength}");
-foreach (var scaleClass in scaleCalculator.ScaleClassesOfLength[scaleLength].OrderByDescending(scaleClass => scaleClass.MinBy(scale => scale.CalculateBase()).CalculateBase()))
-{
-    int intervalOfInterest = 6;
-    bool intervalDetected = false;
-    foreach (var scale in scaleClass.OrderBy(scale => scale.CalculateBase()))
-    {
-        Console.Write($"{scale.CalculateBase(),-3}: {scale.ToString().PadRight(scaleLength * 3)} / ");
-        if (scale.ToIntervals().Contains(intervalOfInterest))
-            intervalDetected = true;
-    }
-    if (intervalDetected)
-        Console.Write($"<- {intervalOfInterest}");
-    Console.WriteLine();
-}
-Console.WriteLine();
+//int scaleLength = 3;
+//Console.WriteLine($"Scales classes of length {scaleLength}");
+//foreach (var scaleClass in scaleCalculator.ScaleClassesOfLength[scaleLength].OrderByDescending(scaleClass => scaleClass.MinBy(scale => scale.CalculateBase()).CalculateBase()))
+//{
+//    int intervalOfInterest = 6;
+//    bool intervalDetected = false;
+//    foreach (var scale in scaleClass.OrderBy(scale => scale.CalculateBase()))
+//    {
+//        Console.Write($"{scale.CalculateBase(),-3}: {scale.ToString().PadRight(scaleLength * 3)} / ");
+//        if (scale.ToIntervals().Contains(intervalOfInterest))
+//            intervalDetected = true;
+//    }
+//    if (intervalDetected)
+//        Console.Write($"<- {intervalOfInterest}");
+//    Console.WriteLine();
+//}
+//Console.WriteLine();
 
 //QueryScaleClassProgressionsFromScale(scaleCalculator);
 
@@ -349,7 +349,7 @@ Console.WriteLine();
 
 //Both of these seems bugged? try 0 3 6 9 in 0 2 4 5 7 9 11
 //QueryChordsInScale(scaleCalculator);
-QueryChordKeyMultiplicity(scaleCalculator);
+//QueryChordKeyMultiplicity(scaleCalculator);
 
 //QueryChordInKeySetTranslations();
 
