@@ -16,6 +16,8 @@ namespace Melodroid.Harmonizers
         //List<Scale> _scalesOfInterest = [new([0, 1, 3, 5, 6, 8, 9]), new([0, 2, 4, 5, 7, 9, 11])];
         List<Scale> _scalesOfInterest = [new([0, 2, 4, 5, 7, 9, 11])];
         //List<Scale> _chordsOfInterest = [new([0, 2, 7]), new([0, 3, 7]), new([0, 4, 7]), new([0, 4, 7, 10])];
+        //List<Scale> _chordsOfInterest = [new([0, 2, 7]), new([0, 3, 6]), new([0, 3, 7]), new([0, 4, 7])];
+        //List<Scale> _chordsOfInterest = [new([0, 2, 7]), new([0, 3, 7]), new([0, 4, 7])];
         List<Scale> _chordsOfInterest = [new([0, 3, 7]), new([0, 4, 7])];
         //List<Scale> _chordsOfInterest = [new([0, 4, 7])];
 
@@ -54,7 +56,7 @@ namespace Melodroid.Harmonizers
                     //Use old chord for key multiplicity
                     keyMultiplicity = CurrentScale.CalculateKeyMultiplicity(CurrentChord);
                     //Select new fundamental for scale from old chord key multiplicity
-                    CurrentScaleFundamental = (CurrentScaleFundamental + keyMultiplicity[0].TakeRandom()) % 12;
+                    CurrentScaleFundamental = (CurrentScaleFundamental + keyMultiplicity[0].Where(mult => mult != 0).TakeRandom()) % 12;
                 }
                 //Always take new random chord
                 CurrentChord = _chordsOfInterest.TakeRandom();

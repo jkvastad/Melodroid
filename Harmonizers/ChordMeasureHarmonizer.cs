@@ -77,7 +77,10 @@ public class ChordMeasureHarmonizer(
 
             foreach (int interval in _currentScale.ToIntervals())
             {
-                int currentNoteNumber = (CurrentOctave * 12) + _currentFundamentalNoteNumber + interval - 12; //put the chords one octave below the melody
+                int currentNoteNumber = (CurrentOctave * 12) + _currentFundamentalNoteNumber + interval;
+                if (currentNoteNumber >= ((CurrentOctave + 1) * 12)) //do not overlap into melody
+                    currentNoteNumber -= 12;
+
                 int velocity = 64; //This particular harmonizer cares not for actual velocities
 
                 measureNoteValues[0]![currentNoteNumber] = velocity;

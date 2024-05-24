@@ -90,7 +90,7 @@ ScaleCalculator scaleCalculator = new();
 ////Select Rhythm Maker
 int timeDivision = 16;
 int numberOfMeasures = 32;
-int beatsPerMeasure = 8;
+int beatsPerMeasure = 8; 
 int deviationsPerMeasure = 2;
 //SimpleIsochronicRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, beatsPerMeasure);
 SimpleGrooveRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, beatsPerMeasure, deviationsPerMeasure);
