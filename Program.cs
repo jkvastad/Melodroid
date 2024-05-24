@@ -113,7 +113,8 @@ Scale initialScale = new(new int[] { 0, 4, 7 });
 //ChordMeasureProgressionHarmonizer harmonizer = new(chordProgression);
 //ScaleClassRotationTransposeHarmonizer harmonizer = new(initialScale);
 //RandomKeyMultiplicityHarmonizer harmonizer = new();
-ChordPreferenceKeyMultiplicityHarmonizer harmonizer = new();
+//ChordPreferenceKeyMultiplicityHarmonizer harmonizer = new();
+ChordPreferenceKeyMultiplicityPhraseHarmonizer harmonizer = new();
 
 //RandomNoteHarmonizer randomNoteHarmonizer = new();
 
