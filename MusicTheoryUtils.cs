@@ -154,7 +154,7 @@ namespace MusicTheory
             }
             return intervals;
         }
-        public static void PrintRelativePeriodicityForOctaveIntervals(int maximumPeriodicity = 16)
+        public static void LogRelativePeriodicityForOctaveIntervals(int maximumPeriodicity = 16)
         {
             List<HashSet<Fraction>> approximations = RatiosClosestTo12TetKeys(maximumPeriodicity);
             Console.WriteLine("Midi note diff: closest frequency ratio");
@@ -191,7 +191,7 @@ namespace MusicTheory
                             best12TetKey = k;
                         }
                     }
-                    approximations[best12TetKey].Add(new(i, j));
+                    approximations[best12TetKey].Add(new(j, i));
                 }
             }
 

@@ -90,10 +90,10 @@ ScaleCalculator scaleCalculator = new();
 ////Select Rhythm Maker
 int timeDivision = 16;
 int numberOfMeasures = 32;
-int beatsPerMeasure = 8; 
+int beatsPerMeasure = 8;
 int deviationsPerMeasure = 2;
-//SimpleIsochronicRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, beatsPerMeasure);
-SimpleGrooveRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, beatsPerMeasure, deviationsPerMeasure);
+SimpleIsochronicRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, beatsPerMeasure);
+//SimpleGrooveRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, beatsPerMeasure, deviationsPerMeasure);
 //List<List<PatternBlock>> measurePatternBlocks = [
 //    [new("A", 8), new("B", 4), new("B", 4)],
 //    [new("A", 8), new("B", 4), new("C", 4)],
@@ -125,14 +125,14 @@ ChordPreferenceKeyMultiplicityPhraseHarmonizer harmonizer = new();
 //BeatBox beatBox = new BeatBox(rhythmMaker, measureHarmonizer);
 
 ////Write MIDI files
-BeatBox beatBox = new BeatBox(rhythmMaker, harmonizer);
+//BeatBox beatBox = new BeatBox(rhythmMaker, harmonizer);
 
-List<Measure> melodyMeasures = beatBox.MakeMeasures();
-beatBox.WriteMeasuresToMidi(melodyMeasures, folderPath, "key_multiplicity_test", true);
+//List<Measure> melodyMeasures = beatBox.MakeMeasures();
+//beatBox.WriteMeasuresToMidi(melodyMeasures, folderPath, "key_multiplicity_test", true);
 
-ChordMeasureHarmonizer chordHarmonizer = new(harmonizer.ChordPerMeasure, 4);
-List<Measure> chordMeasures = chordHarmonizer.MeasuresFromVelocities(rhythmMaker.VelocityMeasures);
-beatBox.WriteMeasuresToMidi(chordMeasures, folderPath, "key_multiplicity_chord_test", true);
+//ChordMeasureHarmonizer chordHarmonizer = new(harmonizer.ChordPerMeasure, 4);
+//List<Measure> chordMeasures = chordHarmonizer.MeasuresFromVelocities(rhythmMaker.VelocityMeasures);
+//beatBox.WriteMeasuresToMidi(chordMeasures, folderPath, "key_multiplicity_chord_test", true);
 
 
 //TODO: Check for patterns in complex chords, e.g. in 3/2, 5/4 the 3/2 interval loops twice, cutting 5/4 in "half" and creating a mirrored version -
@@ -342,15 +342,15 @@ beatBox.WriteMeasuresToMidi(chordMeasures, folderPath, "key_multiplicity_chord_t
 
 //PrintScaleClassUniqueness(scaleCalculator);
 
+LogRelativePeriodicityForOctaveIntervals(16);
 
 //TODO nånting händer med 0 1 8 och 0 7 11 - känns väldigt annorlunda om man inleder med 0 7 (11) eller 0 8 (1). Som om första intervallet 
 //PrintScaleClassAmbiguity(scaleCalculator, true);
 
-//QueryFundamentalClassPerScale(scaleCalculator);
+QueryFundamentalClassPerScale(scaleCalculator);
 
-//Both of these seems bugged? try 0 3 6 9 in 0 2 4 5 7 9 11
 //QueryChordsInScale(scaleCalculator);
-//QueryChordKeyMultiplicity(scaleCalculator);
+QueryChordKeyMultiplicity(scaleCalculator);
 
 //QueryChordInKeySetTranslations();
 
@@ -540,7 +540,11 @@ void QueryChordInKeySetTranslations()
 // -- chord key multiplicity tells us which keys imply which scales, possibly the basis for melody
 void QueryChordKeyMultiplicity(ScaleCalculator scaleCalculator)
 {
-    List<Scale> scalesOfInterest = [new([0, 1, 3, 5, 6, 8, 9]), new([0, 2, 4, 5, 7, 9, 11])];
+    List<Scale> scalesOfInterest = [
+        new([0, 1, 3, 5, 6, 8, 9]),  //base 15 - 1, 16/15, 4/3, 6/5, 7/5(sqrt(2)), 8/5, 5/3 (no key 10 as 16/9)
+        new([0, 1, 3, 5, 6, 9, 10]), //base 15 - 1, 16/15, 6/5, 4/3, 7/5(sqrt(2)), 5/3, 9/5 (key 2 as 10/9? Why no 5/5?)
+        new([0, 2, 4, 5, 7, 9, 11])  //base 24 - 1, 9/8, 5/4, 5/4, 3/2, 5/3, 15/8
+        ];
 
     Console.WriteLine("Matching input against scales:");
     foreach (Scale scale in scalesOfInterest)
