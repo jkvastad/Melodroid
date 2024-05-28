@@ -201,7 +201,7 @@ namespace MusicTheory
             Dictionary<int, HashSet<Fraction>> denominatorsAndFractions = new();
             for (int denominator = 1; denominator <= maxDenominator; denominator++)
             {
-                for (int numerator = denominator; numerator < 2 * maxDenominator; numerator++)
+                for (int numerator = denominator; numerator < 2 * denominator; numerator++)
                 {
                     Fraction fraction = new(numerator, denominator);
                     if (!denominatorsAndFractions.ContainsKey((int)fraction.Denominator))

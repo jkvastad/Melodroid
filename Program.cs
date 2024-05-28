@@ -352,7 +352,9 @@ ChordPreferenceKeyMultiplicityPhraseHarmonizer harmonizer = new();
 //QueryChordKeyMultiplicity(scaleCalculator);
 //QueryChordInKeySetTranslations();
 
-PrintFractionApproximations();
+//PrintFractionApproximations();
+var fractionApproximations = ScaleCalculator.CalculateFractionsForApproximations(15);
+PrintRelativeDeviations(fractionApproximations, 12);
 
 ////Print all scales with superclasses (including self) of lesser/equal base
 //Dictionary<Scale, List<Scale>> leqScalesPerScale = CalculateAllLEQScalesPerScale(scaleCalculator);
@@ -1428,6 +1430,34 @@ static void PrintFractionApproximations(int maxDenominator = 15)
             }
             else
                 Console.Write("".PadRight(columnSpacing));
+        }
+        Console.WriteLine();
+    }
+}
+static void PrintRelativeDeviations(Dictionary<int, HashSet<Fraction>> fractionApproximations, int keysInTonalSystem)
+{
+    int columnSpacing = 14;
+    Dictionary<int, List<(Fraction approximation, double relativeDeviation)>> relativeDeviationsPerKeyAndApproximation
+        = ScaleCalculator.CalculateRelativeDeviationsForEqualToneSystem(fractionApproximations, keysInTonalSystem);
+
+    foreach (var key in relativeDeviationsPerKeyAndApproximation.Keys.OrderBy(key => key))
+        Console.Write($"{key}".PadRight(columnSpacing));
+    Console.WriteLine();
+
+    for (int row = 0; row < relativeDeviationsPerKeyAndApproximation.Values.Max(column => column.Count); row++)
+    {
+        foreach (var column in relativeDeviationsPerKeyAndApproximation.Keys.OrderBy(key => key))
+        {
+            if (row < relativeDeviationsPerKeyAndApproximation[column].Count)
+            {
+                Console.Write(
+                    (
+                    $"{relativeDeviationsPerKeyAndApproximation[column][row].approximation}" +
+                    $"({relativeDeviationsPerKeyAndApproximation[column][row].relativeDeviation:0.00})"
+                    ).PadRight(columnSpacing));
+            }
+            else
+                Console.Write(" ".PadRight(columnSpacing));
         }
         Console.WriteLine();
     }
