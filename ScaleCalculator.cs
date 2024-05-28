@@ -211,6 +211,37 @@ namespace MusicTheory
             }
             return denominatorsAndFractions;
         }
+
+        //Fraction approximations can deviate from equal tone system keys
+        //Tone systems generally produce real value tones which the brain parses to rational value tones
+        //Relative deviation of fraction approximations to tone system tones is likely an important factor in which tone gets approximated with what
+        //TODO what if two deviations are very similar?
+        public static Dictionary<int, List<(Fraction approximation, double relativeDeviation)>> CalculateRelativeDeviationsForEqualToneSystem(
+            Dictionary<int, HashSet<Fraction>> fractionApproximations, int keysInTonalSystem)
+        {
+            Dictionary<int, List<(Fraction approximation, double relativeDeviation)>> relativeErrorForFractionApproximationPerKey = new();
+            Dictionary<int, double> relativeHzPerKey = new();
+            for (int key = 0; key < keysInTonalSystem; key++)
+                relativeHzPerKey[key] = Math.Pow(2, key / (double)keysInTonalSystem);
+            foreach (Fraction fractionApproximation in fractionApproximations.SelectMany(item => item.Value))
+            {
+                double smallestDeviation = 100; //some large initial error                
+                int key = -1;
+                foreach (var relativeHz in relativeHzPerKey)
+                {
+                    double relativeDeviation = (1 - (double)fractionApproximation / relativeHz.Value);
+                    if (Math.Abs(relativeDeviation) < Math.Abs(smallestDeviation))
+                    {
+                        smallestDeviation = relativeDeviation;
+                        key = relativeHz.Key;
+                    }
+                }
+                if (!relativeErrorForFractionApproximationPerKey.ContainsKey(key))
+                    relativeErrorForFractionApproximationPerKey[key] = new();
+                relativeErrorForFractionApproximationPerKey[key].Add((fractionApproximation, smallestDeviation));
+            }
+            return relativeErrorForFractionApproximationPerKey;
+        }
     }
 
 
