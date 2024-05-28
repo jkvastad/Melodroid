@@ -347,12 +347,12 @@ ChordPreferenceKeyMultiplicityPhraseHarmonizer harmonizer = new();
 //TODO nånting händer med 0 1 8 och 0 7 11 - känns väldigt annorlunda om man inleder med 0 7 (11) eller 0 8 (1). Som om första intervallet 
 //PrintScaleClassAmbiguity(scaleCalculator, true);
 
-QueryFundamentalClassPerScale(scaleCalculator);
-
+//QueryFundamentalClassPerScale(scaleCalculator);
 //QueryChordsInScale(scaleCalculator);
-QueryChordKeyMultiplicity(scaleCalculator);
-
+//QueryChordKeyMultiplicity(scaleCalculator);
 //QueryChordInKeySetTranslations();
+
+PrintFractionApproximations();
 
 ////Print all scales with superclasses (including self) of lesser/equal base
 //Dictionary<Scale, List<Scale>> leqScalesPerScale = CalculateAllLEQScalesPerScale(scaleCalculator);
@@ -1406,4 +1406,29 @@ static Dictionary<Scale, List<Scale>> CalculateAllLEQScalesPerScale(ScaleCalcula
     }
 
     return leqScalesPerScale;
+}
+
+static void PrintFractionApproximations(int maxDenominator = 15)
+{
+    int columnSpacing = 6;
+    var fractionApproximations = ScaleCalculator.CalculateFractionsForApproximations(maxDenominator)
+        .ToDictionary(old => old.Key, old => old.Value.OrderBy(item => item).ToList());
+
+    foreach (var key in fractionApproximations.Keys)
+        Console.Write($"{key}".PadRight(columnSpacing));
+    Console.WriteLine();
+
+    for (int row = 0; row < fractionApproximations.Values.Max(column => column.Count); row++)
+    {
+        foreach (var column in fractionApproximations.Keys)
+        {
+            if (row < fractionApproximations[column].Count)
+            {
+                Console.Write($"{fractionApproximations[column][row]}".PadRight(columnSpacing));
+            }
+            else
+                Console.Write("".PadRight(columnSpacing));
+        }
+        Console.WriteLine();
+    }
 }

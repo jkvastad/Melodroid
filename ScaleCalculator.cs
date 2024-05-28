@@ -191,7 +191,28 @@ namespace MusicTheory
             }
             return noteValues;
         }
+
+        // Fractions used for fraction approximations are on the interval [1,2) and have a maximal denominator of roughly 5-50
+        // The interval is due to musical sounds empiricially behaving cyclically on such an interval
+        // The maximal denominator is due to the hearings lower bound on 20hz, meaning a sound packet can not exceed 50ms
+        // - with musical sounds roughly being around 100-1000hz, the maximal (composite) denominator for a sound pattern becomes 5-50
+        public static Dictionary<int, HashSet<Fraction>> CalculateFractionsForApproximations(int maxDenominator)
+        {
+            Dictionary<int, HashSet<Fraction>> denominatorsAndFractions = new();
+            for (int denominator = 1; denominator <= maxDenominator; denominator++)
+            {
+                for (int numerator = denominator; numerator < 2 * maxDenominator; numerator++)
+                {
+                    Fraction fraction = new(numerator, denominator);
+                    if (!denominatorsAndFractions.ContainsKey((int)fraction.Denominator))
+                        denominatorsAndFractions[(int)fraction.Denominator] = new();
+                    denominatorsAndFractions[(int)fraction.Denominator].Add(fraction);
+                }
+            }
+            return denominatorsAndFractions;
+        }
     }
+
 
     public struct Bit12Int
     {
