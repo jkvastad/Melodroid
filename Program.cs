@@ -342,7 +342,7 @@ ChordPreferenceKeyMultiplicityPhraseHarmonizer harmonizer = new();
 
 //PrintScaleClassUniqueness(scaleCalculator);
 
-LogRelativePeriodicityForOctaveIntervals(16);
+//LogRelativePeriodicityForOctaveIntervals(16);
 
 //TODO nånting händer med 0 1 8 och 0 7 11 - känns väldigt annorlunda om man inleder med 0 7 (11) eller 0 8 (1). Som om första intervallet 
 //PrintScaleClassAmbiguity(scaleCalculator, true);
