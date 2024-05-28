@@ -208,7 +208,7 @@ namespace MusicTheory
                         denominatorsAndFractions[(int)fraction.Denominator] = new();
                     denominatorsAndFractions[(int)fraction.Denominator].Add(fraction);
                 }
-            }
+            }            
             return denominatorsAndFractions;
         }
 

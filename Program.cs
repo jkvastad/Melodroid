@@ -1440,6 +1440,10 @@ static void PrintRelativeDeviations(Dictionary<int, HashSet<Fraction>> fractionA
     Dictionary<int, List<(Fraction approximation, double relativeDeviation)>> relativeDeviationsPerKeyAndApproximation
         = ScaleCalculator.CalculateRelativeDeviationsForEqualToneSystem(fractionApproximations, keysInTonalSystem);
 
+    //Sort approximations by relative deviations
+    foreach (var key in relativeDeviationsPerKeyAndApproximation.Keys)
+        relativeDeviationsPerKeyAndApproximation[key] = [.. relativeDeviationsPerKeyAndApproximation[key].OrderBy(item => Math.Abs(item.relativeDeviation))];
+
     foreach (var key in relativeDeviationsPerKeyAndApproximation.Keys.OrderBy(key => key))
         Console.Write($"{key}".PadRight(columnSpacing));
     Console.WriteLine();
