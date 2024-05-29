@@ -208,7 +208,7 @@ namespace MusicTheory
                         denominatorsAndFractions[(int)fraction.Denominator] = new();
                     denominatorsAndFractions[(int)fraction.Denominator].Add(fraction);
                 }
-            }            
+            }
             return denominatorsAndFractions;
         }
 
@@ -241,6 +241,29 @@ namespace MusicTheory
                 relativeErrorForFractionApproximationPerKey[key].Add((fractionApproximation, smallestDeviation));
             }
             return relativeErrorForFractionApproximationPerKey;
+        }
+
+        public static List<HashSet<Fraction>> CalculateFractionClasses(HashSet<Fraction> fractionApproximations)
+        {
+            //TODO calculate all sets of fractions with each original fraction as a fundamental and all other fractions octave transposed into [1,2)
+            List<HashSet<Fraction>> fractionClasses = new();
+            foreach (Fraction fractionAsFundamental in fractionApproximations)
+            {
+                HashSet<Fraction> fractionClass = new();                
+                foreach (var fraction in fractionApproximations)
+                {
+                    var denominator = fraction.Denominator * fractionAsFundamental.Numerator;
+                    var numerator = fraction.Numerator * fractionAsFundamental.Denominator;
+
+                    while (numerator < denominator)
+                        numerator *= 2;
+
+                    fractionClass.Add(new Fraction(numerator, denominator));
+                }
+
+                fractionClasses.Add(fractionClass);
+            }
+            return fractionClasses;
         }
     }
 
