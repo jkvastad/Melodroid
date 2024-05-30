@@ -301,8 +301,28 @@ namespace MusicTheory
             }
             return virtualFundamentals;
         }
-    }
 
+        //Similar to scale classes and fundamental classes for a tonal system, fractions themselves have a fraction class and fraction fundamental cass 
+        //Given a chord of the form [1, a/b, c/d...] and a max packet length for human hearing resolution all possible fundamentals can be calculated
+        // - (max packet length is maximum number of fundamental periods before crossing into rhythm domain)
+        public static Dictionary<Fraction, HashSet<Fraction>> CalculateFractionFundamentalClass(HashSet<Fraction> chord, int maxPacketLength)
+        {
+            Dictionary<Fraction, HashSet<Fraction>> fractionsPerFundamental = new();
+            HashSet<Fraction> virtualFundamentals = CalculateVirtualFundamentals(maxPacketLength);
+            foreach (Fraction fundamental in virtualFundamentals)
+            {
+                HashSet<Fraction> fundamentalNormalizedFractions = new();
+                foreach (Fraction fraction in chord)
+                {
+                    fundamentalNormalizedFractions.Add(new(
+                        fraction.Numerator * fundamental.Denominator,
+                        fraction.Denominator * fundamental.Numerator));
+                }
+                fractionsPerFundamental[fundamental] = fundamentalNormalizedFractions;
+            }
+            return fractionsPerFundamental;
+        }
+    }
 
     public struct Bit12Int
     {

@@ -357,7 +357,9 @@ PrintFractionApproximations();
 var fractionApproximations = ScaleCalculator.CalculateFractionsForApproximations(15);
 PrintRelativeDeviations(fractionApproximations, 12);
 PrintFractionClasses();
-
+PrintVirtualFundamentals();
+HashSet<Fraction> chord = [1, new(5, 4), new(3, 2)];
+PrintFractionFundamentalClass(chord);
 
 ////Print all scales with superclasses (including self) of lesser/equal base
 //Dictionary<Scale, List<Scale>> leqScalesPerScale = CalculateAllLEQScalesPerScale(scaleCalculator);
@@ -1488,5 +1490,24 @@ static void PrintFractionClasses(int maxDenominator = 15)
                 Console.Write($"{fraction}".PadRight(columnSpacing));
             Console.WriteLine();
         }
+    }
+}
+
+static void PrintVirtualFundamentals(int maxPacketLength = 15)
+{
+    var virtualFundamentals = ScaleCalculator.CalculateVirtualFundamentals(maxPacketLength);
+
+    foreach (var fundamental in virtualFundamentals.OrderBy(fraction => fraction))
+    {
+        Console.WriteLine(fundamental);
+    }
+}
+
+static void PrintFractionFundamentalClass(HashSet<Fraction> chord, int maxPacketLength = 15)
+{
+    var fractionFundamentalClass = ScaleCalculator.CalculateFractionFundamentalClass(chord, maxPacketLength);
+    foreach (var fundamental in fractionFundamentalClass.Keys.OrderBy(key => key))
+    {
+        Console.WriteLine($"{fundamental,-5}: {string.Join(" ", fractionFundamentalClass[fundamental])}");
     }
 }
