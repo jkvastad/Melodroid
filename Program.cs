@@ -1506,8 +1506,11 @@ static void PrintVirtualFundamentals(int maxPacketLength = 15)
 static void PrintFractionFundamentalClass(HashSet<Fraction> chord, int maxPacketLength = 15)
 {
     var fractionFundamentalClass = ScaleCalculator.CalculateFractionFundamentalClass(chord, maxPacketLength);
-    foreach (var fundamental in fractionFundamentalClass.Keys.OrderBy(key => key))
+    foreach (var fundamental in fractionFundamentalClass.Keys.OrderBy(key => LCM(fractionFundamentalClass[key].Select(fraction => (long)fraction.Denominator).ToArray())))
     {
-        Console.WriteLine($"{fundamental,-5}: {string.Join(" ", fractionFundamentalClass[fundamental])}");
+        var lcmForFundamental = LCM(fractionFundamentalClass[fundamental].Select(fraction => (long)fraction.Denominator).ToArray());
+        Console.WriteLine($"{fundamental,-5}: " +
+            $"{lcmForFundamental} - " +
+            $"{string.Join(" ", fractionFundamentalClass[fundamental])}");
     }
 }
