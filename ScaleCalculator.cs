@@ -243,13 +243,13 @@ namespace MusicTheory
             return relativeErrorForFractionApproximationPerKey;
         }
 
+        //Calculate all sets of fractions with each original fraction as a fundamental and all other fractions octave transposed into [1,2)
         public static List<HashSet<Fraction>> CalculateFractionClasses(HashSet<Fraction> fractionApproximations)
         {
-            //TODO calculate all sets of fractions with each original fraction as a fundamental and all other fractions octave transposed into [1,2)
             List<HashSet<Fraction>> fractionClasses = new();
             foreach (Fraction fractionAsFundamental in fractionApproximations)
             {
-                HashSet<Fraction> fractionClass = new();                
+                HashSet<Fraction> fractionClass = new();
                 foreach (var fraction in fractionApproximations)
                 {
                     var denominator = fraction.Denominator * fractionAsFundamental.Numerator;
@@ -264,6 +264,42 @@ namespace MusicTheory
                 fractionClasses.Add(fractionClass);
             }
             return fractionClasses;
+        }
+
+        //Calculates all fractions of form a/b on interval (1/2,1) and (1,2) so that a < maxPacketLength
+        //The idea is that any set of normalized fractions has an original fundamental with value 1
+        //When renomarlising to a new virtual fundamental the old fundamental becomes b/a
+        //Since a in b/a is a factor in the new set of fractions least common multiple it cannot exceed packet length.
+        //When a/b is on interval (1,2) the original fundamentals new representation of b/a is less than one:
+        //  - b/a then octave transposes into 2b/a, allowing the numerator of a/b to exceed maxPacketLength by a factor of 2 if a is divisible by 2.
+        public static HashSet<Fraction> CalculateVirtualFundamentals(int maxPacketLength = 15)
+        {
+            HashSet<Fraction> virtualFundamentals = new();
+
+            //Calculate virtual fundamentals for interval (1/2,1)
+            for (int denominator = 1; denominator <= maxPacketLength; denominator++)
+            {
+                for (int numerator = denominator; numerator < 2 * denominator; numerator++) // a/b must be in interval (1/2,1)
+                {
+                    virtualFundamentals.Add(new(denominator, numerator));
+                }
+            }
+
+            //Calculate virtual fundamentals for interval [1,2)
+            for (int denominator = 1; denominator <= 2 * maxPacketLength; denominator++) // double packet length due to octave transposition
+            {
+                if (denominator > maxPacketLength)
+                {
+                    if (denominator % 2 == 0)
+                        break;
+                    continue;
+                }
+                for (int numerator = denominator; numerator > denominator / 2; numerator--) // a/b must be in interval (1,2)
+                {
+                    virtualFundamentals.Add(new(denominator, numerator));
+                }
+            }
+            return virtualFundamentals;
         }
     }
 

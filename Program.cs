@@ -354,9 +354,10 @@ ChordPreferenceKeyMultiplicityPhraseHarmonizer harmonizer = new();
 
 //TODO fraction classes - scale classs but for fractions rather than keys
 PrintFractionApproximations();
+var fractionApproximations = ScaleCalculator.CalculateFractionsForApproximations(15);
+PrintRelativeDeviations(fractionApproximations, 12);
 PrintFractionClasses();
-//var fractionApproximations = ScaleCalculator.CalculateFractionsForApproximations(15);
-//PrintRelativeDeviations(fractionApproximations, 12);
+
 
 ////Print all scales with superclasses (including self) of lesser/equal base
 //Dictionary<Scale, List<Scale>> leqScalesPerScale = CalculateAllLEQScalesPerScale(scaleCalculator);
@@ -1487,19 +1488,5 @@ static void PrintFractionClasses(int maxDenominator = 15)
                 Console.Write($"{fraction}".PadRight(columnSpacing));
             Console.WriteLine();
         }
-
-        //for (int row = 0; row < fractionApproximations.Values.Max(column => column.Count); row++)
-        //{
-        //    foreach (var column in fractionApproximations.Keys)
-        //    {
-        //        if (row < fractionApproximations[column].Count)
-        //        {
-        //            Console.Write($"{fractionApproximations[column][row]}".PadRight(columnSpacing));
-        //        }
-        //        else
-        //            Console.Write("".PadRight(columnSpacing));
-        //    }
-        //    Console.WriteLine();
-        //}
     }
 }
