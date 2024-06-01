@@ -302,7 +302,7 @@ namespace MusicTheory
             return virtualFundamentals;
         }
 
-        //Similar to scale classes and fundamental classes for a tonal system, fractions themselves have a fraction class and fraction fundamental cass 
+        //Similar to scale classes and fundamental classes for a tonal system, fractions themselves have a fraction class and fraction fundamental class 
         //Given a chord of the form [1, a/b, c/d...] and a max packet length for human hearing resolution all possible fundamentals can be calculated
         // - (max packet length is maximum number of fundamental periods before crossing into rhythm domain)
         public static Dictionary<Fraction, HashSet<Fraction>> CalculateFractionFundamentalClass(HashSet<Fraction> chord, int maxPacketLength)
