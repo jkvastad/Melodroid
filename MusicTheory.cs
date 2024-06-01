@@ -17,7 +17,7 @@ namespace MusicTheory
 
     public class Measure
     {
-        public int TimeDivision { get; }       
+        public int TimeDivision { get; }
         public Dictionary<int, int>?[] MIDIKeys { get; } //array position is time division steps in measure, key is MIDI note, value is velocity
 
         public Measure(NoteValue?[] noteValues) : this(noteValues.Select(noteValue =>
@@ -141,6 +141,15 @@ namespace MusicTheory
         public static T TakeRandom<T>(this IEnumerable<T> list)
         {
             return list.ElementAt(random.Next(list.Count()));
+        }
+
+        public static Fraction ToOctave(this Fraction fraction)
+        {
+            while (fraction >= 2)
+                fraction /= 2;
+            while (fraction < 1)
+                fraction *= 2;
+            return fraction;
         }
 
         public static List<T> TakeRandom<T>(this IEnumerable<T> list, int uniqueElements)
