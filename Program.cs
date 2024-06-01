@@ -339,13 +339,12 @@ ChordPreferenceKeyMultiplicityPhraseHarmonizer harmonizer = new();
 //TODO nånting händer med 0 1 8 och 0 7 11 - känns väldigt annorlunda om man inleder med 0 7 (11) eller 0 8 (1). Som om första intervallet 
 //PrintScaleClassAmbiguity(scaleCalculator, true);
 
-//QueryFundamentalClassPerScale(scaleCalculator);
 //QueryChordsInScale(scaleCalculator);
 //QueryChordKeyMultiplicity(scaleCalculator);
 //QueryChordInKeySetTranslations();
 
 //PrintFractionApproximations();
-PrintCumulativeFractionApproximations(16);
+PrintCumulativeFractionApproximations(15, 24);
 //var fractionApproximations = ScaleCalculator.CalculateFractionsForApproximations(15);
 //PrintRelativeDeviations(fractionApproximations, 12);
 //PrintFractionClasses();
@@ -353,6 +352,8 @@ PrintCumulativeFractionApproximations(16);
 //HashSet<Fraction> chord = [1, new(5, 4), new(3, 2)];
 //PrintFractionFundamentalClass(chord);
 //PrintFractionFundamentalClass(chord, toOctave: false);
+
+QueryFundamentalClassPerScale(scaleCalculator);
 
 ////Print all scales with superclasses (including self) of lesser/equal base
 //Dictionary<Scale, List<Scale>> leqScalesPerScale = CalculateAllLEQScalesPerScale(scaleCalculator);
@@ -1432,13 +1433,13 @@ static void PrintFractionApproximations(int maxDenominator = 15)
         Console.WriteLine();
     }
 }
-static void PrintCumulativeFractionApproximations(int maxDenominator = 15)
+static void PrintCumulativeFractionApproximations(int minDenominator = 1, int maxDenominator = 15)
 {
     int columnSpacing = 10;
     var fractionApproximations = ScaleCalculator.CalculateFractionsForApproximations(maxDenominator);
 
-    foreach (var key in fractionApproximations.Keys)
-        Console.Write($"{key}".PadRight(columnSpacing));
+    for (int denominator = minDenominator; denominator <= maxDenominator; denominator++)
+        Console.Write($"{denominator}".PadRight(columnSpacing));
     Console.WriteLine();
 
     Dictionary<int, List<Fraction>> cumulativeApproximations = new();
@@ -1451,7 +1452,10 @@ static void PrintCumulativeFractionApproximations(int maxDenominator = 15)
                 cumulativeApproximations[key].AddRange([.. fractionApproximations[denominator]]);
         }
     }
-    cumulativeApproximations = cumulativeApproximations.ToDictionary(old => old.Key, old => old.Value.OrderBy(item => item).ToList());
+
+    cumulativeApproximations = cumulativeApproximations
+        .Where(kv => kv.Key >= minDenominator)
+        .ToDictionary(old => old.Key, old => old.Value.OrderBy(item => item).ToList());
 
     for (int row = 0; row < cumulativeApproximations.Values.Max(column => column.Count); row++)
     {
