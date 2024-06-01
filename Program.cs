@@ -1,8 +1,5 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using Fractions;
-using MathNet.Numerics.Distributions;
-using MathNet.Numerics.LinearAlgebra;
-using MathNet.Numerics.LinearAlgebra.Double;
 using Melanchall.DryWetMidi.Common;
 using Melanchall.DryWetMidi.Core;
 using Melanchall.DryWetMidi.Interaction;
@@ -10,15 +7,10 @@ using Melanchall.DryWetMidi.MusicTheory;
 using Melodroid.Harmonizers;
 using MusicTheory;
 using Serilog;
-using Serilog.Core;
-using System;
-using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
 using static MusicTheory.MusicTheoryUtils;
-using static System.Formats.Asn1.AsnWriter;
 using Scale = MusicTheory.Scale;
-using Vector = MathNet.Numerics.LinearAlgebra.Vector<double>;
 
 //MIDI standard: http://www.music.mcgill.ca/~ich/classes/mumt306/StandardMIDIfileformat.html
 //Note time in MIDI is defined in header chunk as number of divisions of quarter beat, e.g. setting "division" to 12 means a quarter beat has 12 divisions.
