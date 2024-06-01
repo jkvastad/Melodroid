@@ -344,8 +344,8 @@ ChordPreferenceKeyMultiplicityPhraseHarmonizer harmonizer = new();
 //QueryChordKeyMultiplicity(scaleCalculator);
 //QueryChordInKeySetTranslations();
 
-PrintFractionApproximations();
-PrintCumulativeFractionApproximations();
+//PrintFractionApproximations();
+PrintCumulativeFractionApproximations(16);
 //var fractionApproximations = ScaleCalculator.CalculateFractionsForApproximations(15);
 //PrintRelativeDeviations(fractionApproximations, 12);
 //PrintFractionClasses();
@@ -1434,7 +1434,7 @@ static void PrintFractionApproximations(int maxDenominator = 15)
 }
 static void PrintCumulativeFractionApproximations(int maxDenominator = 15)
 {
-    int columnSpacing = 6;
+    int columnSpacing = 10;
     var fractionApproximations = ScaleCalculator.CalculateFractionsForApproximations(maxDenominator);
 
     foreach (var key in fractionApproximations.Keys)
@@ -1459,7 +1459,7 @@ static void PrintCumulativeFractionApproximations(int maxDenominator = 15)
         {
             if (row < cumulativeApproximations[column].Count)
             {
-                Console.Write($"{cumulativeApproximations[column][row]}".PadRight(columnSpacing));
+                Console.Write(($"{cumulativeApproximations[column][row]}".PadRight(5) + $"({cumulativeApproximations[column][row].ToDouble().ClosestKey()})").PadRight(columnSpacing));
             }
             else
                 Console.Write("".PadRight(columnSpacing));

@@ -151,6 +151,32 @@ namespace MusicTheory
                 fraction *= 2;
             return fraction;
         }
+        public static double ToOctave(this double number)
+        {
+            while (number >= 2)
+                number /= 2;
+            while (number < 1)
+                number *= 2;
+            return number;
+        }
+
+        public static int ClosestKey(this double number, int tonesInSystem = 12)
+        {
+            number = number.ToOctave();
+            double smallestDeviation = 1;
+            int closestKey = -1;
+            for (int i = 0; i < tonesInSystem; i++)
+            {
+                double currentTone = Math.Pow(2, i / 12d);
+                double relativeDeviation = Math.Abs((number - currentTone) / currentTone);
+                if (relativeDeviation < smallestDeviation)
+                {
+                    smallestDeviation = relativeDeviation;
+                    closestKey = i;
+                }
+            }
+            return closestKey;
+        }
 
         public static List<T> TakeRandom<T>(this IEnumerable<T> list, int uniqueElements)
         {
