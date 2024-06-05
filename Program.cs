@@ -344,13 +344,12 @@ ChordPreferenceKeyMultiplicityPhraseHarmonizer harmonizer = new();
 //QueryChordInKeySetTranslations();
 
 //PrintFractionApproximations();
-PrintCumulativeFractionApproximations(15, 24);
+PrintCumulativeFractionApproximations(15, 24, true);
 //var fractionApproximations = ScaleCalculator.CalculateFractionsForApproximations(15);
 //PrintRelativeDeviations(fractionApproximations, 12);
 //PrintFractionClasses();
 //PrintVirtualFundamentals();
-//HashSet<Fraction> chord = [1, new(5, 4), new(3, 2)];
-//PrintFractionFundamentalClass(chord);
+QueryFractionFundamentalClass();
 //PrintFractionFundamentalClass(chord, toOctave: false);
 
 QueryFundamentalClassPerScale(scaleCalculator);
@@ -1433,7 +1432,7 @@ static void PrintFractionApproximations(int maxDenominator = 15)
         Console.WriteLine();
     }
 }
-static void PrintCumulativeFractionApproximations(int minDenominator = 1, int maxDenominator = 15)
+static void PrintCumulativeFractionApproximations(int minDenominator = 1, int maxDenominator = 15, bool legalNumeratorsOnly = false)
 {
     int columnSpacing = 10;
     var fractionApproximations = ScaleCalculator.CalculateFractionsForApproximations(maxDenominator);
@@ -1442,6 +1441,7 @@ static void PrintCumulativeFractionApproximations(int minDenominator = 1, int ma
         Console.Write($"{denominator}".PadRight(columnSpacing));
     Console.WriteLine();
 
+    //Create cumulative approximations
     Dictionary<int, List<Fraction>> cumulativeApproximations = new();
     foreach (var key in fractionApproximations.Keys.OrderBy(key => key))
     {
@@ -1450,6 +1450,35 @@ static void PrintCumulativeFractionApproximations(int minDenominator = 1, int ma
         {
             if (key % denominator == 0)
                 cumulativeApproximations[key].AddRange([.. fractionApproximations[denominator]]);
+        }
+    }
+
+    if (legalNumeratorsOnly)
+    {
+        //if key in dict then legal, value at key is max number of occurences
+        Dictionary<int, int> legalPrimes = new() { { 2, 4 }, { 3, 2 }, { 5, 1 } };
+        foreach (var key in cumulativeApproximations.Keys)
+        {
+            cumulativeApproximations[key] = cumulativeApproximations[key].Where(fraction =>
+                {
+                    if (fraction == new Fraction(7, 5)) //sqrt 2 special case
+                        return true;
+                    var factors = Factorize((int)fraction.Numerator);
+                    foreach (var factor in factors)
+                    {
+                        //numerator must be small enough
+                        if (fraction.Numerator > 24)
+                            return false;
+                        //factor must be legal
+                        if (!legalPrimes.ContainsKey(factor))
+                            return false;
+                        //factor duplicates cannot exceed max allowed occurences
+                        if (factors.Where(otherFactor => otherFactor == factor).Count() > legalPrimes[factor])
+                            return false;
+                    }
+                    return true;
+                }
+            ).ToList();
         }
     }
 
@@ -1535,37 +1564,54 @@ static void PrintVirtualFundamentals(int maxPacketLength = 15)
     }
 }
 
-static void PrintFractionFundamentalClass(HashSet<Fraction> chord, int maxPacketLength = 15, bool toOctave = true)
+static void QueryFractionFundamentalClass(int maxPacketLength = 15, bool toOctave = true)
 {
-    Dictionary<Fraction, HashSet<Fraction>> fractionFundamentalClass = ScaleCalculator.CalculateFractionFundamentalClass(chord, maxPacketLength);
-    if (toOctave == true)
+    while (true)
     {
-        //remove doubles from octave transposition
-        fractionFundamentalClass = fractionFundamentalClass.GroupBy(
-            kv => kv.Key.ToOctave(),
-            kv => kv.Value,
-            (key, values) => new { fraction = key, fractionClass = values.First() }
-            ).ToDictionary(kv => kv.fraction, kv => kv.fractionClass);
-        foreach (var fundamental in fractionFundamentalClass.Keys
-            .OrderBy(key => LCM(fractionFundamentalClass[key].Select(fraction => (long)fraction.ToOctave().Denominator).ToArray()))
-            .ThenBy(key => key.ToOctave()))
+        Console.WriteLine($"Input space separated fractions for fraction fundamental class up to {maxPacketLength} denominator. (empty input to exit)");
+        string input = Console.ReadLine();
+
+        if (input.Length == 0) return;
+        Fraction[] inputKeys = Array.ConvertAll(input.Split(' '), split =>
         {
-            var lcmForFundamental = LCM(fractionFundamentalClass[fundamental].Select(fraction => (long)fraction.ToOctave().Denominator).ToArray());
-            Console.WriteLine($"{fundamental.ToOctave(),-5}: " +
-                $"{lcmForFundamental} - " +
-                $"{string.Join(" ", fractionFundamentalClass[fundamental].Select(fraction => fraction.ToOctave()))}");
+            if (split.Contains('/'))
+            {
+                string[] inputSplit = split.Split('/');
+                return new(int.Parse(inputSplit[0]), int.Parse(inputSplit[1]));
+            }
+            else
+                return new Fraction(1);
+        });
+        Dictionary<Fraction, HashSet<Fraction>> fractionFundamentalClass = ScaleCalculator.CalculateFractionFundamentalClass(inputKeys.ToHashSet(), maxPacketLength);
+        if (toOctave == true)
+        {
+            //remove doubles from octave transposition
+            fractionFundamentalClass = fractionFundamentalClass.GroupBy(
+                kv => kv.Key.ToOctave(),
+                kv => kv.Value,
+                (key, values) => new { fraction = key, fractionClass = values.First() }
+                ).ToDictionary(kv => kv.fraction, kv => kv.fractionClass);
+            foreach (var fundamental in fractionFundamentalClass.Keys
+                .OrderBy(key => LCM(fractionFundamentalClass[key].Select(fraction => (long)fraction.ToOctave().Denominator).ToArray()))
+                .ThenBy(key => key.ToOctave()))
+            {
+                var lcmForFundamental = LCM(fractionFundamentalClass[fundamental].Select(fraction => (long)fraction.ToOctave().Denominator).ToArray());
+                Console.WriteLine($"{fundamental.ToOctave(),-5}: " +
+                    $"{lcmForFundamental} - " +
+                    $"{string.Join(" ", fractionFundamentalClass[fundamental].Select(fraction => fraction.ToOctave()))}");
+            }
         }
-    }
-    else
-    {
-        foreach (var fundamental in fractionFundamentalClass.Keys
-            .OrderBy(key => LCM(fractionFundamentalClass[key].Select(fraction => (long)fraction.Denominator).ToArray()))
-            .ThenBy(key => key))
+        else
         {
-            var lcmForFundamental = LCM(fractionFundamentalClass[fundamental].Select(fraction => (long)fraction.Denominator).ToArray());
-            Console.WriteLine($"{fundamental,-5}: " +
-                $"{lcmForFundamental} - " +
-                $"{string.Join(" ", fractionFundamentalClass[fundamental])}");
+            foreach (var fundamental in fractionFundamentalClass.Keys
+                .OrderBy(key => LCM(fractionFundamentalClass[key].Select(fraction => (long)fraction.Denominator).ToArray()))
+                .ThenBy(key => key))
+            {
+                var lcmForFundamental = LCM(fractionFundamentalClass[fundamental].Select(fraction => (long)fraction.Denominator).ToArray());
+                Console.WriteLine($"{fundamental,-5}: " +
+                    $"{lcmForFundamental} - " +
+                    $"{string.Join(" ", fractionFundamentalClass[fundamental])}");
+            }
         }
     }
 }
