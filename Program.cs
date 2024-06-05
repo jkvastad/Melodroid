@@ -94,8 +94,8 @@ SimpleIsochronicRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, be
 //];
 //SimpleMeasurePatternRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, beatsPerMeasure, deviationsPerMeasure, measurePatternBlocks);
 
-Scale initialScale = new(new int[] { 0, 4, 7 });
 
+//Scale initialScale = new(new int[] { 0, 4, 7 });
 //Scale majorChord = new(new int[] { 0, 4, 7 });
 //Scale minorChord = new(new int[] { 0, 3, 7 });
 //List<Scale> chordProgression = [majorChord, minorChord];
@@ -116,15 +116,15 @@ ChordPreferenceKeyMultiplicityPhraseHarmonizer harmonizer = new();
 //PathWalkMeasureHarmonizer measureHarmonizer = new(initialScale, initialScale, 4);
 //BeatBox beatBox = new BeatBox(rhythmMaker, measureHarmonizer);
 
-////Write MIDI files
-//BeatBox beatBox = new BeatBox(rhythmMaker, harmonizer);
+//Write MIDI files
+BeatBox beatBox = new BeatBox(rhythmMaker, harmonizer);
 
-//List<Measure> melodyMeasures = beatBox.MakeMeasures();
-//beatBox.WriteMeasuresToMidi(melodyMeasures, folderPath, "key_multiplicity_test", true);
+List<Measure> melodyMeasures = beatBox.MakeMeasures();
+beatBox.WriteMeasuresToMidi(melodyMeasures, folderPath, "key_multiplicity_test", true);
 
-//ChordMeasureHarmonizer chordHarmonizer = new(harmonizer.ChordPerMeasure, 4);
-//List<Measure> chordMeasures = chordHarmonizer.MeasuresFromVelocities(rhythmMaker.VelocityMeasures);
-//beatBox.WriteMeasuresToMidi(chordMeasures, folderPath, "key_multiplicity_chord_test", true);
+ChordMeasureHarmonizer chordHarmonizer = new(harmonizer.ChordPerMeasure, 4);
+List<Measure> chordMeasures = chordHarmonizer.MeasuresFromVelocities(rhythmMaker.VelocityMeasures);
+beatBox.WriteMeasuresToMidi(chordMeasures, folderPath, "key_multiplicity_chord_test", true);
 
 
 //TODO: Check for patterns in complex chords, e.g. in 3/2, 5/4 the 3/2 interval loops twice, cutting 5/4 in "half" and creating a mirrored version -
@@ -340,19 +340,19 @@ ChordPreferenceKeyMultiplicityPhraseHarmonizer harmonizer = new();
 //PrintScaleClassAmbiguity(scaleCalculator, true);
 
 //QueryChordsInScale(scaleCalculator);
-//QueryChordKeyMultiplicity(scaleCalculator);
 //QueryChordInKeySetTranslations();
 
 //PrintFractionApproximations();
-PrintCumulativeFractionApproximations(15, 24, true);
+//PrintCumulativeFractionApproximations(15, 24, true);
 //var fractionApproximations = ScaleCalculator.CalculateFractionsForApproximations(15);
 //PrintRelativeDeviations(fractionApproximations, 12);
 //PrintFractionClasses();
 //PrintVirtualFundamentals();
-QueryFractionFundamentalClass();
+//QueryFractionFundamentalClass();
 //PrintFractionFundamentalClass(chord, toOctave: false);
 
-QueryFundamentalClassPerScale(scaleCalculator);
+//QueryChordKeyMultiplicity(scaleCalculator);
+//QueryFundamentalClassPerScale(scaleCalculator);
 
 ////Print all scales with superclasses (including self) of lesser/equal base
 //Dictionary<Scale, List<Scale>> leqScalesPerScale = CalculateAllLEQScalesPerScale(scaleCalculator);
@@ -1467,7 +1467,7 @@ static void PrintCumulativeFractionApproximations(int minDenominator = 1, int ma
                     foreach (var factor in factors)
                     {
                         //numerator must be small enough
-                        if (fraction.Numerator > 24)
+                        if (fraction.Numerator > 30)
                             return false;
                         //factor must be legal
                         if (!legalPrimes.ContainsKey(factor))

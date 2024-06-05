@@ -14,7 +14,9 @@ namespace Melodroid.Harmonizers
         private Scale CurrentChord;
         //base 24 and 15 scales - prime combinations of 2,3 and 3,5
         //List<Scale> _scalesOfInterest = [new([0, 1, 3, 5, 6, 8, 9]), new([0, 2, 4, 5, 7, 9, 11])];
-        List<Scale> _scalesOfInterest = [new([0, 2, 4, 5, 7, 9, 11])];
+        //List<Scale> _scalesOfInterest = [new([0, 1, 3, 5, 6, 8, 9]), new([0, 1, 3, 5, 6, 9, 10]), new([0, 2, 4, 5, 7, 9, 11])];
+        List<Scale> _scalesOfInterest = [new([0, 2, 4, 7, 11]), new([0, 1, 3, 5, 6, 8, 9]), new([0, 1, 3, 5, 6, 9, 10]), new([0, 2, 4, 5, 7, 9, 11])];
+        //List<Scale> _scalesOfInterest = [new([0, 2, 4, 5, 7, 9, 11])];
         //List<Scale> _chordsOfInterest = [new([0, 2, 7]), new([0, 3, 7]), new([0, 4, 7]), new([0, 4, 7, 10])];
         //List<Scale> _chordsOfInterest = [new([0, 2, 7]), new([0, 3, 6]), new([0, 3, 7]), new([0, 4, 7])];
         //List<Scale> _chordsOfInterest = [new([0, 2, 7]), new([0, 3, 7]), new([0, 4, 7])];
@@ -48,6 +50,7 @@ namespace Melodroid.Harmonizers
 
                 List<int>[] keyMultiplicity;
 
+                //TODO overhaul of how melody is created from multiplicity
                 //New scale once per phrase
                 if (measureIndex % MeasuresPerPhrase == 0)
                 {
