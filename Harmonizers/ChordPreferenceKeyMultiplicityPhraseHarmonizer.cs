@@ -19,6 +19,7 @@ namespace Melodroid.Harmonizers
         //List<Scale> _scalesOfInterest = [new([0, 1, 3, 5, 6, 8, 9]), new([0, 1, 3, 5, 6, 9, 10]), new([0, 2, 4, 5, 7, 9, 11])];
         //The natural scales
         List<Scale> _scalesOfInterest = [new([0, 2, 4, 7, 11]), new([0, 1, 3, 5, 6, 8, 9]), new([0, 1, 3, 5, 6, 9, 10]), new([0, 2, 4, 5, 7, 9, 11])];
+        //List<Scale> _scalesOfInterest = [new([0, 2, 4, 7, 11]), new([0, 1, 3, 5, 6, 8, 9]), new([0, 1, 3, 5, 6, 9, 10]), new([0, 2, 4, 5, 7, 9, 11])];
 
         public List<(int fundamentalNoteNumber, Scale scale)> ChordPerMeasure = new();
         public List<Measure> MeasuresFromVelocities(List<int?[]> velocityMeasures)
@@ -60,8 +61,8 @@ namespace Melodroid.Harmonizers
                 //Always take new random chord
                 do
                 {
-                    //3 to 4 notes from current scale
-                    List<int> newIntervals = _currentScale.ToIntervals().TakeRandom(_random.NextBoolean() ? 3 : 4);
+                    //3 notes from current scale
+                    List<int> newIntervals = _currentScale.ToIntervals().TakeRandom(3);
                     //new chord at position relative to scale fundamental
                     int relativeChordFundamental = newIntervals.Min();
                     newIntervals = newIntervals.Select(interval => interval - relativeChordFundamental).ToList();

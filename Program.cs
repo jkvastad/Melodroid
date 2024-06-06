@@ -117,14 +117,14 @@ ChordPreferenceKeyMultiplicityPhraseHarmonizer harmonizer = new();
 //BeatBox beatBox = new BeatBox(rhythmMaker, measureHarmonizer);
 
 //Write MIDI files
-BeatBox beatBox = new BeatBox(rhythmMaker, harmonizer);
+//BeatBox beatBox = new BeatBox(rhythmMaker, harmonizer);
 
-List<Measure> melodyMeasures = beatBox.MakeMeasures();
-beatBox.WriteMeasuresToMidi(melodyMeasures, folderPath, "key_multiplicity_test", true);
+//List<Measure> melodyMeasures = beatBox.MakeMeasures();
+//beatBox.WriteMeasuresToMidi(melodyMeasures, folderPath, "key_multiplicity_test", true);
 
-ChordMeasureHarmonizer chordHarmonizer = new(harmonizer.ChordPerMeasure, 4);
-List<Measure> chordMeasures = chordHarmonizer.MeasuresFromVelocities(rhythmMaker.VelocityMeasures);
-beatBox.WriteMeasuresToMidi(chordMeasures, folderPath, "key_multiplicity_chord_test", true);
+//ChordMeasureHarmonizer chordHarmonizer = new(harmonizer.ChordPerMeasure, 4);
+//List<Measure> chordMeasures = chordHarmonizer.MeasuresFromVelocities(rhythmMaker.VelocityMeasures);
+//beatBox.WriteMeasuresToMidi(chordMeasures, folderPath, "key_multiplicity_chord_test", true);
 
 
 //TODO: Check for patterns in complex chords, e.g. in 3/2, 5/4 the 3/2 interval loops twice, cutting 5/4 in "half" and creating a mirrored version -
@@ -351,7 +351,7 @@ beatBox.WriteMeasuresToMidi(chordMeasures, folderPath, "key_multiplicity_chord_t
 //QueryFractionFundamentalClass();
 //PrintFractionFundamentalClass(chord, toOctave: false);
 
-//QueryChordKeyMultiplicity(scaleCalculator);
+QueryChordKeyMultiplicity(scaleCalculator);
 //QueryFundamentalClassPerScale(scaleCalculator);
 
 ////Print all scales with superclasses (including self) of lesser/equal base
