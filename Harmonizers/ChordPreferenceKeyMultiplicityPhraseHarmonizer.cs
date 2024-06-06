@@ -1,4 +1,5 @@
-﻿using MusicTheory;
+﻿using MathNet.Numerics.Random;
+using MusicTheory;
 using Serilog;
 
 namespace Melodroid.Harmonizers
@@ -10,26 +11,19 @@ namespace Melodroid.Harmonizers
         public int CurrentOctave = 4;
         public int MeasuresPerPhrase = 4;
         private Random _random = new();
-        private Scale CurrentScale;
-        private Scale CurrentChord;
-        //base 24 and 15 scales - prime combinations of 2,3 and 3,5
+        private Scale _currentScale;
+        private Scale _currentChord = new([0, 4, 7]);
+        private Scale _semitone = new([0, 1]);        
+        //List<Scale> _scalesOfInterest = [new([0, 2, 4, 5, 7, 9, 11])];        
         //List<Scale> _scalesOfInterest = [new([0, 1, 3, 5, 6, 8, 9]), new([0, 2, 4, 5, 7, 9, 11])];
         //List<Scale> _scalesOfInterest = [new([0, 1, 3, 5, 6, 8, 9]), new([0, 1, 3, 5, 6, 9, 10]), new([0, 2, 4, 5, 7, 9, 11])];
+        //The natural scales
         List<Scale> _scalesOfInterest = [new([0, 2, 4, 7, 11]), new([0, 1, 3, 5, 6, 8, 9]), new([0, 1, 3, 5, 6, 9, 10]), new([0, 2, 4, 5, 7, 9, 11])];
-        //List<Scale> _scalesOfInterest = [new([0, 2, 4, 5, 7, 9, 11])];
-        //List<Scale> _chordsOfInterest = [new([0, 2, 7]), new([0, 3, 7]), new([0, 4, 7]), new([0, 4, 7, 10])];
-        //List<Scale> _chordsOfInterest = [new([0, 2, 7]), new([0, 3, 6]), new([0, 3, 7]), new([0, 4, 7])];
-        //List<Scale> _chordsOfInterest = [new([0, 2, 7]), new([0, 3, 7]), new([0, 4, 7])];
-        List<Scale> _chordsOfInterest = [new([0, 3, 7]), new([0, 4, 7])];
-        //List<Scale> _chordsOfInterest = [new([0, 4, 7])];
 
         public List<(int fundamentalNoteNumber, Scale scale)> ChordPerMeasure = new();
         public List<Measure> MeasuresFromVelocities(List<int?[]> velocityMeasures)
         {
             ChordPerMeasure.Clear();
-
-            //intial chord
-            CurrentChord = _chordsOfInterest.TakeRandom();
 
             List<Measure> measures = new();
             int measureIndex = 0;
@@ -48,27 +42,35 @@ namespace Melodroid.Harmonizers
                     }
                 }
 
-                List<int>[] keyMultiplicity;
-
-                //TODO overhaul of how melody is created from multiplicity
                 //New scale once per phrase
                 if (measureIndex % MeasuresPerPhrase == 0)
                 {
-                    //Take any scale of interest
-                    CurrentScale = _scalesOfInterest.TakeRandom();
-                    //Use old chord for key multiplicity
-                    keyMultiplicity = CurrentScale.CalculateKeyMultiplicity(CurrentChord);
-                    //Select new fundamental for scale from old chord key multiplicity
-                    CurrentScaleFundamental = (CurrentScaleFundamental + keyMultiplicity[0].Where(mult => mult != 0).TakeRandom()) % 12;
+                    //get key multiplicity for chord in all interesting scales
+                    Dictionary<Scale, List<int>[]> keyMultiplicityPerScale = new();
+                    foreach (Scale scale in _scalesOfInterest)
+                    {
+                        keyMultiplicityPerScale[scale] = scale.CalculateKeyMultiplicity(_currentChord);
+                    }
+                    //keep only multiplicities containing the current chord
+                    keyMultiplicityPerScale = keyMultiplicityPerScale.Where(kv => kv.Value[0].Count > 0).ToDictionary();
+                    //take any of the remaining scales and fundamental
+                    _currentScale = keyMultiplicityPerScale.Keys.TakeRandom();
+                    CurrentScaleFundamental = (CurrentScaleFundamental + keyMultiplicityPerScale[_currentScale][0].TakeRandom()) % 12;
                 }
                 //Always take new random chord
-                CurrentChord = _chordsOfInterest.TakeRandom();
-                //Chord fundamental is any chord placement in current scale.
-                //(Since key multiplicity is the scales fundamental translation to the right, chord placement is negative multiplicity)
-                keyMultiplicity = CurrentScale.CalculateKeyMultiplicity(CurrentChord);
-                CurrentChordFundamental = (12 + (CurrentScaleFundamental - keyMultiplicity[0].TakeRandom())) % 12;
+                do
+                {
+                    //3 to 4 notes from current scale
+                    List<int> newIntervals = _currentScale.ToIntervals().TakeRandom(_random.NextBoolean() ? 3 : 4);
+                    //new chord at position relative to scale fundamental
+                    int relativeChordFundamental = newIntervals.Min();
+                    newIntervals = newIntervals.Select(interval => interval - relativeChordFundamental).ToList();
+                    _currentChord = new(newIntervals.ToArray());
+                    CurrentChordFundamental = (CurrentScaleFundamental + relativeChordFundamental) % 12;
+                    //redo if semitone (avoid beating from 16/15)
+                } while (_semitone.IsSubClassTo(_currentChord));
 
-                HashSet<int> currentIntervals = CurrentScale.ToIntervals().ToHashSet();
+                HashSet<int> currentIntervals = _currentScale.ToIntervals().ToHashSet();
 
                 //Play random notes from current allowed intervals                
                 for (int i = 0; i < velocityMeasure.Length; i++)
@@ -88,11 +90,11 @@ namespace Melodroid.Harmonizers
                 Measure measure = new(measureNoteValues);
                 measures.Add(measure);
 
-                ChordPerMeasure.Add((CurrentChordFundamental, CurrentChord)); //used by chord harmonizers
+                ChordPerMeasure.Add((CurrentChordFundamental, _currentChord)); //used by chord harmonizers
 
                 Log.Information($"Measure {measureIndex}");
-                Log.Information($"Scale fundamental {CurrentScaleFundamental,-2}, Scale {CurrentScale} ");
-                Log.Information($"Chord fundamental {CurrentChordFundamental,-2}, Chord {CurrentChord}");
+                Log.Information($"Scale fundamental {CurrentScaleFundamental,-2}, Scale {_currentScale} ");
+                Log.Information($"Chord fundamental {CurrentChordFundamental,-2}, Chord {_currentChord}");
 
                 measureIndex++;
             }

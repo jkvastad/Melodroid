@@ -36,49 +36,14 @@ public class ChordMeasureHarmonizer(
                 }
             }
 
-            //Create chord            
-            if (semitoneScale.IsSubClassTo(_currentScale) || tripleWholeToneScale.IsSubClassTo(_currentScale))
-            {
-                //power set of scale size
-                List<int> allSubscalePermutations = new();
-                for (int i = 1; i < BigInteger.Pow(2, _currentScale.NumberOfKeys()); i++)
-                {
-                    allSubscalePermutations.Add(i);
-                }
-                //all subscale progressions                
-                List<(int keyStep, Scale subscale)> subscaleProgressions = new();
-                List<int> currentScaleIntervals = _currentScale.ToIntervals().OrderBy(interval => interval).ToList();
-                foreach (int permutation in allSubscalePermutations)
-                {
-                    //create the new scale
-                    List<int> newScaleIntervals = new();
-                    for (int i = 0; i < currentScaleIntervals.Count; i++)
-                    {
-                        if (((permutation >> i) & 1) == 1) // is interval included?
-                            newScaleIntervals.Add(currentScaleIntervals[i]);
-                    }
-                    int smallestInterval = newScaleIntervals.First();
-                    newScaleIntervals = newScaleIntervals.Select(interval => interval - smallestInterval).ToList(); //normalize scale to start at interval 0
-                    Scale newScale = new(newScaleIntervals.ToArray());
-
-                    //check for semitone                    
-                    if (semitoneScale.IsSubClassTo(newScale) || tripleWholeToneScale.IsSubClassTo(newScale))
-                        continue;
-
-                    subscaleProgressions.Add((smallestInterval, newScale));
-                }
-                //Take the largest progression scale at random. Mr. speaker, we are for the big.
-                int largestProgressionScaleSize = subscaleProgressions.Max(progression => progression.subscale.NumberOfKeys());
-                var largestProgressions = subscaleProgressions.Where(progression => progression.subscale.NumberOfKeys() == largestProgressionScaleSize);
-                var progression = largestProgressions.TakeRandom();
-                _currentScale = progression.subscale;
-                _currentFundamentalNoteNumber += progression.keyStep;
-            }
+            //set chord and fundamental
+            _currentScale = ChordProgressionsPerMeasure[measureIndex].scale;
+            _currentFundamentalNoteNumber = ChordProgressionsPerMeasure[measureIndex].fundamentalNoteNumber;
 
             foreach (int interval in _currentScale.ToIntervals())
             {
                 int currentNoteNumber = (CurrentOctave * 12) + _currentFundamentalNoteNumber + interval;
-                if (currentNoteNumber >= ((CurrentOctave + 1) * 12)) //do not overlap into melody
+                if (currentNoteNumber >= ((CurrentOctave + 1) * 12) - 1) //stay one semitone from melody
                     currentNoteNumber -= 12;
 
                 int velocity = 64; //This particular harmonizer cares not for actual velocities
