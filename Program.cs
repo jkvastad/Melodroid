@@ -353,6 +353,8 @@ ChordPreferenceKeyMultiplicityPhraseHarmonizer harmonizer = new();
 
 QueryChordKeyMultiplicity(scaleCalculator);
 //QueryFundamentalClassPerScale(scaleCalculator);
+QueryChordProgressionFromMultiplicity(scaleCalculator);
+//QueryChordInKeySetTranslations();
 
 ////Print all scales with superclasses (including self) of lesser/equal base
 //Dictionary<Scale, List<Scale>> leqScalesPerScale = CalculateAllLEQScalesPerScale(scaleCalculator);
@@ -541,8 +543,9 @@ void QueryChordInKeySetTranslations()
 void QueryChordKeyMultiplicity(ScaleCalculator scaleCalculator)
 {
     List<Scale> scalesOfInterest = [
-        new([0, 1, 3, 5, 6, 8, 9]),  //base 15 - 1, 16/15, 4/3, 6/5, 7/5(sqrt(2)), 8/5, 5/3 (no key 10 as 16/9)
-        new([0, 1, 3, 5, 6, 9, 10]), //base 15 - 1, 16/15, 6/5, 4/3, 7/5(sqrt(2)), 5/3, 9/5 (key 2 as 10/9? Why no 5/5?)
+        new([0, 1, 3, 5, 6, 8, 9]),  //base 15 - 1, 16/15, 4/3, 6/5, 7/5(sqrt(2)), 8/5, 5/3 (if both 8 and 10 then becomes base 24 at 1)
+        new([0, 1, 3, 5, 6, 9, 10]), //base 15 - 1, 16/15, 6/5, 4/3, 7/5(sqrt(2)), 5/3, 9/5 (if both 8 and 10 then becomes base 24 at 1)
+        new([0, 2, 4, 7, 11]),  //base 8
         new([0, 2, 4, 5, 7, 9, 11])  //base 24 - 1, 9/8, 5/4, 5/4, 3/2, 5/3, 15/8
         ];
 
@@ -585,6 +588,62 @@ void QueryChordKeyMultiplicity(ScaleCalculator scaleCalculator)
                 Console.WriteLine();
             }
             Console.WriteLine();
+        }
+    }
+}
+
+void QueryChordProgressionFromMultiplicity(ScaleCalculator scaleCalculator)
+{
+    List<Scale> scalesOfInterest = [
+        new([0, 1, 3, 5, 6, 8, 9]),  //base 15 - 1, 16/15, 4/3, 6/5, 7/5(sqrt(2)), 8/5, 5/3 (if both 8 and 10 then becomes base 24 at 1)
+        new([0, 1, 3, 5, 6, 9, 10]), //base 15 - 1, 16/15, 6/5, 4/3, 7/5(sqrt(2)), 5/3, 9/5 (if both 8 and 10 then becomes base 24 at 1)        
+        new([0, 2, 4, 7, 11]),  //base 8
+        new([0, 2, 4, 5, 7, 9, 11])  //base 24 - 1, 9/8, 5/4, 5/4, 3/2, 5/3, 15/8
+        ];
+
+    Console.WriteLine("Matching input against scales:");
+    foreach (Scale scale in scalesOfInterest)
+    {
+        Console.WriteLine($"{scale.CalculateBase(),-2}: {scale}");
+    }
+
+    while (true)
+    {
+        Console.WriteLine($"Input space separated tet12 keys for chord current chord");
+        string chordInput = Console.ReadLine();
+
+        Scale currentChord = new(Array.ConvertAll(chordInput.Split(' '), int.Parse));
+
+        Console.WriteLine($"Input space separated tet12 keys for chord to progress to. Empty input to exit");
+        chordInput = Console.ReadLine();
+
+        if (chordInput.Length == 0)
+            return;
+
+        Scale progressionChord = new(Array.ConvertAll(chordInput.Split(' '), int.Parse));
+        foreach (Scale scale in scalesOfInterest)
+        {
+            //calculate multiplicity to get all scale fundamental shifts
+            var multiplicity = scale.CalculateKeyMultiplicity(currentChord);
+            //Combine with all occurences of the progression chord in the scale for all progressions root positions
+            List<int> chordPositionsInScale = new();
+            for (int i = 0; i < 12; i++)
+            {
+                //chord in scale rotation?
+                if (((scale >> i).BinaryRepresentation & progressionChord.KeySet.BinaryRepresentation) == progressionChord.KeySet.BinaryRepresentation)
+                {
+                    chordPositionsInScale.Add(i);
+                }
+            }
+            HashSet<int> chordPositions = new();
+            foreach (int fundamentalShift in multiplicity[0])
+            {
+                foreach (int chordPositionInScale in chordPositionsInScale)
+                {
+                    chordPositions.Add((fundamentalShift + chordPositionInScale) % 12);
+                }
+            }
+            Console.WriteLine($"{string.Join(" ", chordPositions.OrderBy(position => position)),-25} ({string.Join(" ", chordPositionsInScale.OrderBy(position => position))})");
         }
     }
 }
