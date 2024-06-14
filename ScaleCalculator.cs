@@ -641,6 +641,12 @@ namespace MusicTheory
             return Bit12Int.Bit12IntToIntervals(KeySet.BinaryRepresentation);
         }
 
+        public List<Fraction> ToFractions()
+        {
+            var intervals = ToIntervals();
+            return [.. TET12_STANDARD_FRACTION_APPROXIMATIONS.Where((fraction, index) => intervals.Contains(index)).OrderBy(fraction => fraction)];
+        }
+
         public int CalculateBase()
         {
             return CalculateBase(TET12_STANDARD_FRACTION_APPROXIMATIONS);
@@ -659,6 +665,24 @@ namespace MusicTheory
         public Scale Transpose()
         {
             return new(ToIntervals().Select(interval => -interval).ToArray());
+        }
+                
+        public Fraction CalculateClosestFraction(double realOctaveValue)
+        {
+            realOctaveValue = realOctaveValue.ToOctave();
+            List<Fraction> scaleFractions = [.. ToFractions(), 2];
+            double leastDeviation = 1;
+            Fraction bestFraction = 0;
+            foreach (Fraction fraction in scaleFractions)
+            {
+                double currentDeviation = Math.Abs(RelativeDeviation(fraction.ToDouble(), realOctaveValue));
+                if (currentDeviation < leastDeviation)
+                {
+                    bestFraction = fraction;
+                    leastDeviation = currentDeviation;
+                }
+            }
+            return bestFraction;
         }
 
         public HashSet<Scale> CalculateScaleClass()

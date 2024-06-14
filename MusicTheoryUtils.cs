@@ -287,6 +287,12 @@ namespace MusicTheory
             return fractions.ToList();
         }
 
+        //Includes sign
+        public static double RelativeDeviation(double from, double to)
+        {
+            return (to - from) / from;
+        }
+
         public static List<int> Factorize(int integer, int maxLoops = 100)
         {
             List<int> factors = new();
@@ -307,6 +313,6 @@ namespace MusicTheory
                 if (loops > maxLoops) throw new ArgumentException($"Factorization failed - exceeded maxLoops {maxLoops}");
             }
             return factors.Count == 0 ? new() { 1 } : factors;
-        }        
+        }
     }
 }

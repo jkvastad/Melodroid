@@ -351,10 +351,21 @@ ChordPreferenceKeyMultiplicityPhraseHarmonizer harmonizer = new();
 //QueryFractionFundamentalClass();
 //PrintFractionFundamentalClass(chord, toOctave: false);
 
-QueryChordKeyMultiplicity(scaleCalculator);
+//QueryChordKeyMultiplicity(scaleCalculator);
 //QueryFundamentalClassPerScale(scaleCalculator);
-QueryChordProgressionFromMultiplicity(scaleCalculator);
+//QueryChordProgressionFromMultiplicity(scaleCalculator);
 //QueryChordInKeySetTranslations();
+
+
+Fraction to = new(27, 16);
+Fraction from = new(5, 3);
+Console.WriteLine(from.ToDouble());
+Console.WriteLine(to.ToDouble());
+Console.WriteLine($"{RelativeDeviation(from.ToDouble(), to.ToDouble())}");
+Scale base24Scale = new(new int[] { 0, 2, 4, 5, 7, 9, 11 });
+Scale base15Scale = new(new int[] { 0, 1, 3, 5, 6, 8, 9, 10 });
+Console.WriteLine(base24Scale.CalculateClosestFraction(to.ToDouble()));
+Console.WriteLine(base15Scale.CalculateClosestFraction(to.ToDouble()));
 
 ////Print all scales with superclasses (including self) of lesser/equal base
 //Dictionary<Scale, List<Scale>> leqScalesPerScale = CalculateAllLEQScalesPerScale(scaleCalculator);
@@ -544,7 +555,7 @@ void QueryChordKeyMultiplicity(ScaleCalculator scaleCalculator)
 {
     List<Scale> scalesOfInterest = [
         new([0, 1, 3, 5, 6, 8, 9]),  //base 15 - 1, 16/15, 4/3, 6/5, 7/5(sqrt(2)), 8/5, 5/3 (if both 8 and 10 then becomes base 24 at 1)
-        new([0, 1, 3, 5, 6, 9, 10]), //base 15 - 1, 16/15, 6/5, 4/3, 7/5(sqrt(2)), 5/3, 9/5 (if both 8 and 10 then becomes base 24 at 1)
+        new([0, 1, 3, 5, 6, 9, 10]), //base 15 - 1, 16/15, 6/5, 4/3, 7/5(sqrt(2)), 5/3, 9/5 (if both 8 and 10 then becomes base 24 at 1)        
         new([0, 2, 4, 7, 11]),  //base 8
         new([0, 2, 4, 5, 7, 9, 11])  //base 24 - 1, 9/8, 5/4, 5/4, 3/2, 5/3, 15/8
         ];
