@@ -351,21 +351,28 @@ ChordPreferenceKeyMultiplicityPhraseHarmonizer harmonizer = new();
 //QueryFractionFundamentalClass();
 //PrintFractionFundamentalClass(chord, toOctave: false);
 
-//QueryChordKeyMultiplicity(scaleCalculator);
+//Scale base24Scale = new(new int[] { 0, 2, 4, 5, 7, 9, 11 });
+//Scale base15Scale = new(new int[] { 0, 1, 3, 5, 6, 8, 9, 10 });
+//Scale base15ScaleLeft = new(new int[] { 0, 1, 3, 5, 6, 8, 9 });
+//Scale base15ScaleRight = new(new int[] { 0, 1, 3, 5, 6, 9, 10 });
+//Scale base30Scale = new(new int[] { 0, 1, 3, 5, 6, 7, 8, 9, 10 });
+//List<Fraction> base15FractionsFrom0 = base15Scale.ToFractions();
+//List<Fraction> base15FractionsFrom1 = [.. base15FractionsFrom0.Select(fraction => (fraction * new Fraction(15, 16)).ToOctave())];
+
+//PrintClosestFractionsBetweenScales(base15Scale, base24Scale);
+//Console.WriteLine("---");
+//PrintClosestFractionsBetweenScales(base15ScaleLeft, base24Scale);
+//Console.WriteLine("---");
+//PrintClosestFractionsBetweenScales(base15ScaleRight, base24Scale);
+
+QueryChordKeyMultiplicity(scaleCalculator);
 //QueryFundamentalClassPerScale(scaleCalculator);
 //QueryChordProgressionFromMultiplicity(scaleCalculator);
 //QueryChordInKeySetTranslations();
 
 
-Fraction to = new(27, 16);
-Fraction from = new(5, 3);
-Console.WriteLine(from.ToDouble());
-Console.WriteLine(to.ToDouble());
-Console.WriteLine($"{RelativeDeviation(from.ToDouble(), to.ToDouble())}");
-Scale base24Scale = new(new int[] { 0, 2, 4, 5, 7, 9, 11 });
-Scale base15Scale = new(new int[] { 0, 1, 3, 5, 6, 8, 9, 10 });
-Console.WriteLine(base24Scale.CalculateClosestFraction(to.ToDouble()));
-Console.WriteLine(base15Scale.CalculateClosestFraction(to.ToDouble()));
+
+
 
 ////Print all scales with superclasses (including self) of lesser/equal base
 //Dictionary<Scale, List<Scale>> leqScalesPerScale = CalculateAllLEQScalesPerScale(scaleCalculator);
@@ -436,6 +443,26 @@ Console.WriteLine(base15Scale.CalculateClosestFraction(to.ToDouble()));
 //e.g.:
 //BeatBox beatBox = new BeatBox();
 //WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, "melodroid testing");
+
+static void PrintClosestFractionsBetweenScales(Scale scaleToRotate, Scale scaleForReference)
+{
+    Scale currentScale = scaleToRotate;
+    List<Fraction> currentScaleFractions = currentScale.ToFractions();
+    foreach (Fraction fundamentalFraction in currentScaleFractions)
+    {
+        List<Fraction> renormalizedFractions = [.. currentScaleFractions.Select(fraction => (fraction / fundamentalFraction).ToOctave())];
+        foreach (Fraction fraction in renormalizedFractions)
+        {
+            var bestFitFraction = scaleForReference.CalculateClosestFraction(fraction.ToDouble());
+
+            Console.WriteLine(
+                $"{bestFitFraction,-5} "
+                + $"{Math.Abs(RelativeDeviation(bestFitFraction.ToDouble(), fraction.ToDouble())):0.00} ".PadRight(5)
+                + $"({fraction})".PadRight(5));
+        }
+        Console.WriteLine();
+    }
+}
 
 //Ambiguity is the number of fundamental note placements in the scaleclass producing identical scales - e.g. 0 3 6 9 has ambiguity 4, while 0 4 7 has ambiguity 1
 void PrintScaleClassAmbiguity(ScaleCalculator scaleCalculator, bool printBase = true)
@@ -554,9 +581,9 @@ void QueryChordInKeySetTranslations()
 void QueryChordKeyMultiplicity(ScaleCalculator scaleCalculator)
 {
     List<Scale> scalesOfInterest = [
-        new([0, 1, 3, 5, 6, 8, 9]),  //base 15 - 1, 16/15, 4/3, 6/5, 7/5(sqrt(2)), 8/5, 5/3 (if both 8 and 10 then becomes base 24 at 1)
-        new([0, 1, 3, 5, 6, 9, 10]), //base 15 - 1, 16/15, 6/5, 4/3, 7/5(sqrt(2)), 5/3, 9/5 (if both 8 and 10 then becomes base 24 at 1)        
-        new([0, 2, 4, 7, 11]),  //base 8
+        //new([0, 1, 3, 5, 6, 9, 10]), //base 15 - seems like the full base 15 collapses to base 24 due to the 8/5 creating base24 at C or G for base 15 at B
+        new([0, 1, 3, 5, 6, 8, 9, 10]), //full base 15
+        //new([0, 2, 4, 7, 11]),  //base 8
         new([0, 2, 4, 5, 7, 9, 11])  //base 24 - 1, 9/8, 5/4, 5/4, 3/2, 5/3, 15/8
         ];
 

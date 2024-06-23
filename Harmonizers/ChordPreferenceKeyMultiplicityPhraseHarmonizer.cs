@@ -13,12 +13,12 @@ namespace Melodroid.Harmonizers
         private Random _random = new();
         private Scale _currentScale;
         private Scale _currentChord = new([0, 4, 7]);
-        private Scale _semitone = new([0, 1]);        
+        private Scale _semitone = new([0, 1]);
         //List<Scale> _scalesOfInterest = [new([0, 2, 4, 5, 7, 9, 11])];        
+        List<Scale> _scalesOfInterest = [new([0, 1, 3, 5, 6, 8, 9, 10]), new([0, 2, 4, 5, 7, 9, 11])];
         //List<Scale> _scalesOfInterest = [new([0, 1, 3, 5, 6, 8, 9]), new([0, 2, 4, 5, 7, 9, 11])];
-        //List<Scale> _scalesOfInterest = [new([0, 1, 3, 5, 6, 8, 9]), new([0, 1, 3, 5, 6, 9, 10]), new([0, 2, 4, 5, 7, 9, 11])];
-        //The natural scales
-        List<Scale> _scalesOfInterest = [new([0, 2, 4, 7, 11]), new([0, 1, 3, 5, 6, 8, 9]), new([0, 1, 3, 5, 6, 9, 10]), new([0, 2, 4, 5, 7, 9, 11])];
+        //List<Scale> _scalesOfInterest = [new([0, 1, 3, 5, 6, 8, 9]), new([0, 1, 3, 5, 6, 9, 10]), new([0, 2, 4, 5, 7, 9, 11])];        
+        //List<Scale> _scalesOfInterest = [new([0, 2, 4, 7, 11]), new([0, 1, 3, 5, 6, 8, 9]), new([0, 1, 3, 5, 6, 9, 10]), new([0, 2, 4, 5, 7, 9, 11])];
         //List<Scale> _scalesOfInterest = [new([0, 2, 4, 7, 11]), new([0, 1, 3, 5, 6, 8, 9]), new([0, 1, 3, 5, 6, 9, 10]), new([0, 2, 4, 5, 7, 9, 11])];
 
         public List<(int fundamentalNoteNumber, Scale scale)> ChordPerMeasure = new();
