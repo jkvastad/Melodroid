@@ -106,7 +106,7 @@ SimpleIsochronicRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, be
 //ScaleClassRotationTransposeHarmonizer harmonizer = new(initialScale);
 //RandomKeyMultiplicityHarmonizer harmonizer = new();
 //ChordPreferenceKeyMultiplicityHarmonizer harmonizer = new();
-ChordPreferenceKeyMultiplicityPhraseHarmonizer harmonizer = new();
+//MajorChordCollapsingKeyMultiplicityPhraseHarmonizer harmonizer = new();
 
 //RandomNoteHarmonizer randomNoteHarmonizer = new();
 
@@ -367,7 +367,7 @@ ChordPreferenceKeyMultiplicityPhraseHarmonizer harmonizer = new();
 
 QueryChordKeyMultiplicity(scaleCalculator);
 //QueryFundamentalClassPerScale(scaleCalculator);
-//QueryChordProgressionFromMultiplicity(scaleCalculator);
+QueryChordProgressionFromMultiplicity(scaleCalculator);
 //QueryChordInKeySetTranslations();
 
 
@@ -632,11 +632,9 @@ void QueryChordKeyMultiplicity(ScaleCalculator scaleCalculator)
 
 void QueryChordProgressionFromMultiplicity(ScaleCalculator scaleCalculator)
 {
-    List<Scale> scalesOfInterest = [
-        new([0, 1, 3, 5, 6, 8, 9]),  //base 15 - 1, 16/15, 4/3, 6/5, 7/5(sqrt(2)), 8/5, 5/3 (if both 8 and 10 then becomes base 24 at 1)
-        new([0, 1, 3, 5, 6, 9, 10]), //base 15 - 1, 16/15, 6/5, 4/3, 7/5(sqrt(2)), 5/3, 9/5 (if both 8 and 10 then becomes base 24 at 1)        
-        new([0, 2, 4, 7, 11]),  //base 8
-        new([0, 2, 4, 5, 7, 9, 11])  //base 24 - 1, 9/8, 5/4, 5/4, 3/2, 5/3, 15/8
+    List<Scale> scalesOfInterest = [        
+        new([0, 1, 3, 5, 6, 8, 9, 10]), //base 15
+        new([0, 2, 4, 5, 7, 9, 11])  //base 24
         ];
 
     Console.WriteLine("Matching input against scales:");
@@ -647,7 +645,7 @@ void QueryChordProgressionFromMultiplicity(ScaleCalculator scaleCalculator)
 
     while (true)
     {
-        Console.WriteLine($"Input space separated tet12 keys for chord current chord");
+        Console.WriteLine($"Input space separated tet12 keys for current chord");
         string chordInput = Console.ReadLine();
 
         Scale currentChord = new(Array.ConvertAll(chordInput.Split(' '), int.Parse));
