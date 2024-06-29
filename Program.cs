@@ -367,7 +367,7 @@ SimpleIsochronicRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, be
 
 QueryChordKeyMultiplicity(scaleCalculator);
 //QueryFundamentalClassPerScale(scaleCalculator);
-QueryChordProgressionFromMultiplicity(scaleCalculator);
+//QueryChordProgressionFromMultiplicity(scaleCalculator);
 //QueryChordInKeySetTranslations();
 
 
@@ -601,7 +601,7 @@ void QueryChordKeyMultiplicity(ScaleCalculator scaleCalculator)
         if (chordInput.Length == 0)
             return;
 
-        Scale chord = new(Array.ConvertAll(chordInput.Split(' '), int.Parse));
+        Tet12KeySet chord = new(Array.ConvertAll(chordInput.Split(' '), int.Parse));
         //Find all matches for chord per scale of interest
         foreach (Scale scale in scalesOfInterest)
         {
@@ -651,7 +651,7 @@ void QueryChordProgressionFromMultiplicity(ScaleCalculator scaleCalculator)
         if (chordInput.Length == 0)
             return;
         //TODO remake progressions to work from previosu chords
-        Scale currentChord = new(Array.ConvertAll(chordInput.Split(' '), int.Parse));
+        Tet12KeySet currentChord = new(Array.ConvertAll(chordInput.Split(' '), int.Parse));
 
         Console.WriteLine($"Input space separated tet12 keys for previous chord.");
         chordInput = Console.ReadLine();

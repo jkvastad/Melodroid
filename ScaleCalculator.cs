@@ -539,6 +539,11 @@ namespace MusicTheory
             return new(left.BinaryRepresentation << right);
         }
 
+        public static Tet12KeySet operator &(Tet12KeySet left, Tet12KeySet right)
+        {
+            return new(left.BinaryRepresentation & right.BinaryRepresentation);
+        }
+
         public static bool operator ==(Tet12KeySet left, Tet12KeySet right)
         {
 
@@ -666,7 +671,7 @@ namespace MusicTheory
         {
             return new(ToIntervals().Select(interval => -interval).ToArray());
         }
-                
+
         public Fraction CalculateClosestFraction(double realOctaveValue)
         {
             realOctaveValue = realOctaveValue.ToOctave();
@@ -710,40 +715,42 @@ namespace MusicTheory
         //Given a chord and scale, applying the chord scale fundamental set to the scale produces a key set for each fundamental.
         // - each key thus belongs to a number (possibly 0) of fundamentals, this is called "chord key multiplicity" or simply key multiplicity
         // -- chord key multiplicity tells us which keys imply which scales, possibly the basis for melody
-        public List<int>[] CalculateKeyMultiplicity(Scale chord)
+        public List<int>[] CalculateKeyMultiplicity(Tet12KeySet originalChord)
         {
-            Dictionary<int, Scale> leftTranslatedScales = new();
+            List<int> scaleFundamentalsContainingChord = new();
             for (int i = 0; i < 12; i++)
             {
-                //Check if rotated scale is still a scale
-                Tet12KeySet rotatedKeys = this >> i;
-                if ((rotatedKeys.BinaryRepresentation & 1) == 1)
-                {
-                    //Record if scale contains chord after rotation
-                    // - rotating the scale's binary representation right is equivalent to offseting the scale left via translation
-                    Scale rotatedScale = new(rotatedKeys);
-                    if (rotatedScale.Contains(chord))
-                        leftTranslatedScales[i] = rotatedScale;
-                }
+                //check if chord matches scale when scale is renormalized to fundamental at i
+                Tet12KeySet rotatedChord = originalChord >> i; //e.g. 2 7 11 becomes 0 4 7 at i=7
+                if ((rotatedChord & KeySet) == rotatedChord)
+                    scaleFundamentalsContainingChord.Add(i);
             }
 
-            //Find how many scales each key can belong to
+            //Create table of which keys belong to which scale fundamentals
             List<int>[] keyMultiplicity = new List<int>[12];
             for (int i = 0; i < keyMultiplicity.Length; i++)
             {
                 keyMultiplicity[i] = new();
             }
 
-            for (int i = 0; i < 12; i++)
+            //Find scale fundamentals for each key
+            foreach (int fundamental in scaleFundamentalsContainingChord)
             {
-                foreach (var translationAndScale in leftTranslatedScales)
+                //Compare e.g. C Major shifted left 7 steps to G major scale from key 0 (keyboard note C)
+                Tet12KeySet renormalizedScale = this << fundamental;
+                for (int i = 0; i < 12; i++)
                 {
-                    //Check if key is in the translated scale - if yes add the fundamental
-                    if (((translationAndScale.Value >> i).BinaryRepresentation & 1) == 1)
-                        keyMultiplicity[i].Add((12 - translationAndScale.Key) % 12);
+                    //check if key at i is in the renormalized scale
+                    if (((renormalizedScale >> i).BinaryRepresentation & 1) == 1)
+                        keyMultiplicity[i].Add(fundamental);
                 }
             }
+
             return keyMultiplicity;
+        }
+        public List<int>[] CalculateKeyMultiplicity(Scale originalChord)
+        {
+            return CalculateKeyMultiplicity(originalChord.KeySet);
         }
 
         public bool IsSubClassTo(Scale superClassScale)

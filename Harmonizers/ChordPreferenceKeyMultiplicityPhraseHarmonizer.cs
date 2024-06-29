@@ -118,8 +118,8 @@ namespace Melodroid.Harmonizers
         //base 15 at [0], base 24 at [1]        
         public static Scale base15Scale = new([0, 1, 3, 5, 6, 8, 9, 10]);
         public static Scale base24Scale = new([0, 2, 4, 5, 7, 9, 11]);
-        List<int>[] base15MajorChordMultiplicity = base15Scale.CalculateKeyMultiplicity(new([0, 4, 7]));
-        List<int>[] base24MajorChordMultiplicity = base24Scale.CalculateKeyMultiplicity(new([0, 4, 7]));
+        List<int>[] base15MajorChordMultiplicity = base15Scale.CalculateKeyMultiplicity(new Scale([0, 4, 7]));
+        List<int>[] base24MajorChordMultiplicity = base24Scale.CalculateKeyMultiplicity(new Scale([0, 4, 7]));
 
 
         public List<(int fundamentalNoteNumber, Scale scale)> ChordPerMeasure = new();
