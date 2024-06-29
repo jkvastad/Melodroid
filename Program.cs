@@ -645,18 +645,18 @@ void QueryChordProgressionFromMultiplicity(ScaleCalculator scaleCalculator)
 
     while (true)
     {
-        Console.WriteLine($"Input space separated tet12 keys for current chord");
+        Console.WriteLine($"Input space separated tet12 keys for current chord. Empty input to exit.");
         string chordInput = Console.ReadLine();
-
-        Scale currentChord = new(Array.ConvertAll(chordInput.Split(' '), int.Parse));
-
-        Console.WriteLine($"Input space separated tet12 keys for chord to progress to. Empty input to exit");
-        chordInput = Console.ReadLine();
 
         if (chordInput.Length == 0)
             return;
+        //TODO remake progressions to work from previosu chords
+        Scale currentChord = new(Array.ConvertAll(chordInput.Split(' '), int.Parse));
 
-        Scale progressionChord = new(Array.ConvertAll(chordInput.Split(' '), int.Parse));
+        Console.WriteLine($"Input space separated tet12 keys for previous chord.");
+        chordInput = Console.ReadLine();
+        
+        Scale previousChord = new(Array.ConvertAll(chordInput.Split(' '), int.Parse));
         foreach (Scale scale in scalesOfInterest)
         {
             //calculate multiplicity to get all scale fundamental shifts
@@ -666,7 +666,7 @@ void QueryChordProgressionFromMultiplicity(ScaleCalculator scaleCalculator)
             for (int i = 0; i < 12; i++)
             {
                 //chord in scale rotation?
-                if (((scale >> i).BinaryRepresentation & progressionChord.KeySet.BinaryRepresentation) == progressionChord.KeySet.BinaryRepresentation)
+                if (((scale >> i).BinaryRepresentation & previousChord.KeySet.BinaryRepresentation) == previousChord.KeySet.BinaryRepresentation)
                 {
                     chordPositionsInScale.Add(i);
                 }
