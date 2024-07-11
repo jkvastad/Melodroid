@@ -365,23 +365,31 @@ Scale customScale0 = new(new int[] { 0, 2, 4, 5, 7, 8, 9, 11 });
 Scale customScale1 = new(new int[] { 0, 2, 4, 5, 8, 9, 11 });
 Scale customScale2 = new(new int[] { 0, 2, 4, 5, 7, 8, 11 });
 Scale base15Scale = new(new int[] { 0, 1, 3, 5, 6, 8, 9, 10 });
+double[] tet12Base15Scale = ConstructTet12DoubleArray(new int[] { 0, 1, 3, 5, 6, 8, 9, 10 });
 Scale base20Scale = new(new int[] { 0, 3, 4, 6, 7, 8, 10 });
+double[] tet12Base20Scale = ConstructTet12DoubleArray(new int[] { 0, 3, 4, 6, 7, 8, 10 });
 //Scale base15ScaleLeft = new(new int[] { 0, 1, 3, 5, 6, 8, 9 });
 //Scale base15ScaleRight = new(new int[] { 0, 1, 3, 5, 6, 9, 10 });
 //Scale base30Scale = new(new int[] { 0, 1, 3, 5, 6, 7, 8, 9, 10 });
 //List<Fraction> base15FractionsFrom0 = base15Scale.ToFractions();
 //List<Fraction> base15FractionsFrom1 = [.. base15FractionsFrom0.Select(fraction => (fraction * new Fraction(15, 16)).ToOctave())];
 
+//PrintClosestFractionsBetweenScales(base24Scale, base24Scale);
+//Console.WriteLine("---");
+//PrintClosestDoublesBetweenScales(tet12Base24Scale, base24Scale);
+//Console.WriteLine("---");
 //PrintClosestFractionsBetweenScales(base15Scale, base24Scale);
 //Console.WriteLine("---");
-//PrintClosestFractionsBetweenScales(base15ScaleLeft, base24Scale);
-//Console.WriteLine("---");
-PrintClosestFractionsBetweenScales(base24Scale, base24Scale);
-Console.WriteLine("---");
-PrintClosestDoublesBetweenScales(tet12Base24Scale, base24Scale);
-//PrintClosestFractionsBetweenScales(base15Scale, base24Scale);
+//PrintClosestDoublesBetweenScales(tet12Base15Scale, base24Scale);
 //Console.WriteLine("---");
 //PrintClosestFractionsBetweenScales(base20Scale, base24Scale);
+//Console.WriteLine("---");
+//PrintClosestDoublesBetweenScales(tet12Base20Scale, base24Scale);
+//Console.WriteLine("---");
+//PrintClosestDoublesBetweenScales(tet12Base15Scale, base24Scale);
+
+PrintSlidingFundamentalMatchingBetweenScales(tet12Base15Scale, base24Scale);
+
 
 //QueryChordKeyMultiplicity(scaleCalculator);
 //QueryFundamentalClassPerScale(scaleCalculator);
@@ -486,7 +494,7 @@ static void PrintClosestDoublesBetweenScales(double[] scaleToRotate, Scale scale
 {
     foreach (double fundamentalDouble in scaleToRotate)
     {
-        List<double> renormalizedDoubles = [.. scaleToRotate.Select(fraction => (fraction / fundamentalDouble).ToOctave())];
+        List<double> renormalizedDoubles = [.. scaleToRotate.Select(scaleNote => (scaleNote / fundamentalDouble).ToOctave())];
         foreach (double renormalizedDouble in renormalizedDoubles)
         {
             var bestFitFraction = scaleForReference.CalculateClosestFraction(renormalizedDouble);
@@ -497,6 +505,35 @@ static void PrintClosestDoublesBetweenScales(double[] scaleToRotate, Scale scale
                 + $"({renormalizedDouble:0.00})".PadRight(5));
         }
         Console.WriteLine();
+    }
+}
+
+static void PrintSlidingFundamentalMatchingBetweenScales(double[] scaleToSlide, Scale scaleForReference)
+{
+    double fundamental = 1;
+    double stepSize = 0.01; //12 tet key diff is about 0.06
+    double keyFitCriteria = 0.02d;
+    while (fundamental > 0.5)
+    {
+        List<double> renormalizedDoubles = [.. scaleToSlide.Select(scaleNote => (scaleNote * fundamental).ToOctave())];
+        double errorSum = 0;
+        int goodKeyFits = 0;
+
+        foreach (double renormalizedDouble in renormalizedDoubles)
+        {
+            var bestFitFraction = scaleForReference.CalculateClosestFraction(renormalizedDouble);
+            double relativeDeviation = Math.Abs(RelativeDeviation(bestFitFraction.ToDouble(), renormalizedDouble));
+            errorSum += relativeDeviation;
+            if (relativeDeviation < keyFitCriteria)
+                goodKeyFits++;
+
+            Console.WriteLine(
+                $"{bestFitFraction,-5} "
+                + $"{relativeDeviation:0.00} ".PadRight(5)
+                + $"({renormalizedDouble:0.00})".PadRight(5));
+        }
+        Console.WriteLine($"{fundamental} ({fundamental.ToOctave():0.00}) - {errorSum} : {goodKeyFits}");
+        fundamental -= stepSize;
     }
 }
 
