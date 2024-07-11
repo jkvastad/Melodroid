@@ -351,8 +351,21 @@ SimpleIsochronicRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, be
 //QueryFractionFundamentalClass();
 //PrintFractionFundamentalClass(chord, toOctave: false);
 
-//Scale base24Scale = new(new int[] { 0, 2, 4, 5, 7, 9, 11 });
-//Scale base15Scale = new(new int[] { 0, 1, 3, 5, 6, 8, 9, 10 });
+double[] ConstructTet12DoubleArray(int[] keys)
+{
+    double[] tet12Doubles = new double[keys.Length];
+    for (int i = 0; i < keys.Length; i++)
+        tet12Doubles[i] = Math.Pow(2, keys[i] / 12d);
+    return tet12Doubles;
+}
+
+Scale base24Scale = new(new int[] { 0, 2, 4, 5, 7, 9, 11 });
+double[] tet12Base24Scale = ConstructTet12DoubleArray(new int[] { 0, 2, 4, 5, 7, 9, 11 });
+Scale customScale0 = new(new int[] { 0, 2, 4, 5, 7, 8, 9, 11 });
+Scale customScale1 = new(new int[] { 0, 2, 4, 5, 8, 9, 11 });
+Scale customScale2 = new(new int[] { 0, 2, 4, 5, 7, 8, 11 });
+Scale base15Scale = new(new int[] { 0, 1, 3, 5, 6, 8, 9, 10 });
+Scale base20Scale = new(new int[] { 0, 3, 4, 6, 7, 8, 10 });
 //Scale base15ScaleLeft = new(new int[] { 0, 1, 3, 5, 6, 8, 9 });
 //Scale base15ScaleRight = new(new int[] { 0, 1, 3, 5, 6, 9, 10 });
 //Scale base30Scale = new(new int[] { 0, 1, 3, 5, 6, 7, 8, 9, 10 });
@@ -363,9 +376,14 @@ SimpleIsochronicRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, be
 //Console.WriteLine("---");
 //PrintClosestFractionsBetweenScales(base15ScaleLeft, base24Scale);
 //Console.WriteLine("---");
-//PrintClosestFractionsBetweenScales(base15ScaleRight, base24Scale);
+PrintClosestFractionsBetweenScales(base24Scale, base24Scale);
+Console.WriteLine("---");
+PrintClosestDoublesBetweenScales(tet12Base24Scale, base24Scale);
+//PrintClosestFractionsBetweenScales(base15Scale, base24Scale);
+//Console.WriteLine("---");
+//PrintClosestFractionsBetweenScales(base20Scale, base24Scale);
 
-QueryChordKeyMultiplicity(scaleCalculator);
+//QueryChordKeyMultiplicity(scaleCalculator);
 //QueryFundamentalClassPerScale(scaleCalculator);
 //QueryChordProgressionFromMultiplicity(scaleCalculator);
 //QueryChordInKeySetTranslations();
@@ -459,6 +477,24 @@ static void PrintClosestFractionsBetweenScales(Scale scaleToRotate, Scale scaleF
                 $"{bestFitFraction,-5} "
                 + $"{Math.Abs(RelativeDeviation(bestFitFraction.ToDouble(), fraction.ToDouble())):0.00} ".PadRight(5)
                 + $"({fraction})".PadRight(5));
+        }
+        Console.WriteLine();
+    }
+}
+
+static void PrintClosestDoublesBetweenScales(double[] scaleToRotate, Scale scaleForReference)
+{
+    foreach (double fundamentalDouble in scaleToRotate)
+    {
+        List<double> renormalizedDoubles = [.. scaleToRotate.Select(fraction => (fraction / fundamentalDouble).ToOctave())];
+        foreach (double renormalizedDouble in renormalizedDoubles)
+        {
+            var bestFitFraction = scaleForReference.CalculateClosestFraction(renormalizedDouble);
+
+            Console.WriteLine(
+                $"{bestFitFraction,-5} "
+                + $"{Math.Abs(RelativeDeviation(bestFitFraction.ToDouble(), renormalizedDouble)):0.00} ".PadRight(5)
+                + $"({renormalizedDouble:0.00})".PadRight(5));
         }
         Console.WriteLine();
     }
@@ -583,6 +619,7 @@ void QueryChordKeyMultiplicity(ScaleCalculator scaleCalculator)
     List<Scale> scalesOfInterest = [
         //new([0, 1, 3, 5, 6, 9, 10]), //base 15 - seems like the full base 15 collapses to base 24 due to the 8/5 creating base24 at C or G for base 15 at B
         new([0, 1, 3, 5, 6, 8, 9, 10]), //full base 15
+        new([0, 3, 4, 6, 7, 8, 10]), //full base 20
         //new([0, 2, 4, 7, 11]),  //base 8
         new([0, 2, 4, 5, 7, 9, 11])  //base 24 - 1, 9/8, 5/4, 5/4, 3/2, 5/3, 15/8
         ];
@@ -632,7 +669,7 @@ void QueryChordKeyMultiplicity(ScaleCalculator scaleCalculator)
 
 void QueryChordProgressionFromMultiplicity(ScaleCalculator scaleCalculator)
 {
-    List<Scale> scalesOfInterest = [        
+    List<Scale> scalesOfInterest = [
         new([0, 1, 3, 5, 6, 8, 9, 10]), //base 15
         new([0, 2, 4, 5, 7, 9, 11])  //base 24
         ];
@@ -655,7 +692,7 @@ void QueryChordProgressionFromMultiplicity(ScaleCalculator scaleCalculator)
 
         Console.WriteLine($"Input space separated tet12 keys for previous chord.");
         chordInput = Console.ReadLine();
-        
+
         Scale previousChord = new(Array.ConvertAll(chordInput.Split(' '), int.Parse));
         foreach (Scale scale in scalesOfInterest)
         {
