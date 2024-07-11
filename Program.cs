@@ -368,6 +368,8 @@ Scale base15Scale = new(new int[] { 0, 1, 3, 5, 6, 8, 9, 10 });
 double[] tet12Base15Scale = ConstructTet12DoubleArray(new int[] { 0, 1, 3, 5, 6, 8, 9, 10 });
 Scale base20Scale = new(new int[] { 0, 3, 4, 6, 7, 8, 10 });
 double[] tet12Base20Scale = ConstructTet12DoubleArray(new int[] { 0, 3, 4, 6, 7, 8, 10 });
+double[] tet12MinorChord = ConstructTet12DoubleArray(new int[] { 0, 3, 7 });
+double[] tet12Custom0 = ConstructTet12DoubleArray(new int[] { 9, 10, 1, 4 });
 //Scale base15ScaleLeft = new(new int[] { 0, 1, 3, 5, 6, 8, 9 });
 //Scale base15ScaleRight = new(new int[] { 0, 1, 3, 5, 6, 9, 10 });
 //Scale base30Scale = new(new int[] { 0, 1, 3, 5, 6, 7, 8, 9, 10 });
@@ -388,10 +390,15 @@ double[] tet12Base20Scale = ConstructTet12DoubleArray(new int[] { 0, 3, 4, 6, 7,
 //Console.WriteLine("---");
 //PrintClosestDoublesBetweenScales(tet12Base15Scale, base24Scale);
 
-PrintSlidingFundamentalMatchingBetweenScales(tet12Base15Scale, base24Scale);
+//TODO - varför ger inputen 9 10 1 4 att multipliciteten ör bas 15 har rötter på 4, 1 och 6 för bas 20, men sliding fundamental ger träffar på 8/5, 4/3 (bas 15) 6/5 på bas 20?
+PrintSlidingFundamentalMatchingBetweenScales(tet12Custom0, base24Scale, true);
+Console.WriteLine("---");
+PrintSlidingFundamentalMatchingBetweenScales(tet12Custom0, base15Scale, true);
+Console.WriteLine("---");
+PrintSlidingFundamentalMatchingBetweenScales(tet12Custom0, base20Scale, true);
 
 
-//QueryChordKeyMultiplicity(scaleCalculator);
+QueryChordKeyMultiplicity(scaleCalculator);
 //QueryFundamentalClassPerScale(scaleCalculator);
 //QueryChordProgressionFromMultiplicity(scaleCalculator);
 //QueryChordInKeySetTranslations();
@@ -508,7 +515,7 @@ static void PrintClosestDoublesBetweenScales(double[] scaleToRotate, Scale scale
     }
 }
 
-static void PrintSlidingFundamentalMatchingBetweenScales(double[] scaleToSlide, Scale scaleForReference)
+static void PrintSlidingFundamentalMatchingBetweenScales(double[] scaleToSlide, Scale scaleForReference, bool printMaxMatchOnly = false)
 {
     double fundamental = 1;
     double stepSize = 0.01; //12 tet key diff is about 0.06
@@ -518,7 +525,7 @@ static void PrintSlidingFundamentalMatchingBetweenScales(double[] scaleToSlide, 
         List<double> renormalizedDoubles = [.. scaleToSlide.Select(scaleNote => (scaleNote * fundamental).ToOctave())];
         double errorSum = 0;
         int goodKeyFits = 0;
-
+        List<string> output = new();
         foreach (double renormalizedDouble in renormalizedDoubles)
         {
             var bestFitFraction = scaleForReference.CalculateClosestFraction(renormalizedDouble);
@@ -527,12 +534,27 @@ static void PrintSlidingFundamentalMatchingBetweenScales(double[] scaleToSlide, 
             if (relativeDeviation < keyFitCriteria)
                 goodKeyFits++;
 
-            Console.WriteLine(
+            output.Add(
                 $"{bestFitFraction,-5} "
                 + $"{relativeDeviation:0.00} ".PadRight(5)
                 + $"({renormalizedDouble:0.00})".PadRight(5));
         }
-        Console.WriteLine($"{fundamental} ({fundamental.ToOctave():0.00}) - {errorSum} : {goodKeyFits}");
+        if (printMaxMatchOnly)
+        {
+            if (goodKeyFits == scaleToSlide.Length)
+            {
+                foreach (var line in output)
+                    Console.WriteLine(line);
+                Console.WriteLine($"{fundamental} ({fundamental.ToOctave():0.00}) - {errorSum} : {goodKeyFits}");
+            }
+        }
+        else
+        {
+            foreach (var line in output)
+                Console.WriteLine(line);
+            Console.WriteLine($"{fundamental} ({fundamental.ToOctave():0.00}) - {errorSum} : {goodKeyFits}");
+        }
+
         fundamental -= stepSize;
     }
 }
