@@ -427,9 +427,11 @@ double[] myRatios = new double[] { 1, 5 / 4d, 3 / 2d };
 double[] myRatios2 = new double[] { 7 / 4d, 7 / 5d };
 double[] myRatios3 = new double[] { 7 / 6d, 11 / 6d };
 double[] minorF = new double[] { 4 / 3d, 8 / 5d, 2 };
+double[] minorF7 = new double[] { 4 / 3d, 8 / 5d, 2, 6 / 5d };
 double[] majorD = new double[] { 9 / 8d, 7 / 5d, 5 / 3d };
 double[] pentatonic = new double[] { 1, 9 / 8d, 5 / 4d, 3 / 2d, 5 / 3d };
-PrintRatioFundamentalOctaveSweep(pentatonic);
+
+PrintRatioFundamentalOctaveSweep(majorD.Union(minorF7).ToArray());
 
 QueryChordKeyMultiplicity(scaleCalculator);
 //QueryFundamentalClassPerScale(scaleCalculator);
