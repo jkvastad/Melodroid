@@ -359,17 +359,41 @@ double[] ConstructTet12DoubleArray(int[] keys)
     return tet12Doubles;
 }
 
+double[] ConstructTet12FractionFamily(int familyNumerator, int maxNumerator = 25)
+{
+    List<double> tet12Doubles = new();
+    for (int i = 0; i < familyNumerator; i++)
+    {
+        Fraction currentFraction = new Fraction(i + familyNumerator, familyNumerator);
+        if (currentFraction.Numerator <= maxNumerator)
+            tet12Doubles.Add(currentFraction.ToDouble());
+    }
+    return tet12Doubles.ToArray();
+}
+
+Scale chromaticScale = new(new int[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 });
 Scale base24Scale = new(new int[] { 0, 2, 4, 5, 7, 9, 11 });
-double[] tet12Base24Scale = ConstructTet12DoubleArray(new int[] { 0, 2, 4, 5, 7, 9, 11 });
 Scale customScale0 = new(new int[] { 0, 2, 4, 5, 7, 8, 9, 11 });
+Scale majorChord = new(new int[] { 0, 4, 7 });
 Scale customScale1 = new(new int[] { 0, 2, 4, 5, 8, 9, 11 });
 Scale customScale2 = new(new int[] { 0, 2, 4, 5, 7, 8, 11 });
 Scale base15Scale = new(new int[] { 0, 1, 3, 5, 6, 8, 9, 10 });
 double[] tet12Base15Scale = ConstructTet12DoubleArray(new int[] { 0, 1, 3, 5, 6, 8, 9, 10 });
-Scale base20Scale = new(new int[] { 0, 3, 4, 6, 7, 8, 10 });
 double[] tet12Base20Scale = ConstructTet12DoubleArray(new int[] { 0, 3, 4, 6, 7, 8, 10 });
+double[] tet12Base24Scale = ConstructTet12DoubleArray(new int[] { 0, 2, 4, 5, 7, 9, 11 });
+Scale base20Scale = new(new int[] { 0, 3, 4, 6, 7, 8, 10 });
 double[] tet12MinorChord = ConstructTet12DoubleArray(new int[] { 0, 3, 7 });
 double[] tet12Custom0 = ConstructTet12DoubleArray(new int[] { 9, 10, 1, 4 });
+double[] tet12base7 = ConstructTet12FractionFamily(7);
+
+//for (int i = 2; i <= 25; i++)
+//{
+//    Console.WriteLine($"Fraction family {i}:");
+//    PrintSlidingFundamentalMatchingBetweenScales(ConstructTet12FractionFamily(i), chromaticScale, true);
+//    Console.WriteLine("---");
+//}
+
+
 //Scale base15ScaleLeft = new(new int[] { 0, 1, 3, 5, 6, 8, 9 });
 //Scale base15ScaleRight = new(new int[] { 0, 1, 3, 5, 6, 9, 10 });
 //Scale base30Scale = new(new int[] { 0, 1, 3, 5, 6, 7, 8, 9, 10 });
@@ -390,13 +414,18 @@ double[] tet12Custom0 = ConstructTet12DoubleArray(new int[] { 9, 10, 1, 4 });
 //Console.WriteLine("---");
 //PrintClosestDoublesBetweenScales(tet12Base15Scale, base24Scale);
 
-//TODO - varför ger inputen 9 10 1 4 att multipliciteten ör bas 15 har rötter på 4, 1 och 6 för bas 20, men sliding fundamental ger träffar på 8/5, 4/3 (bas 15) 6/5 på bas 20?
-PrintSlidingFundamentalMatchingBetweenScales(tet12Custom0, base24Scale, true);
-Console.WriteLine("---");
-PrintSlidingFundamentalMatchingBetweenScales(tet12Custom0, base15Scale, true);
-Console.WriteLine("---");
-PrintSlidingFundamentalMatchingBetweenScales(tet12Custom0, base20Scale, true);
+//PrintSlidingFundamentalMatchingBetweenScales(ConstructTet12FractionFamily(24), chromaticScale, false);
+//Console.WriteLine("---");
+//PrintSlidingFundamentalMatchingBetweenScales(tet12Base15Scale, chromaticScale, true);
+//Console.WriteLine("---");
+//PrintSlidingFundamentalMatchingBetweenScales(tet12base7, chromaticScale, true);
+//Console.WriteLine("---");
+//PrintSlidingFundamentalMatchingBetweenScales(tet12base7, majorChord, false);
+//Console.WriteLine("---");
 
+double[] myRatios = new double[] { 1, 5 / 4d, 3 / 2d };
+double[] myRatios2 = new double[] { 7 / 4d, 7 / 5d };
+PrintRatioFundamentalOctaveSweep(myRatios);
 
 QueryChordKeyMultiplicity(scaleCalculator);
 //QueryFundamentalClassPerScale(scaleCalculator);
@@ -477,6 +506,39 @@ QueryChordKeyMultiplicity(scaleCalculator);
 //BeatBox beatBox = new BeatBox();
 //WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, "melodroid testing");
 
+static void PrintRatioFundamentalOctaveSweep(double[] originalRatios, double stepSize = 0.01)
+{
+    //No 7/5? approximates sqrt 2, might be important even though big prime in numerator
+    double[] goodRatios = new double[] { 16 / 15d, 9 / 8d, 6 / 5d, 5 / 4d, 4 / 3d, 3 / 2d, 8 / 5d, 5 / 3d, 9 / 5d, 15 / 8d }; 
+    double maxDeviation = 0.01d;
+    double fundamental = 1;
+    while (fundamental < 2)
+    {
+        var renormalizedRatios = originalRatios.Select(ratio => (ratio / fundamental).ToOctave());
+        List<double> goodRatiosFound = new();
+
+        Console.Write($"{fundamental:0.00}:");
+        foreach (var ratio in renormalizedRatios)
+        {
+            Console.Write($" {ratio:0.00}");
+            foreach (var goodRatio in goodRatios)
+            {
+                if (Math.Abs(ratio - goodRatio) < maxDeviation)
+                    goodRatiosFound.Add(goodRatio);
+            }
+        }
+        if (goodRatiosFound.Count > 0)
+        {
+            Console.Write(" <--");
+            foreach (var goodRatio in goodRatiosFound)
+                Console.Write($" {goodRatio:0.00}");
+        }
+
+        Console.WriteLine();
+        fundamental += stepSize;
+    }
+}
+
 static void PrintClosestFractionsBetweenScales(Scale scaleToRotate, Scale scaleForReference)
 {
     Scale currentScale = scaleToRotate;
@@ -515,11 +577,10 @@ static void PrintClosestDoublesBetweenScales(double[] scaleToRotate, Scale scale
     }
 }
 
-static void PrintSlidingFundamentalMatchingBetweenScales(double[] scaleToSlide, Scale scaleForReference, bool printMaxMatchOnly = false)
+static void PrintSlidingFundamentalMatchingBetweenScales(double[] scaleToSlide, Scale scaleForReference, bool printMaxMatchOnly = false, double keyFitCriteria = 0.02d)
 {
     double fundamental = 1;
-    double stepSize = 0.01; //12 tet key diff is about 0.06
-    double keyFitCriteria = 0.02d;
+    double stepSize = 0.01; //12 tet key diff is about 0.06    
     while (fundamental > 0.5)
     {
         List<double> renormalizedDoubles = [.. scaleToSlide.Select(scaleNote => (scaleNote * fundamental).ToOctave())];
@@ -679,6 +740,7 @@ void QueryChordKeyMultiplicity(ScaleCalculator scaleCalculator)
         //new([0, 1, 3, 5, 6, 9, 10]), //base 15 - seems like the full base 15 collapses to base 24 due to the 8/5 creating base24 at C or G for base 15 at B
         new([0, 1, 3, 5, 6, 8, 9, 10]), //full base 15
         new([0, 3, 4, 6, 7, 8, 10]), //full base 20
+        new([0, 2, 4, 6, 8, 9]), //full base 7
         //new([0, 2, 4, 7, 11]),  //base 8
         new([0, 2, 4, 5, 7, 9, 11])  //base 24 - 1, 9/8, 5/4, 5/4, 3/2, 5/3, 15/8
         ];
