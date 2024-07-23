@@ -513,7 +513,7 @@ QueryChordKeyMultiplicity(scaleCalculator);
 static void PrintRatioFundamentalOctaveSweep(double[] originalRatios, double stepSize = 0.01)
 {
     //No 7/5? approximates sqrt 2, might be important even though big prime in numerator
-    double[] goodRatios = new double[] { 1, 16 / 15d, 9 / 8d, 6 / 5d, 5 / 4d, 4 / 3d, 3 / 2d, 8 / 5d, 5 / 3d, 9 / 5d, 15 / 8d };
+    double[] goodRatios = new double[] { 1, 16 / 15d, 9 / 8d, 6 / 5d, 5 / 4d, 4 / 3d, 3 / 2d, 8 / 5d, 5 / 3d, 9 / 5d, 15 / 8d, 2 };
     double maxDeviation = 0.011d;
     double fundamental = 1;
     while (fundamental < 2)
@@ -529,7 +529,7 @@ static void PrintRatioFundamentalOctaveSweep(double[] originalRatios, double ste
             foreach (var goodRatio in goodRatios)
             {
                 if (Math.Abs(ratio - goodRatio) < maxDeviation)
-                    goodRatiosFound[i] = goodRatio;
+                    goodRatiosFound[i] = goodRatio.ToOctave();
             }
         }
         if (goodRatiosFound.Any(goodRatio => goodRatio > 0))
