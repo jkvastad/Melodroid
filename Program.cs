@@ -425,7 +425,11 @@ double[] tet12base7 = ConstructTet12FractionFamily(7);
 
 double[] myRatios = new double[] { 1, 5 / 4d, 3 / 2d };
 double[] myRatios2 = new double[] { 7 / 4d, 7 / 5d };
-PrintRatioFundamentalOctaveSweep(myRatios);
+double[] myRatios3 = new double[] { 7 / 6d, 11 / 6d };
+double[] minorF = new double[] { 4 / 3d, 8 / 5d, 2 };
+double[] majorD = new double[] { 9 / 8d, 7 / 5d, 5 / 3d };
+double[] pentatonic = new double[] { 1, 9 / 8d, 5 / 4d, 3 / 2d, 5 / 3d };
+PrintRatioFundamentalOctaveSweep(pentatonic);
 
 QueryChordKeyMultiplicity(scaleCalculator);
 //QueryFundamentalClassPerScale(scaleCalculator);
@@ -509,29 +513,35 @@ QueryChordKeyMultiplicity(scaleCalculator);
 static void PrintRatioFundamentalOctaveSweep(double[] originalRatios, double stepSize = 0.01)
 {
     //No 7/5? approximates sqrt 2, might be important even though big prime in numerator
-    double[] goodRatios = new double[] { 16 / 15d, 9 / 8d, 6 / 5d, 5 / 4d, 4 / 3d, 3 / 2d, 8 / 5d, 5 / 3d, 9 / 5d, 15 / 8d }; 
-    double maxDeviation = 0.01d;
+    double[] goodRatios = new double[] { 1, 16 / 15d, 9 / 8d, 6 / 5d, 5 / 4d, 4 / 3d, 3 / 2d, 8 / 5d, 5 / 3d, 9 / 5d, 15 / 8d };
+    double maxDeviation = 0.011d;
     double fundamental = 1;
     while (fundamental < 2)
     {
-        var renormalizedRatios = originalRatios.Select(ratio => (ratio / fundamental).ToOctave());
-        List<double> goodRatiosFound = new();
+        double[] renormalizedRatios = originalRatios.Select(ratio => (ratio / fundamental).ToOctave()).ToArray();
+        double[] goodRatiosFound = new double[originalRatios.Length];
 
         Console.Write($"{fundamental:0.00}:");
-        foreach (var ratio in renormalizedRatios)
+        for (int i = 0; i < renormalizedRatios.Count(); i++)
         {
+            double ratio = renormalizedRatios[i];
             Console.Write($" {ratio:0.00}");
             foreach (var goodRatio in goodRatios)
             {
                 if (Math.Abs(ratio - goodRatio) < maxDeviation)
-                    goodRatiosFound.Add(goodRatio);
+                    goodRatiosFound[i] = goodRatio;
             }
         }
-        if (goodRatiosFound.Count > 0)
+        if (goodRatiosFound.Any(goodRatio => goodRatio > 0))
         {
             Console.Write(" <--");
             foreach (var goodRatio in goodRatiosFound)
-                Console.Write($" {goodRatio:0.00}");
+            {
+                if (goodRatio > 0)
+                    Console.Write($" {goodRatio:0.00}");
+                else
+                    Console.Write("     ");
+            }
         }
 
         Console.WriteLine();
