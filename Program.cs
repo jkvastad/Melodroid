@@ -422,21 +422,42 @@ double[] tet12base7 = ConstructTet12FractionFamily(7);
 //Console.WriteLine("---");
 //PrintSlidingFundamentalMatchingBetweenScales(tet12base7, majorChord, false);
 //Console.WriteLine("---");
+double[] myRatios = new double[] { 6 / 5d, 4 / 3d, 5 / 3d };
+double[] myRatios2 = new double[] { 5 / 4d };
+double[] myRatios3 = new double[] { 1, 16 / 15d };
+double[] myRatios4 = new double[] { 1, 15 / 18d };
 
+double[] cumulativeDScale6 = new double[] { 1, 7 / 6d, 8 / 6d, 9 / 6d, 10 / 6d, 11 / 6d };
+
+double[] fSharp = new double[] { 9 / 5d };
 double[] majorC = new double[] { 1, 5 / 4d, 3 / 2d };
+double[] dimCSharp = new double[] { 16 / 15d, 5 / 4d, 3 / 2d };
 double[] majorD = new double[] { 9 / 8d, 7 / 5d, 5 / 3d };
-double[] majorC7 = new double[] { 1, 5 / 4d, 3 / 2d, 9 / 5d };
-double[] myRatios = new double[] { 1, 5 / 4d, 3 / 2d };
-double[] myRatios2 = new double[] { 7 / 4d, 7 / 5d };
-double[] myRatios3 = new double[] { 7 / 6d, 11 / 6d };
+double[] majorC7_7_4 = new double[] { 1, 5 / 4d, 3 / 2d, 7 / 4d };
+double[] majorC7_9_5 = new double[] { 1, 5 / 4d, 3 / 2d, 9 / 5d };
+double[] majorC7_16_9 = new double[] { 1, 5 / 4d, 3 / 2d, 16 / 9d };
 double[] minorF = new double[] { 4 / 3d, 8 / 5d, 2 };
+double[] minorE = new double[] { 5 / 4d, 3 / 2d, 15 / 8d };
 double[] minorF4 = new double[] { 4 / 3d, 8 / 5d, 9 / 5d, 2 };
 double[] minorF7 = new double[] { 4 / 3d, 8 / 5d, 2, 6 / 5d };
 
 double[] pentatonic = new double[] { 1, 9 / 8d, 5 / 4d, 3 / 2d, 5 / 3d };
 
 //PrintRatioFundamentalOctaveSweep(majorD.Union(minorF7).ToArray());
-PrintRatioFundamentalOctaveSweep(majorC);
+//PrintRatioFundamentalOctaveSweep(minorE.Union(fSharp).ToArray());
+//PrintRatioFundamentalOctaveSweep(majorC.Union(myRatios).ToArray());
+
+//PrintRatioFundamentalOctaveSweep(majorC7_7_4);
+//Console.WriteLine("---");
+//PrintRatioFundamentalOctaveSweep(majorC7_9_5);
+//Console.WriteLine("---");
+//PrintRatioFundamentalOctaveSweep(majorC7_16_9);
+//Console.WriteLine("---");
+
+PrintRatioFundamentalOctaveSweep(myRatios3);
+Console.WriteLine("---");
+PrintRatioFundamentalOctaveSweep(myRatios4);
+
 
 QueryChordKeyMultiplicity(scaleCalculator);
 //QueryFundamentalClassPerScale(scaleCalculator);
@@ -517,42 +538,50 @@ QueryChordKeyMultiplicity(scaleCalculator);
 //BeatBox beatBox = new BeatBox();
 //WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, "melodroid testing");
 
-static void PrintRatioFundamentalOctaveSweep(double[] originalRatios, double stepSize = 0.01)
+static void PrintRatioFundamentalOctaveSweep(double[] originalRatios, double stepSize = 0.01, double maxDeviation = 0.011d)
 {
     //No 7/5? approximates sqrt 2, might be important even though big prime in numerator
-    double[] goodRatios = new double[] { 1, 16 / 15d, 9 / 8d, 6 / 5d, 5 / 4d, 4 / 3d, 3 / 2d, 8 / 5d, 5 / 3d, 9 / 5d, 15 / 8d, 2 };
-    double maxDeviation = 0.011d;
+    Fraction[] goodFractions = new Fraction[] { new(1), new(16, 15), new(9, 8), new(6, 5), new(5, 4), new(4, 3), new(3, 2), new(8, 5), new(5, 3), new(9, 5), new(15, 8) };
+    double[] goodRatios = goodFractions.Select(fraction => fraction.ToDouble()).ToArray();    
     double fundamental = 1;
     while (fundamental < 2)
     {
         double[] renormalizedRatios = originalRatios.Select(ratio => (ratio / fundamental).ToOctave()).ToArray();
-        double[] goodRatiosFound = new double[originalRatios.Length];
+        Fraction[] goodFractionsFound = new Fraction[originalRatios.Length];
+        
 
         Console.Write($"{fundamental:0.00}:");
         for (int i = 0; i < renormalizedRatios.Count(); i++)
         {
-            double ratio = renormalizedRatios[i];
-            Console.Write($" {ratio:0.00}");
-            foreach (var goodRatio in goodRatios)
+            double renormalizedRatio = renormalizedRatios[i];
+            Console.Write($" {renormalizedRatio:0.00}");
+            foreach (var goodFraction in goodFractions)
             {
-                if (Math.Abs(ratio - goodRatio) < maxDeviation)
-                    goodRatiosFound[i] = goodRatio.ToOctave();
+                //proximity modulo 2 - check from both left and right of number line, go for smallest distance
+                if (Math.MinMagnitude(Math.Abs((double)goodFraction - renormalizedRatio), Math.Abs(((double)goodFraction - 1) + (2 - renormalizedRatio))) < maxDeviation)
+                    goodFractionsFound[i] = goodFraction;
             }
+            //foreach (var goodRatio in goodRatios)
+            //{
+            //    //proximity modulo 2 - check from both left and right of number line, go for smallest distance
+            //    if (Math.MinMagnitude(Math.Abs(goodRatio - renormalizedRatio), Math.Abs((goodRatio - 1) + (2 - renormalizedRatio))) < maxDeviation)
+            //        goodRatiosFound[i] = goodRatio.ToOctave();
+            //}
         }
-        if (goodRatiosFound.Any(goodRatio => goodRatio > 0))
+        if (goodFractionsFound.Any(goodFraction => goodFraction > 0))
         {
             Console.Write(" <--");
-            foreach (var goodRatio in goodRatiosFound)
+            for (int i = 0; i < goodFractionsFound.Length; i++)
             {
-                if (goodRatio > 0)
-                    Console.Write($" {goodRatio:0.00}");
+                Fraction goodFraction = goodFractionsFound[i];                
+                if (goodFraction > 0)
+                    Console.Write($" {goodFraction}".PadRight(6));
                 else
-                    Console.Write("     ");
+                    Console.Write("".PadRight(6));
             }
-            if (goodRatiosFound.Where(goodRatio => goodRatio > 0).Count() == originalRatios.Length)
+            if (goodFractionsFound.Where(goodFraction => goodFraction > 0).Count() == originalRatios.Length)
                 Console.Write(" !");
         }
-
         Console.WriteLine();
         fundamental += stepSize;
     }
