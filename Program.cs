@@ -560,13 +560,7 @@ static void PrintRatioFundamentalOctaveSweep(double[] originalRatios, double ste
                 //proximity modulo 2 - check from both left and right of number line, go for smallest distance
                 if (Math.MinMagnitude(Math.Abs((double)goodFraction - renormalizedRatio), Math.Abs(((double)goodFraction - 1) + (2 - renormalizedRatio))) < maxDeviation)
                     goodFractionsFound[i] = goodFraction;
-            }
-            //foreach (var goodRatio in goodRatios)
-            //{
-            //    //proximity modulo 2 - check from both left and right of number line, go for smallest distance
-            //    if (Math.MinMagnitude(Math.Abs(goodRatio - renormalizedRatio), Math.Abs((goodRatio - 1) + (2 - renormalizedRatio))) < maxDeviation)
-            //        goodRatiosFound[i] = goodRatio.ToOctave();
-            //}
+            }            
         }
         if (goodFractionsFound.Any(goodFraction => goodFraction > 0))
         {
