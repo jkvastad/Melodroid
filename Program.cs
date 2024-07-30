@@ -351,7 +351,7 @@ SimpleIsochronicRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, be
 //QueryFractionFundamentalClass();
 //PrintFractionFundamentalClass(chord, toOctave: false);
 
-double[] ConstructTet12DoubleArray(int[] keys)
+static double[] ConstructTet12DoubleArray(int[] keys)
 {
     double[] tet12Doubles = new double[keys.Length];
     for (int i = 0; i < keys.Length; i++)
@@ -431,8 +431,12 @@ double[] cumulativeDScale6 = new double[] { 1, 7 / 6d, 8 / 6d, 9 / 6d, 10 / 6d, 
 
 double[] fSharp = new double[] { 9 / 5d };
 double[] majorC = new double[] { 1, 5 / 4d, 3 / 2d };
+double[] tet12majorC = ConstructTet12DoubleArray(new int[] { 0, 4, 7 });
 double[] dimCSharp = new double[] { 16 / 15d, 5 / 4d, 3 / 2d };
+double[] dimC = new double[] { 1, 6 / 5d, 7 / 5d };
+double[] tet12dimC = ConstructTet12DoubleArray(new int[] { 0, 3, 6 });
 double[] majorD = new double[] { 9 / 8d, 7 / 5d, 5 / 3d };
+double[] tet12majorC7 = ConstructTet12DoubleArray(new int[] { 0, 4, 7, 10 });
 double[] majorC7_7_4 = new double[] { 1, 5 / 4d, 3 / 2d, 7 / 4d };
 double[] majorC7_9_5 = new double[] { 1, 5 / 4d, 3 / 2d, 9 / 5d };
 double[] majorC7_16_9 = new double[] { 1, 5 / 4d, 3 / 2d, 16 / 9d };
@@ -447,19 +451,32 @@ double[] pentatonic = new double[] { 1, 9 / 8d, 5 / 4d, 3 / 2d, 5 / 3d };
 //PrintRatioFundamentalOctaveSweep(minorE.Union(fSharp).ToArray());
 //PrintRatioFundamentalOctaveSweep(majorC.Union(myRatios).ToArray());
 
+//TODO - when playing e.g. A# in C7, is it experienced purely as 9/5 or does it work as 7/4 and 16/9 as well?
+//(seems probable given how base 6 scale is off by 0.3 and still approximates 5/3,4/3 etc.)
+//if so, how to capture all the implications/harmonic dynamics of a single key? All values in an interval around key? 
+//PrintRatioFundamentalOctaveSweep(majorC);
+//Console.WriteLine($"---{nameof(majorC)}---");
+//PrintRatioFundamentalOctaveSweep(tet12majorC);
+//Console.WriteLine($"---{nameof(tet12majorC)}---");
+//PrintRatioFundamentalOctaveSweep(dimC);
+//Console.WriteLine($"---{nameof(dimC)}---");
+//PrintRatioFundamentalOctaveSweep(tet12dimC);
+//Console.WriteLine($"---{nameof(tet12dimC)}---");
+//PrintRatioFundamentalOctaveSweep(tet12majorC7);
+//Console.WriteLine($"---{nameof(tet12majorC7)}---");
 //PrintRatioFundamentalOctaveSweep(majorC7_7_4);
-//Console.WriteLine("---");
+//Console.WriteLine($"---{nameof(majorC7_7_4)}---");
 //PrintRatioFundamentalOctaveSweep(majorC7_9_5);
-//Console.WriteLine("---");
+//Console.WriteLine($"---{nameof(majorC7_9_5)}---");
 //PrintRatioFundamentalOctaveSweep(majorC7_16_9);
+//Console.WriteLine($"---{nameof(majorC7_16_9)}---");
+
+//PrintRatioFundamentalOctaveSweep(myRatios3);
 //Console.WriteLine("---");
+//PrintRatioFundamentalOctaveSweep(myRatios4);
 
-PrintRatioFundamentalOctaveSweep(myRatios3);
-Console.WriteLine("---");
-PrintRatioFundamentalOctaveSweep(myRatios4);
-
-
-QueryChordKeyMultiplicity(scaleCalculator);
+QueryRatioFundamentalOctaveSweep();
+//QueryChordKeyMultiplicity(scaleCalculator);
 //QueryFundamentalClassPerScale(scaleCalculator);
 //QueryChordProgressionFromMultiplicity(scaleCalculator);
 //QueryChordInKeySetTranslations();
@@ -538,17 +555,30 @@ QueryChordKeyMultiplicity(scaleCalculator);
 //BeatBox beatBox = new BeatBox();
 //WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, "melodroid testing");
 
-static void PrintRatioFundamentalOctaveSweep(double[] originalRatios, double stepSize = 0.01, double maxDeviation = 0.011d)
+static void QueryRatioFundamentalOctaveSweep()
+{
+    while (true)
+    {
+        Console.WriteLine($"Input space separated tet12 keys for octave sweep, empty input to exit");
+        string input = Console.ReadLine();
+
+        if (input.Length == 0) return;
+        int[] tet12Keys = Array.ConvertAll(input.Split(' '), int.Parse);
+
+        PrintRatioFundamentalOctaveSweep(ConstructTet12DoubleArray(tet12Keys));
+    }
+}
+static void PrintRatioFundamentalOctaveSweep(double[] originalRatios, double stepSize = 0.01, double maxDeviation = 0.015d)
 {
     //No 7/5? approximates sqrt 2, might be important even though big prime in numerator
     Fraction[] goodFractions = new Fraction[] { new(1), new(16, 15), new(9, 8), new(6, 5), new(5, 4), new(4, 3), new(3, 2), new(8, 5), new(5, 3), new(9, 5), new(15, 8) };
-    double[] goodRatios = goodFractions.Select(fraction => fraction.ToDouble()).ToArray();    
+    double[] goodRatios = goodFractions.Select(fraction => fraction.ToDouble()).ToArray();
     double fundamental = 1;
     while (fundamental < 2)
     {
         double[] renormalizedRatios = originalRatios.Select(ratio => (ratio / fundamental).ToOctave()).ToArray();
         Fraction[] goodFractionsFound = new Fraction[originalRatios.Length];
-        
+
 
         Console.Write($"{fundamental:0.00}:");
         for (int i = 0; i < renormalizedRatios.Count(); i++)
@@ -560,14 +590,14 @@ static void PrintRatioFundamentalOctaveSweep(double[] originalRatios, double ste
                 //proximity modulo 2 - check from both left and right of number line, go for smallest distance
                 if (Math.MinMagnitude(Math.Abs((double)goodFraction - renormalizedRatio), Math.Abs(((double)goodFraction - 1) + (2 - renormalizedRatio))) < maxDeviation)
                     goodFractionsFound[i] = goodFraction;
-            }            
+            }
         }
         if (goodFractionsFound.Any(goodFraction => goodFraction > 0))
         {
             Console.Write(" <--");
             for (int i = 0; i < goodFractionsFound.Length; i++)
             {
-                Fraction goodFraction = goodFractionsFound[i];                
+                Fraction goodFraction = goodFractionsFound[i];
                 if (goodFraction > 0)
                     Console.Write($" {goodFraction}".PadRight(6));
                 else
