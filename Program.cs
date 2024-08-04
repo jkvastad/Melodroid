@@ -478,7 +478,8 @@ double[] pentatonic = new double[] { 1, 9 / 8d, 5 / 4d, 3 / 2d, 5 / 3d };
 //PrintRatioFundamentalOctaveSweep(myRatios4);
 
 //TODO: Are chord progressions based on finding intervals 3/2 and 5/4 (major chord)? Implies other intervals are renormalized and must fit in with the prioritized intervals
-QueryRatioFundamentalOctaveSweep();
+//TODO: Print LCM to simplify comparing interval matches, perhaps filter on max LCM.
+QueryRatioFundamentalOctaveSweep(maxDeviation: 0.021d);
 //QueryChordKeyMultiplicity(scaleCalculator);
 //QueryFundamentalClassPerScale(scaleCalculator);
 //QueryChordProgressionFromMultiplicity(scaleCalculator);
@@ -558,7 +559,7 @@ QueryRatioFundamentalOctaveSweep();
 //BeatBox beatBox = new BeatBox();
 //WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, "melodroid testing");
 
-static void QueryRatioFundamentalOctaveSweep(double maxDeviation = 0.020d)
+static void QueryRatioFundamentalOctaveSweep(double maxDeviation = 0.010d)
 {
     while (true)
     {
@@ -568,10 +569,11 @@ static void QueryRatioFundamentalOctaveSweep(double maxDeviation = 0.020d)
         if (input.Length == 0) return;
         int[] tet12Keys = Array.ConvertAll(input.Split(' '), int.Parse);
 
-        PrintRatioFundamentalOctaveSweep(ConstructTet12DoubleArray(tet12Keys), maxDeviation);
+        PrintRatioFundamentalOctaveSweep(ConstructTet12DoubleArray(tet12Keys), maxDeviation: maxDeviation);
     }
 }
-static void PrintRatioFundamentalOctaveSweep(double[] originalRatios, double stepSize = 0.01, double maxDeviation = 0.020d)
+//Default max set to catch certain scenarios
+static void PrintRatioFundamentalOctaveSweep(double[] originalRatios, double stepSize = 0.01, double maxDeviation = 0.01d)
 {
     //No 7/5? approximates sqrt 2, might be important even though big prime in numerator
     Fraction[] goodFractions = new Fraction[] { new(1), new(16, 15), new(9, 8), new(6, 5), new(5, 4), new(4, 3), new(3, 2), new(8, 5), new(5, 3), new(9, 5), new(15, 8) };
