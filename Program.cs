@@ -462,8 +462,10 @@ double[] pentatonic = new double[] { 1, 9 / 8d, 5 / 4d, 3 / 2d, 5 / 3d };
 //Console.WriteLine($"---{nameof(dimC)}---");
 //PrintRatioFundamentalOctaveSweep(tet12dimC);
 //Console.WriteLine($"---{nameof(tet12dimC)}---");
+
 //PrintRatioFundamentalOctaveSweep(tet12majorC7);
 //Console.WriteLine($"---{nameof(tet12majorC7)}---");
+
 //PrintRatioFundamentalOctaveSweep(majorC7_7_4);
 //Console.WriteLine($"---{nameof(majorC7_7_4)}---");
 //PrintRatioFundamentalOctaveSweep(majorC7_9_5);
@@ -475,6 +477,7 @@ double[] pentatonic = new double[] { 1, 9 / 8d, 5 / 4d, 3 / 2d, 5 / 3d };
 //Console.WriteLine("---");
 //PrintRatioFundamentalOctaveSweep(myRatios4);
 
+//TODO: Are chord progressions based on finding intervals 3/2 and 5/4 (major chord)? Implies other intervals are renormalized and must fit in with the prioritized intervals
 QueryRatioFundamentalOctaveSweep();
 //QueryChordKeyMultiplicity(scaleCalculator);
 //QueryFundamentalClassPerScale(scaleCalculator);
@@ -555,7 +558,7 @@ QueryRatioFundamentalOctaveSweep();
 //BeatBox beatBox = new BeatBox();
 //WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, "melodroid testing");
 
-static void QueryRatioFundamentalOctaveSweep()
+static void QueryRatioFundamentalOctaveSweep(double maxDeviation = 0.020d)
 {
     while (true)
     {
@@ -565,10 +568,10 @@ static void QueryRatioFundamentalOctaveSweep()
         if (input.Length == 0) return;
         int[] tet12Keys = Array.ConvertAll(input.Split(' '), int.Parse);
 
-        PrintRatioFundamentalOctaveSweep(ConstructTet12DoubleArray(tet12Keys));
+        PrintRatioFundamentalOctaveSweep(ConstructTet12DoubleArray(tet12Keys), maxDeviation);
     }
 }
-static void PrintRatioFundamentalOctaveSweep(double[] originalRatios, double stepSize = 0.01, double maxDeviation = 0.015d)
+static void PrintRatioFundamentalOctaveSweep(double[] originalRatios, double stepSize = 0.01, double maxDeviation = 0.020d)
 {
     //No 7/5? approximates sqrt 2, might be important even though big prime in numerator
     Fraction[] goodFractions = new Fraction[] { new(1), new(16, 15), new(9, 8), new(6, 5), new(5, 4), new(4, 3), new(3, 2), new(8, 5), new(5, 3), new(9, 5), new(15, 8) };
