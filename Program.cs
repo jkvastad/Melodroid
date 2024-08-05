@@ -586,6 +586,7 @@ static void PrintRatioFundamentalOctaveSweep(double[] originalRatios, double ste
 
 
         Console.Write($"{fundamental:0.00}:");
+        //Match renormalized ratios to good fractions
         for (int i = 0; i < renormalizedRatios.Count(); i++)
         {
             double renormalizedRatio = renormalizedRatios[i];
@@ -597,6 +598,7 @@ static void PrintRatioFundamentalOctaveSweep(double[] originalRatios, double ste
                     goodFractionsFound[i] = goodFraction;
             }
         }
+        //Pretty print good fractions
         if (goodFractionsFound.Any(goodFraction => goodFraction > 0))
         {
             Console.Write(" <--");
@@ -610,6 +612,12 @@ static void PrintRatioFundamentalOctaveSweep(double[] originalRatios, double ste
             }
             if (goodFractionsFound.Where(goodFraction => goodFraction > 0).Count() == originalRatios.Length)
                 Console.Write(" !");
+            else
+                Console.Write("  ");
+            Console.Write($" LCM:{LCM(goodFractionsFound
+                .Where(goodFraction => goodFraction > 0)
+                .Select(fraction => (long)fraction.Denominator)
+                .ToArray())}");
         }
         Console.WriteLine();
         fundamental += stepSize;
