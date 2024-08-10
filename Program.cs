@@ -579,19 +579,17 @@ static void PrintRatioFundamentalOctaveSweep(double[] originalRatios, double ste
     Fraction[] goodFractions = new Fraction[] { new(1), new(16, 15), new(9, 8), new(6, 5), new(5, 4), new(4, 3), new(7, 5), new(3, 2), new(8, 5), new(5, 3), new(9, 5), new(15, 8) };
     double[] goodRatios = goodFractions.Select(fraction => fraction.ToDouble()).ToArray();
     double fundamental = 1;
+    List<(double fundamental, double[] renormalizedRatios, Fraction[] goodFractionsFound)> dataPerStep = new();
+    //Compute renormalized ratios and bin to good ratios during octave sweep
     while (fundamental < 2)
     {
         double[] renormalizedRatios = originalRatios.Select(ratio => (ratio / fundamental).ToOctave()).ToArray();
         Fraction[] goodFractionsFound = new Fraction[originalRatios.Length];
 
-        //TODO: first calculations, then printing, for easier display e.g. full match only
-
-        Console.Write($"{fundamental:0.00}:");
         //Match renormalized ratios to good fractions
         for (int i = 0; i < renormalizedRatios.Count(); i++)
         {
             double renormalizedRatio = renormalizedRatios[i];
-            Console.Write($" {renormalizedRatio:0.00}");
             foreach (var goodFraction in goodFractions)
             {
                 //proximity modulo 2 - check from both left and right of number line, go for smallest distance
@@ -599,31 +597,61 @@ static void PrintRatioFundamentalOctaveSweep(double[] originalRatios, double ste
                     goodFractionsFound[i] = goodFraction;
             }
         }
+
+        dataPerStep.Add((fundamental, renormalizedRatios, goodFractionsFound));
+
+        fundamental += stepSize;
+    }
+    //Print data     
+    long previousLcm = 0;
+    foreach (var dataRow in dataPerStep)
+    {
+        bool isRowFullMatch = dataRow.goodFractionsFound.Where(goodFraction => goodFraction > 0).Count() == originalRatios.Length;
+        //abbreviated output
+        long rowLcm = 0;
+        if (dataRow.goodFractionsFound.Any(goodFraction => goodFraction > 0))
+        {
+            rowLcm = LCM(dataRow.goodFractionsFound
+                .Where(goodFraction => goodFraction > 0)
+                .Select(fraction => (long)fraction.Denominator)
+                .ToArray());
+        }
+        if (rowLcm == previousLcm)
+        {
+            previousLcm = rowLcm;
+            continue;
+        }
+        previousLcm = rowLcm;
+        if (fullMatchOnly && !isRowFullMatch)
+            continue;
+        Console.Write($"{dataRow.fundamental:0.00}:");
+        //Print renormalized ratios
+        for (int i = 0; i < dataRow.renormalizedRatios.Count(); i++)
+        {
+            double renormalizedRatio = dataRow.renormalizedRatios[i];
+            Console.Write($" {renormalizedRatio:0.00}");
+        }
+
         //Pretty print good fractions
 
-        if (goodFractionsFound.Any(goodFraction => goodFraction > 0))
+        if (dataRow.goodFractionsFound.Any(goodFraction => goodFraction > 0))
         {
             Console.Write(" <--");
-            for (int i = 0; i < goodFractionsFound.Length; i++)
+            for (int i = 0; i < dataRow.goodFractionsFound.Length; i++)
             {
-                Fraction goodFraction = goodFractionsFound[i];
+                Fraction goodFraction = dataRow.goodFractionsFound[i];
                 if (goodFraction > 0)
                     Console.Write($" {goodFraction}".PadRight(6));
                 else
                     Console.Write("".PadRight(6));
             }
-            if (goodFractionsFound.Where(goodFraction => goodFraction > 0).Count() == originalRatios.Length)
+            if (isRowFullMatch)
                 Console.Write(" !");
             else
                 Console.Write("  ");
-            Console.Write($" LCM:{LCM(goodFractionsFound
-                .Where(goodFraction => goodFraction > 0)
-                .Select(fraction => (long)fraction.Denominator)
-                .ToArray())}");
+            Console.Write($" LCM:{rowLcm}");
         }
         Console.WriteLine();
-
-        fundamental += stepSize;
     }
 }
 
