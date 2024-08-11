@@ -479,7 +479,7 @@ double[] pentatonic = new double[] { 1, 9 / 8d, 5 / 4d, 3 / 2d, 5 / 3d };
 
 //TODO: Are chord progressions based on finding intervals 3/2 and 5/4 (major chord)? Implies other intervals are renormalized and must fit in with the prioritized intervals
 //TODO: Print LCM to simplify comparing interval matches, perhaps filter on max LCM.
-QueryRatioFundamentalOctaveSweep(maxDeviation: 0.02d, fullMatchOnly: true);
+QueryRatioFundamentalOctaveSweep(maxDeviation: 0.02d, fullMatchOnly: true, repeatFractions: false);
 //QueryChordKeyMultiplicity(scaleCalculator);
 //QueryFundamentalClassPerScale(scaleCalculator);
 //QueryChordProgressionFromMultiplicity(scaleCalculator);
@@ -559,7 +559,7 @@ QueryRatioFundamentalOctaveSweep(maxDeviation: 0.02d, fullMatchOnly: true);
 //BeatBox beatBox = new BeatBox();
 //WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, "melodroid testing");
 
-static void QueryRatioFundamentalOctaveSweep(double maxDeviation = 0.010d, bool fullMatchOnly = false)
+static void QueryRatioFundamentalOctaveSweep(double maxDeviation = 0.010d, bool fullMatchOnly = false, bool repeatFractions = true)
 {
     while (true)
     {
@@ -569,14 +569,18 @@ static void QueryRatioFundamentalOctaveSweep(double maxDeviation = 0.010d, bool 
         if (input.Length == 0) return;
         int[] tet12Keys = Array.ConvertAll(input.Split(' '), int.Parse);
 
-        PrintRatioFundamentalOctaveSweep(ConstructTet12DoubleArray(tet12Keys), maxDeviation: maxDeviation, fullMatchOnly: fullMatchOnly);
+        PrintRatioFundamentalOctaveSweep(ConstructTet12DoubleArray(tet12Keys), maxDeviation: maxDeviation, fullMatchOnly: fullMatchOnly, repeatFractions: repeatFractions);
     }
 }
 //Default max set to catch certain scenarios
-static void PrintRatioFundamentalOctaveSweep(double[] originalRatios, double stepSize = 0.01, double maxDeviation = 0.01d, bool fullMatchOnly = false)
+static void PrintRatioFundamentalOctaveSweep(double[] originalRatios,
+                                             double stepSize = 0.01,
+                                             double maxDeviation = 0.01d,
+                                             bool fullMatchOnly = false,
+                                             bool repeatFractions = true)
 {
     //No 7/5? approximates sqrt 2, might be important even though big prime in numerator
-    Fraction[] goodFractions = new Fraction[] { new(1), new(16, 15), new(9, 8), new(6, 5), new(5, 4), new(4, 3), new(7, 5), new(3, 2), new(8, 5), new(5, 3), new(9, 5), new(15, 8) };
+    Fraction[] goodFractions = new Fraction[] { new(1), new(16, 15), new(9, 8), new(6, 5), new(5, 4), new(4, 3), new(3, 2), new(8, 5), new(5, 3), new(9, 5), new(15, 8) };
     double[] goodRatios = goodFractions.Select(fraction => fraction.ToDouble()).ToArray();
     double fundamental = 1;
     List<(double fundamental, double[] renormalizedRatios, Fraction[] goodFractionsFound)> dataPerStep = new();
@@ -603,28 +607,36 @@ static void PrintRatioFundamentalOctaveSweep(double[] originalRatios, double ste
         fundamental += stepSize;
     }
     //Print data     
-    long previousLcm = 0;
+    
+    Fraction[] previousGoodFractions = []; //used with repeatFractions
     foreach (var dataRow in dataPerStep)
     {
-        bool isRowFullMatch = dataRow.goodFractionsFound.Where(goodFraction => goodFraction > 0).Count() == originalRatios.Length;
-        //abbreviated output
+        Fraction[] goodFractionsFound = dataRow.goodFractionsFound;        
         long rowLcm = 0;
-        if (dataRow.goodFractionsFound.Any(goodFraction => goodFraction > 0))
+        if (goodFractionsFound.Any(goodFraction => goodFraction > 0))
         {
             rowLcm = LCM(dataRow.goodFractionsFound
                 .Where(goodFraction => goodFraction > 0)
                 .Select(fraction => (long)fraction.Denominator)
                 .ToArray());
         }
-        if (rowLcm == previousLcm)
+
+        //abbreviated output
+        if (!repeatFractions)
         {
-            previousLcm = rowLcm;
-            continue;
+            if (Enumerable.SequenceEqual(goodFractionsFound, previousGoodFractions))
+            {
+                previousGoodFractions = goodFractionsFound;
+                continue;
+            }
+            previousGoodFractions = goodFractionsFound;
         }
-        previousLcm = rowLcm;
+        //full match only output
+        bool isRowFullMatch = goodFractionsFound.Where(goodFraction => goodFraction > 0).Count() == originalRatios.Length;
         if (fullMatchOnly && !isRowFullMatch)
-            continue;
+                continue;
         Console.Write($"{dataRow.fundamental:0.00}:");
+
         //Print renormalized ratios
         for (int i = 0; i < dataRow.renormalizedRatios.Count(); i++)
         {
@@ -633,8 +645,7 @@ static void PrintRatioFundamentalOctaveSweep(double[] originalRatios, double ste
         }
 
         //Pretty print good fractions
-
-        if (dataRow.goodFractionsFound.Any(goodFraction => goodFraction > 0))
+        if (rowLcm != 0)
         {
             Console.Write(" <--");
             for (int i = 0; i < dataRow.goodFractionsFound.Length; i++)
