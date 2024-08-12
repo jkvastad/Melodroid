@@ -479,7 +479,7 @@ double[] pentatonic = new double[] { 1, 9 / 8d, 5 / 4d, 3 / 2d, 5 / 3d };
 
 //TODO: Are chord progressions based on finding intervals 3/2 and 5/4 (major chord)? Implies other intervals are renormalized and must fit in with the prioritized intervals
 //TODO: Print LCM to simplify comparing interval matches, perhaps filter on max LCM.
-QueryRatioFundamentalOctaveSweep(maxDeviation: 0.02d, fullMatchOnly: true, repeatFractions: false);
+QueryRatioFundamentalOctaveSweep(maxDeviation: 0.02d);
 //QueryChordKeyMultiplicity(scaleCalculator);
 //QueryFundamentalClassPerScale(scaleCalculator);
 //QueryChordProgressionFromMultiplicity(scaleCalculator);
@@ -559,15 +559,35 @@ QueryRatioFundamentalOctaveSweep(maxDeviation: 0.02d, fullMatchOnly: true, repea
 //BeatBox beatBox = new BeatBox();
 //WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, "melodroid testing");
 
-static void QueryRatioFundamentalOctaveSweep(double maxDeviation = 0.010d, bool fullMatchOnly = false, bool repeatFractions = true)
+static void QueryRatioFundamentalOctaveSweep(double maxDeviation = 0.010d)
 {
     while (true)
     {
+        bool fullMatchOnly = false;
+        bool repeatFractions = true;
         Console.WriteLine($"Input space separated tet12 keys for octave sweep, empty input to exit");
         string input = Console.ReadLine();
 
         if (input.Length == 0) return;
-        int[] tet12Keys = Array.ConvertAll(input.Split(' '), int.Parse);
+        string[] splitInput = input.Split(' ');
+        List<string> options = splitInput.Where(chars => !int.TryParse(chars, out _)).ToList();
+        foreach (string option in options)
+        {
+            switch (option)
+            {
+                case "f": //fullMatchOnly
+                    fullMatchOnly = true;
+                    break;
+                case "r": //repeatFractions
+                    repeatFractions = false;
+                    break;
+                default:
+                    break;
+            };
+        }
+
+        string[] keys = splitInput.Where(chars => int.TryParse(chars, out _)).ToArray();
+        int[] tet12Keys = Array.ConvertAll(keys, int.Parse);
 
         PrintRatioFundamentalOctaveSweep(ConstructTet12DoubleArray(tet12Keys), maxDeviation: maxDeviation, fullMatchOnly: fullMatchOnly, repeatFractions: repeatFractions);
     }
@@ -607,11 +627,11 @@ static void PrintRatioFundamentalOctaveSweep(double[] originalRatios,
         fundamental += stepSize;
     }
     //Print data     
-    
+
     Fraction[] previousGoodFractions = []; //used with repeatFractions
     foreach (var dataRow in dataPerStep)
     {
-        Fraction[] goodFractionsFound = dataRow.goodFractionsFound;        
+        Fraction[] goodFractionsFound = dataRow.goodFractionsFound;
         long rowLcm = 0;
         if (goodFractionsFound.Any(goodFraction => goodFraction > 0))
         {
@@ -634,7 +654,7 @@ static void PrintRatioFundamentalOctaveSweep(double[] originalRatios,
         //full match only output
         bool isRowFullMatch = goodFractionsFound.Where(goodFraction => goodFraction > 0).Count() == originalRatios.Length;
         if (fullMatchOnly && !isRowFullMatch)
-                continue;
+            continue;
         Console.Write($"{dataRow.fundamental:0.00}:");
 
         //Print renormalized ratios
