@@ -564,6 +564,7 @@ static void QueryRatioFundamentalOctaveSweep(double maxDeviation = 0.010d)
     while (true)
     {
         bool fullMatchOnly = false;
+        bool tet12Only = false;
         bool repeatFractions = true;
         Console.WriteLine($"Input space separated tet12 keys for octave sweep, empty input to exit");
         string input = Console.ReadLine();
@@ -575,6 +576,9 @@ static void QueryRatioFundamentalOctaveSweep(double maxDeviation = 0.010d)
         {
             switch (option)
             {
+                case "t": //fullMatchOnly
+                    tet12Only = true;
+                    break;
                 case "f": //fullMatchOnly
                     fullMatchOnly = true;
                     break;
@@ -589,7 +593,11 @@ static void QueryRatioFundamentalOctaveSweep(double maxDeviation = 0.010d)
         string[] keys = splitInput.Where(chars => int.TryParse(chars, out _)).ToArray();
         int[] tet12Keys = Array.ConvertAll(keys, int.Parse);
 
-        PrintRatioFundamentalOctaveSweep(ConstructTet12DoubleArray(tet12Keys), maxDeviation: maxDeviation, fullMatchOnly: fullMatchOnly, repeatFractions: repeatFractions);
+        PrintRatioFundamentalOctaveSweep(ConstructTet12DoubleArray(tet12Keys),
+                                         maxDeviation: maxDeviation,
+                                         fullMatchOnly: fullMatchOnly,
+                                         repeatFractions: repeatFractions,
+                                         tet12Only: tet12Only);
     }
 }
 //Default max set to catch certain scenarios
@@ -597,10 +605,12 @@ static void PrintRatioFundamentalOctaveSweep(double[] originalRatios,
                                              double stepSize = 0.01,
                                              double maxDeviation = 0.01d,
                                              bool fullMatchOnly = false,
-                                             bool repeatFractions = true)
+                                             bool repeatFractions = true,
+                                             bool tet12Only = true
+                                             )
 {
     //No 7/5? approximates sqrt 2, might be important even though big prime in numerator
-    Fraction[] goodFractions = new Fraction[] { new(1), new(16, 15), new(9, 8), new(6, 5), new(5, 4), new(4, 3), new(3, 2), new(8, 5), new(5, 3), new(9, 5), new(15, 8) };
+    Fraction[] goodFractions = [new(1), new(16, 15), new(9, 8), new(6, 5), new(5, 4), new(4, 3), new(3, 2), new(8, 5), new(5, 3), new(9, 5), new(15, 8)];
     double[] goodRatios = goodFractions.Select(fraction => fraction.ToDouble()).ToArray();
     double fundamental = 1;
     List<(double fundamental, double[] renormalizedRatios, Fraction[] goodFractionsFound)> dataPerStep = new();
@@ -629,8 +639,28 @@ static void PrintRatioFundamentalOctaveSweep(double[] originalRatios,
     //Print data     
 
     Fraction[] previousGoodFractions = []; //used with repeatFractions
+    var tet12Keys = CalculateTet12Values().ToList();
+    tet12Keys.Add(2);
     foreach (var dataRow in dataPerStep)
     {
+        if (tet12Only)
+        {
+            bool match12Tet = false;
+            foreach (var tet12Key in tet12Keys)
+            {
+                if (Math.MinMagnitude(
+                    Math.Abs(dataRow.fundamental - tet12Key),
+                    Math.Abs(dataRow.fundamental - 1) + (2 - tet12Key)) < 0.01)
+                {
+                    match12Tet = true;
+                    break;
+                }
+            }
+            if (!match12Tet)
+                continue;
+        }
+
+
         Fraction[] goodFractionsFound = dataRow.goodFractionsFound;
         long rowLcm = 0;
         if (goodFractionsFound.Any(goodFraction => goodFraction > 0))
@@ -659,6 +689,7 @@ static void PrintRatioFundamentalOctaveSweep(double[] originalRatios,
         //skip empty rows
         if (rowLcm == 0)
             continue;
+
 
         Console.Write($"{dataRow.fundamental:0.00}:");
 
