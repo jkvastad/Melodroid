@@ -655,6 +655,11 @@ static void PrintRatioFundamentalOctaveSweep(double[] originalRatios,
         bool isRowFullMatch = goodFractionsFound.Where(goodFraction => goodFraction > 0).Count() == originalRatios.Length;
         if (fullMatchOnly && !isRowFullMatch)
             continue;
+
+        //skip empty rows
+        if (rowLcm == 0)
+            continue;
+
         Console.Write($"{dataRow.fundamental:0.00}:");
 
         //Print renormalized ratios
@@ -682,6 +687,7 @@ static void PrintRatioFundamentalOctaveSweep(double[] originalRatios,
                 Console.Write("  ");
             Console.Write($" LCM:{rowLcm}");
         }
+
         Console.WriteLine();
     }
 }
