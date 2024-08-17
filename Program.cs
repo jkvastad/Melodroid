@@ -570,6 +570,11 @@ static void QueryRatioFundamentalOctaveSweep(double maxDeviation = 0.010d)
         string input = Console.ReadLine();
 
         if (input.Length == 0) return;
+        if (input == "clear")
+        {
+            Console.Clear();
+            continue;
+        }
         string[] splitInput = input.Split(' ');
         List<string> options = splitInput.Where(chars => !int.TryParse(chars, out _)).ToList();
         foreach (string option in options)
