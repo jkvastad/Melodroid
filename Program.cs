@@ -1010,22 +1010,44 @@ void QueryChordKeyMultiplicityPowerSets(ScaleCalculator scaleCalculator, int min
         if (chordInput.Length == 0)
             return;
 
-        int[] keys = Array.ConvertAll(chordInput.Split(' '), int.Parse);
+        bool isTargetChordQueried = false;
+        Tet12KeySet targetChord = new();
+        int[] keys;
+        int localMinSubsetLength = minSubsetLength;
+        if (chordInput.Contains(":"))
+        {
+            isTargetChordQueried = true;
+
+            string[] splitInput = chordInput.Split(":").Select(split => split.Trim(' ')).ToArray();
+            int[] targetChordKeys = Array.ConvertAll(splitInput[1].Split(' '), int.Parse);
+            targetChord = new(targetChordKeys);
+            keys = [.. Array.ConvertAll(splitInput[0].Split(' '), int.Parse), .. targetChordKeys];
+            //localMinSubsetLength += targetChordKeys.Count();
+        }
+        else
+            keys = Array.ConvertAll(chordInput.Split(' '), int.Parse);
+
         List<List<int>> powerSetOfChords = GetPowerSet(keys)
-            .Where(set => set.Count >= minSubsetLength)
+            .Where(set => set.Count >= localMinSubsetLength)
             .OrderBy(set => set.Count).ToList();
 
         //Find all matches for chord per scale of interest
-        int setIndex = 1; //skip empty set
+        int setIndex = 0;
         while (setIndex < powerSetOfChords.Count)
         {
             //Calculate data
             Tet12KeySet chord = new(powerSetOfChords[setIndex].ToArray());
+            if (isTargetChordQueried && !targetChord.IsSubsetTo(chord))
+            {
+                setIndex++;
+                continue;
+            }
+
             List<List<int>[]> chordKeyMultiplicities = new();
             foreach (Scale scale in scalesOfInterest)
                 chordKeyMultiplicities.Add(scale.CalculateKeyMultiplicity(chord));
 
-            //Print data 
+            //Print data             
             if (chordKeyMultiplicities.Any(multiplicity => multiplicity.Any(fundamentals => fundamentals.Count > 0)))
             {
                 Console.WriteLine(chord.ToIntervalString());
@@ -1035,7 +1057,6 @@ void QueryChordKeyMultiplicityPowerSets(ScaleCalculator scaleCalculator, int min
                     Console.WriteLine($"  {string.Join(" ", chordKeyMultiplicities[i].First(fundamentals => fundamentals.Count == maxFundamentals))}");
                 }
             }
-
             setIndex++;
         }
     }
