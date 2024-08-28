@@ -479,12 +479,15 @@ double[] pentatonic = new double[] { 1, 9 / 8d, 5 / 4d, 3 / 2d, 5 / 3d };
 
 //TODO: Are chord progressions based on finding intervals 3/2 and 5/4 (major chord)? Implies other intervals are renormalized and must fit in with the prioritized intervals
 //TODO: Print LCM to simplify comparing interval matches, perhaps filter on max LCM.
-QueryRatioFundamentalOctaveSweep(maxDeviation: 0.02d);
-//QueryChordKeyMultiplicity(scaleCalculator);
-//QueryFundamentalClassPerScale(scaleCalculator);
-//QueryChordProgressionFromMultiplicity(scaleCalculator);
-//QueryChordInKeySetTranslations();
-
+while (true)
+{
+    QueryRatioFundamentalOctaveSweep(maxDeviation: 0.033d);
+    //QueryChordKeyMultiplicity(scaleCalculator);
+    QueryChordKeyMultiplicityPowerSets(scaleCalculator);
+    //QueryFundamentalClassPerScale(scaleCalculator);
+    //QueryChordProgressionFromMultiplicity(scaleCalculator);
+    //QueryChordInKeySetTranslations();
+}
 
 
 
@@ -581,7 +584,7 @@ static void QueryRatioFundamentalOctaveSweep(double maxDeviation = 0.010d)
         {
             switch (option)
             {
-                case "t": //fullMatchOnly
+                case "t": //tet 12 keys only
                     tet12Only = true;
                     break;
                 case "f": //fullMatchOnly
@@ -616,6 +619,7 @@ static void PrintRatioFundamentalOctaveSweep(double[] originalRatios,
 {
     //No 7/5? approximates sqrt 2, might be important even though big prime in numerator
     Fraction[] goodFractions = [new(1), new(16, 15), new(9, 8), new(6, 5), new(5, 4), new(4, 3), new(3, 2), new(8, 5), new(5, 3), new(9, 5), new(15, 8)];
+    //Fraction[] goodFractions = [new(1), new(8, 7), new(9, 7), new(10, 7), new(11, 7), new(12, 7), new(13, 7)];
     double[] goodRatios = goodFractions.Select(fraction => fraction.ToDouble()).ToArray();
     double fundamental = 1;
     List<(double fundamental, double[] renormalizedRatios, Fraction[] goodFractionsFound)> dataPerStep = new();
@@ -644,10 +648,15 @@ static void PrintRatioFundamentalOctaveSweep(double[] originalRatios,
     //Print data     
 
     Fraction[] previousGoodFractions = []; //used with repeatFractions
+
+
     var tet12Keys = CalculateTet12Values().ToList();
     tet12Keys.Add(2);
     foreach (var dataRow in dataPerStep)
     {
+        Fraction[] goodFractionsFound = dataRow.goodFractionsFound;
+        long rowLcm = 0;
+
         if (tet12Only)
         {
             bool match12Tet = false;
@@ -665,9 +674,7 @@ static void PrintRatioFundamentalOctaveSweep(double[] originalRatios,
                 continue;
         }
 
-
-        Fraction[] goodFractionsFound = dataRow.goodFractionsFound;
-        long rowLcm = 0;
+        //abbreviated output
         if (goodFractionsFound.Any(goodFraction => goodFraction > 0))
         {
             rowLcm = LCM(dataRow.goodFractionsFound
@@ -675,8 +682,6 @@ static void PrintRatioFundamentalOctaveSweep(double[] originalRatios,
                 .Select(fraction => (long)fraction.Denominator)
                 .ToArray());
         }
-
-        //abbreviated output
         if (!repeatFractions)
         {
             if (Enumerable.SequenceEqual(goodFractionsFound, previousGoodFractions))
@@ -686,6 +691,7 @@ static void PrintRatioFundamentalOctaveSweep(double[] originalRatios,
             }
             previousGoodFractions = goodFractionsFound;
         }
+
         //full match only output
         bool isRowFullMatch = goodFractionsFound.Where(goodFraction => goodFraction > 0).Count() == originalRatios.Length;
         if (fullMatchOnly && !isRowFullMatch)
@@ -926,10 +932,11 @@ void QueryChordInKeySetTranslations()
 void QueryChordKeyMultiplicity(ScaleCalculator scaleCalculator)
 {
     List<Scale> scalesOfInterest = [
+        //new([0, 1, 3, 5, 6, 8, 9, 10]), //full base 15
         //new([0, 1, 3, 5, 6, 9, 10]), //base 15 - seems like the full base 15 collapses to base 24 due to the 8/5 creating base24 at C or G for base 15 at B
-        new([0, 1, 3, 5, 6, 8, 9, 10]), //full base 15
-        new([0, 3, 4, 6, 7, 8, 10]), //full base 20
-        new([0, 2, 4, 6, 8, 9]), //full base 7
+        new([0, 1, 3, 5, 9, 10]), //natural base 15 - no 8 as it collapses to 24 on 1, no 6 as 7 is bad numerator in 7/5
+        //new([0, 3, 4, 6, 7, 8, 10]), //full base 20
+        //new([0, 2, 4, 6, 8, 9]), //full base 7
         //new([0, 2, 4, 7, 11]),  //base 8
         new([0, 2, 4, 5, 7, 9, 11])  //base 24 - 1, 9/8, 5/4, 5/4, 3/2, 5/3, 15/8
         ];
@@ -973,6 +980,63 @@ void QueryChordKeyMultiplicity(ScaleCalculator scaleCalculator)
                 Console.WriteLine();
             }
             Console.WriteLine();
+        }
+    }
+}
+
+void QueryChordKeyMultiplicityPowerSets(ScaleCalculator scaleCalculator, int minSubsetLength = 2)
+{
+    List<Scale> scalesOfInterest = [
+        //new([0, 1, 3, 5, 6, 8, 9, 10]), //full base 15
+        //new([0, 1, 3, 5, 6, 9, 10]), //base 15 - seems like the full base 15 collapses to base 24 due to the 8/5 creating base24 at C or G for base 15 at B
+        new([0, 1, 3, 5, 9, 10]), //natural base 15 - no 8 as it collapses to 24 on 1, no 6 as 7 is bad numerator in 7/5
+        //new([0, 3, 4, 6, 7, 8, 10]), //full base 20
+        //new([0, 2, 4, 6, 8, 9]), //full base 7
+        //new([0, 2, 4, 7, 11]),  //base 8
+        new([0, 2, 4, 5, 7, 9, 11])  //base 24 - 1, 9/8, 5/4, 5/4, 3/2, 5/3, 15/8
+        ];
+
+    Console.WriteLine("Matching input against scales:");
+    foreach (Scale scale in scalesOfInterest)
+    {
+        Console.WriteLine($"{scale.CalculateBase(),-2}: {scale}");
+    }
+
+    while (true)
+    {
+        Console.WriteLine($"Input space separated tet12 keys for chord to calculate chord key multiplicity power sets - empty input to exit");
+        string chordInput = Console.ReadLine();
+
+        if (chordInput.Length == 0)
+            return;
+
+        int[] keys = Array.ConvertAll(chordInput.Split(' '), int.Parse);
+        List<List<int>> powerSetOfChords = GetPowerSet(keys)
+            .Where(set => set.Count >= minSubsetLength)
+            .OrderBy(set => set.Count).ToList();
+
+        //Find all matches for chord per scale of interest
+        int setIndex = 1; //skip empty set
+        while (setIndex < powerSetOfChords.Count)
+        {
+            //Calculate data
+            Tet12KeySet chord = new(powerSetOfChords[setIndex].ToArray());
+            List<List<int>[]> chordKeyMultiplicities = new();
+            foreach (Scale scale in scalesOfInterest)
+                chordKeyMultiplicities.Add(scale.CalculateKeyMultiplicity(chord));
+
+            //Print data 
+            if (chordKeyMultiplicities.Any(multiplicity => multiplicity.Any(fundamentals => fundamentals.Count > 0)))
+            {
+                Console.WriteLine(chord.ToIntervalString());
+                for (int i = 0; i < scalesOfInterest.Count; i++)
+                {
+                    int maxFundamentals = chordKeyMultiplicities[i].Max(fundamentals => fundamentals.Count); //get all possible fundamentals - max includes all possibilities
+                    Console.WriteLine($"  {string.Join(" ", chordKeyMultiplicities[i].First(fundamentals => fundamentals.Count == maxFundamentals))}");
+                }
+            }
+
+            setIndex++;
         }
     }
 }
