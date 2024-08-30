@@ -603,9 +603,9 @@ static void QuerySubsetLCMs()
         {
             foreach (var key in pair)
                 Console.Write($"{key,-2} ");
-            Console.Write("- ");
+            Console.Write("  ");
         }
-        Console.WriteLine();
+        Console.WriteLine("all");
         for (int fundamental = 0; fundamental < 12; fundamental++)
         {
             Console.Write($"{fundamental,-2}: ");
@@ -616,6 +616,8 @@ static void QuerySubsetLCMs()
                 else
                     Console.Write($"{lcm,-7} ");
             }
+            long totalLcm = LCM(LcmPairsPerFundamental[fundamental].Where(lcm => lcm != 0).ToArray());
+            Console.Write($"{totalLcm,-3} ");
             Console.WriteLine();
         }
     }
