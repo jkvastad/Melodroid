@@ -483,10 +483,11 @@ while (true)
 {
     QueryRatioFundamentalOctaveSweep(maxDeviation: 0.033d);
     //QueryChordKeyMultiplicity(scaleCalculator);
-    QueryChordKeyMultiplicityPowerSets(scaleCalculator);
+    //QueryChordKeyMultiplicityPowerSets(scaleCalculator);
     //QueryFundamentalClassPerScale(scaleCalculator);
     //QueryChordProgressionFromMultiplicity(scaleCalculator);
     //QueryChordInKeySetTranslations();
+    QuerySubsetLCMs();
 }
 
 
@@ -561,6 +562,47 @@ while (true)
 //e.g.:
 //BeatBox beatBox = new BeatBox();
 //WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, "melodroid testing");
+
+static void QuerySubsetLCMs()
+{
+    Fraction[] standardFractions = [new(1), new(16, 15), new(9, 8), new(6, 5), new(5, 4), new(4, 3), new(0), new(3, 2), new(8, 5), new(5, 3), new(9, 5), new(15, 8)];
+    while (true)
+    {
+        Console.WriteLine($"Input space separated tet12 keys for subset LCMs, empty input to exit");
+        string input = Console.ReadLine();
+
+        if (input.Length == 0) return;
+        if (input == "clear")
+        {
+            Console.Clear();
+            continue;
+        }
+        int[] tet12Keys = Array.ConvertAll(input.Split(" "), int.Parse);
+
+        List<List<int>> inputPairs = GetPowerSet(tet12Keys).Where(set => set.Count == 2).ToList();
+        Dictionary<int, List<long>> LcmPairsPerFundamental = new();
+        for (int fundamental = 0; fundamental < 12; fundamental++)
+        {
+            List<List<int>> renormalizedPairs = inputPairs.Select(
+                pairs => pairs.Select(key => (key - fundamental + 12) % 12).ToList())
+                .Where(pairs => !pairs.Any(interval => interval == 6)) //not using 7/5 interval
+                .ToList();
+
+            List<long> LcmPerPair = new();
+            foreach (List<int> pair in renormalizedPairs)
+                LcmPerPair.Add(LCM(pair.Select(key => (long)standardFractions[key].Denominator).ToArray()));
+
+            LcmPairsPerFundamental[fundamental] = LcmPerPair;
+        }
+        for (int fundamental = 0; fundamental < 12; fundamental++)
+        {
+            Console.Write($"{fundamental,-2}: ");
+            foreach (var lcm in LcmPairsPerFundamental[fundamental])
+                Console.Write($"{lcm,-3} ");
+            Console.WriteLine();
+        }
+    }
+}
 
 static void QueryRatioFundamentalOctaveSweep(double maxDeviation = 0.010d)
 {
