@@ -585,20 +585,37 @@ static void QuerySubsetLCMs()
         {
             List<List<int>> renormalizedPairs = inputPairs.Select(
                 pairs => pairs.Select(key => (key - fundamental + 12) % 12).ToList())
-                .Where(pairs => !pairs.Any(interval => interval == 6)) //not using 7/5 interval
                 .ToList();
 
             List<long> LcmPerPair = new();
             foreach (List<int> pair in renormalizedPairs)
-                LcmPerPair.Add(LCM(pair.Select(key => (long)standardFractions[key].Denominator).ToArray()));
+            {
+                if (pair.Any(interval => interval == 6))
+                    LcmPerPair.Add(0); //0 to indicate invalid interval, not using 7/5
+                else
+                    LcmPerPair.Add(LCM(pair.Select(key => (long)standardFractions[key].Denominator).ToArray()));
+            }
 
             LcmPairsPerFundamental[fundamental] = LcmPerPair;
         }
+        Console.Write($" ".PadRight(4));
+        foreach (var pair in inputPairs)
+        {
+            foreach (var key in pair)
+                Console.Write($"{key,-2} ");
+            Console.Write("- ");
+        }
+        Console.WriteLine();
         for (int fundamental = 0; fundamental < 12; fundamental++)
         {
             Console.Write($"{fundamental,-2}: ");
             foreach (var lcm in LcmPairsPerFundamental[fundamental])
-                Console.Write($"{lcm,-3} ");
+            {
+                if (lcm == 0)
+                    Console.Write($" ".PadRight(8));
+                else
+                    Console.Write($"{lcm,-7} ");
+            }
             Console.WriteLine();
         }
     }
