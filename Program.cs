@@ -618,6 +618,8 @@ static void QuerySubsetLCMs()
             }
             long totalLcm = LCM(LcmPairsPerFundamental[fundamental].Where(lcm => lcm != 0).ToArray());
             Console.Write($"{totalLcm,-3} ");
+            if (!LcmPairsPerFundamental[fundamental].Any(lcm => lcm == 0))
+                Console.Write("!");
             Console.WriteLine();
         }
     }
@@ -628,8 +630,8 @@ static void QueryRatioFundamentalOctaveSweep(double maxDeviation = 0.010d)
     while (true)
     {
         bool fullMatchOnly = false;
-        bool tet12Only = false;
-        bool repeatFractions = true;
+        bool tet12Only = true;
+        bool repeatFractions = false;
         Console.WriteLine($"Input space separated tet12 keys for octave sweep, empty input to exit");
         string input = Console.ReadLine();
 
@@ -645,14 +647,14 @@ static void QueryRatioFundamentalOctaveSweep(double maxDeviation = 0.010d)
         {
             switch (option)
             {
-                case "t": //tet 12 keys only
-                    tet12Only = true;
+                case "t": //allow non tet 12 keys
+                    tet12Only = false;
                     break;
                 case "f": //fullMatchOnly
                     fullMatchOnly = true;
                     break;
                 case "r": //repeatFractions
-                    repeatFractions = false;
+                    repeatFractions = true;
                     break;
                 default:
                     break;
