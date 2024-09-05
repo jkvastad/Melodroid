@@ -488,6 +488,7 @@ while (true)
     //QueryChordProgressionFromMultiplicity(scaleCalculator);
     //QueryChordInKeySetTranslations();
     QuerySubsetLCMs();
+    QueryReducedSubsetLCMs();
 }
 
 
@@ -562,6 +563,87 @@ while (true)
 //e.g.:
 //BeatBox beatBox = new BeatBox();
 //WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, "melodroid testing");
+
+static void QueryReducedSubsetLCMs()
+{
+    Fraction[] standardFractions = [new(1), new(16, 15), new(9, 8), new(6, 5), new(5, 4), new(4, 3), new(0), new(3, 2), new(8, 5), new(5, 3), new(9, 5), new(15, 8)];
+    while (true)
+    {
+        Console.WriteLine($"Input space separated tet12 keys for reduced subset LCMs, empty input to exit");
+        string input = Console.ReadLine();
+
+        if (input.Length == 0) return;
+        if (input == "clear")
+        {
+            Console.Clear();
+            continue;
+        }
+        int[] tet12Keys = Array.ConvertAll(input.Split(" "), int.Parse);
+        if (tet12Keys.Count() < 4)
+        {
+            Console.WriteLine("At least 4 keys for reduced LCMs");
+            continue;
+        }
+
+        List<List<int>> powerSetOfKeys = GetPowerSet(tet12Keys);
+        List<List<int>> reducedKeys = powerSetOfKeys.Where(set => set.Count == tet12Keys.Count() - 1).ToList();
+
+        foreach (List<int> reducedSet in reducedKeys)
+        {
+            List<List<int>> inputPairs = GetPowerSet(reducedSet.ToArray()).Where(set => set.Count == 2).ToList();
+            Dictionary<int, List<long>> LcmPairsPerFundamental = new();
+            for (int fundamental = 0; fundamental < 12; fundamental++)
+            {
+                List<List<int>> renormalizedPairs = inputPairs.Select(
+                    pairs => pairs.Select(key => (key - fundamental + 12) % 12).ToList())
+                    .ToList();
+
+                List<long> LcmPerPair = new();
+                foreach (List<int> pair in renormalizedPairs)
+                {
+                    if (pair.Any(interval => interval == 6))
+                        LcmPerPair.Add(0); //0 to indicate invalid interval, not using 7/5
+                    else
+                        LcmPerPair.Add(LCM(pair.Select(key => (long)standardFractions[key].Denominator).ToArray()));
+                }
+
+                LcmPairsPerFundamental[fundamental] = LcmPerPair;
+            }
+            //Console.Write($" ".PadRight(4));
+            //foreach (var pair in inputPairs)
+            //{
+            //    foreach (var key in pair)
+            //        Console.Write($"{key,-2} ");
+            //    Console.Write("  ");
+            //}
+            //Console.WriteLine("all");
+            Console.WriteLine(string.Join(" ", reducedSet));
+            for (int fundamental = 0; fundamental < 12; fundamental++)
+            {
+                Console.Write($"{fundamental}:".PadRight(4));
+                //foreach (var lcm in LcmPairsPerFundamental[fundamental])
+                //{
+                //    if (lcm == 0)
+                //        Console.Write($" ".PadRight(8));
+                //    else
+                //        Console.Write($"{lcm,-7} ");
+                //}
+
+                long totalLcm = LCM(LcmPairsPerFundamental[fundamental].Where(lcm => lcm != 0).ToArray());
+
+                var stringBuilder = new StringBuilder();
+                if (!LcmPairsPerFundamental[fundamental].Any(lcm => lcm == 0))
+                    stringBuilder.Append("!");
+                else
+                    stringBuilder.Append(" ");
+                stringBuilder.Append(totalLcm);
+
+                Console.Write(stringBuilder.ToString().PadRight(5));
+            }
+            Console.WriteLine();
+        }
+    }
+}
 
 static void QuerySubsetLCMs()
 {
