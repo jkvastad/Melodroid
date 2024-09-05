@@ -579,14 +579,14 @@ static void QueryReducedSubsetLCMs()
             continue;
         }
         int[] tet12Keys = Array.ConvertAll(input.Split(" "), int.Parse);
-        if (tet12Keys.Count() < 4)
+        if (tet12Keys.Count() < 3)
         {
-            Console.WriteLine("At least 4 keys for reduced LCMs");
+            Console.WriteLine("At least 3 keys for reduced LCMs");
             continue;
         }
 
         List<List<int>> powerSetOfKeys = GetPowerSet(tet12Keys);
-        List<List<int>> reducedKeys = powerSetOfKeys.Where(set => set.Count == tet12Keys.Count() - 1).ToList();
+        List<List<int>> reducedKeys = [powerSetOfKeys.Last(), .. powerSetOfKeys.Where(set => set.Count == tet12Keys.Count() - 1)];
 
         foreach (List<int> reducedSet in reducedKeys)
         {
@@ -609,30 +609,26 @@ static void QueryReducedSubsetLCMs()
 
                 LcmPairsPerFundamental[fundamental] = LcmPerPair;
             }
-            //Console.Write($" ".PadRight(4));
-            //foreach (var pair in inputPairs)
-            //{
-            //    foreach (var key in pair)
-            //        Console.Write($"{key,-2} ");
-            //    Console.Write("  ");
-            //}
-            //Console.WriteLine("all");
+
             Console.WriteLine(string.Join(" ", reducedSet));
             for (int fundamental = 0; fundamental < 12; fundamental++)
             {
-                Console.Write($"{fundamental}:".PadRight(4));
-                //foreach (var lcm in LcmPairsPerFundamental[fundamental])
-                //{
-                //    if (lcm == 0)
-                //        Console.Write($" ".PadRight(8));
-                //    else
-                //        Console.Write($"{lcm,-7} ");
-                //}
+                long[] lcmPairs = LcmPairsPerFundamental[fundamental].Where(lcm => lcm != 0).ToArray();
+                if (lcmPairs.Count() == 0) //null exception calling LCM with 0 length argument
+                    continue;
 
-                long totalLcm = LCM(LcmPairsPerFundamental[fundamental].Where(lcm => lcm != 0).ToArray());
+                long totalLcm = LCM(lcmPairs);
+                if (24 % totalLcm != 0 && 15 % totalLcm != 0) //assuming only base 15 and 24 exist
+                    continue;
+
+                bool isFullMatch = !LcmPairsPerFundamental[fundamental].Any(lcm => lcm == 0);
+                if (!isFullMatch)
+                    continue;
+
+                Console.Write($"{fundamental}:".PadRight(4));
 
                 var stringBuilder = new StringBuilder();
-                if (!LcmPairsPerFundamental[fundamental].Any(lcm => lcm == 0))
+                if (isFullMatch)
                     stringBuilder.Append("!");
                 else
                     stringBuilder.Append(" ");
