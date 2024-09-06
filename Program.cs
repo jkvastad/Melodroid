@@ -585,16 +585,21 @@ static void QueryReducedSubsetLCMs()
             continue;
         }
 
-        List<List<int>> powerSetOfKeys = GetPowerSet(tet12Keys);
-        List<List<int>> reducedKeys = [powerSetOfKeys.Last(), .. powerSetOfKeys.Where(set => set.Count == tet12Keys.Count() - 1)];
-
-        foreach (List<int> reducedSet in reducedKeys)
+        List<List<int>> reducedKeys = [tet12Keys.ToList()];
+        for (int i = 0; i < tet12Keys.Length; i++)
         {
-            List<List<int>> inputPairs = GetPowerSet(reducedSet.ToArray()).Where(set => set.Count == 2).ToList();
-            Dictionary<int, List<long>> LcmPairsPerFundamental = new();
-            for (int fundamental = 0; fundamental < 12; fundamental++)
+            List<int> reducedSet = tet12Keys.Where((_, index) => index != i).ToList();
+            reducedKeys.Add(reducedSet);
+        }
+
+        List<List<long>> lcmPerFundamentalPerReducedSet = new();
+        for (int fundamental = 0; fundamental < 12; fundamental++)
+        {
+            lcmPerFundamentalPerReducedSet.Add(new());
+            foreach (var keys in reducedKeys)
             {
-                List<List<int>> renormalizedPairs = inputPairs.Select(
+                List<List<int>> intervalPairs = GetPowerSet(keys.ToArray()).Where(set => set.Count == 2).ToList();
+                List<List<int>> renormalizedPairs = intervalPairs.Select(
                     pairs => pairs.Select(key => (key - fundamental + 12) % 12).ToList())
                     .ToList();
 
@@ -607,39 +612,36 @@ static void QueryReducedSubsetLCMs()
                         LcmPerPair.Add(LCM(pair.Select(key => (long)standardFractions[key].Denominator).ToArray()));
                 }
 
-                LcmPairsPerFundamental[fundamental] = LcmPerPair;
+                long totalLcm = 0;
+
+                if (!LcmPerPair.Any(lcm => lcm == 0)) //only lcm from full match intervals
+                    totalLcm = LCM(LcmPerPair.ToArray());
+
+                lcmPerFundamentalPerReducedSet[fundamental].Add(totalLcm);
             }
+        }
 
-            Console.WriteLine(string.Join(" ", reducedSet));
-            for (int fundamental = 0; fundamental < 12; fundamental++)
+        //Print data
+        Console.Write("".PadRight(4));
+        Console.Write("-".PadRight(4));
+        foreach (var key in tet12Keys) // printing removed key which produces the reduced set
+            Console.Write($"{key}".PadRight(4));
+        Console.WriteLine();
+        for (int fundamental = 0; fundamental < 12; fundamental++)
+        {
+            Console.Write($"{fundamental}:".PadRight(4));
+            foreach (var lcm in lcmPerFundamentalPerReducedSet[fundamental])
             {
-                long[] lcmPairs = LcmPairsPerFundamental[fundamental].Where(lcm => lcm != 0).ToArray();
-                if (lcmPairs.Count() == 0) //null exception calling LCM with 0 length argument
-                    continue;
-
-                long totalLcm = LCM(lcmPairs);
-                if (24 % totalLcm != 0 && 15 % totalLcm != 0) //assuming only base 15 and 24 exist
-                    continue;
-
-                bool isFullMatch = !LcmPairsPerFundamental[fundamental].Any(lcm => lcm == 0);
-                if (!isFullMatch)
-                    continue;
-
-                Console.Write($"{fundamental}:".PadRight(4));
-
-                var stringBuilder = new StringBuilder();
-                if (isFullMatch)
-                    stringBuilder.Append("!");
+                if (lcm != 0 && (24 % lcm == 0 || 15 % lcm == 0)) //only base 24 or 15 lcm, else invalid
+                    Console.Write($"{lcm}".PadRight(4));
                 else
-                    stringBuilder.Append(" ");
-                stringBuilder.Append(totalLcm);
-
-                Console.Write(stringBuilder.ToString().PadRight(5));
+                    Console.Write($"".PadRight(4));
             }
             Console.WriteLine();
         }
     }
 }
+
 
 static void QuerySubsetLCMs()
 {
