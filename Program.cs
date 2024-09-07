@@ -481,14 +481,15 @@ double[] pentatonic = new double[] { 1, 9 / 8d, 5 / 4d, 3 / 2d, 5 / 3d };
 //TODO: Print LCM to simplify comparing interval matches, perhaps filter on max LCM.
 while (true)
 {
-    QueryRatioFundamentalOctaveSweep(maxDeviation: 0.033d);
+    //QueryRatioFundamentalOctaveSweep(maxDeviation: 0.033d);
     //QueryChordKeyMultiplicity(scaleCalculator);
     //QueryChordKeyMultiplicityPowerSets(scaleCalculator);
     //QueryFundamentalClassPerScale(scaleCalculator);
     //QueryChordProgressionFromMultiplicity(scaleCalculator);
     //QueryChordInKeySetTranslations();
-    QuerySubsetLCMs();
+    //QuerySubsetLCMs();
     QueryReducedSubsetLCMs();
+    QueryMelodicSupersetLCMs();
 }
 
 
@@ -563,6 +564,66 @@ while (true)
 //e.g.:
 //BeatBox beatBox = new BeatBox();
 //WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, "melodroid testing");
+
+//Ad an extra tone to the original set, e.g. the melody being played, display LCM for all fundamentals for all possible keys
+static void QueryMelodicSupersetLCMs()
+{
+    Fraction[] standardFractions = [new(1), new(16, 15), new(9, 8), new(6, 5), new(5, 4), new(4, 3), new(0), new(3, 2), new(8, 5), new(5, 3), new(9, 5), new(15, 8)];
+    while (true)
+    {
+        Console.WriteLine($"Input space separated tet12 keys for melodic superset LCMs, empty input to exit");
+        string input = Console.ReadLine();
+
+        if (input.Length == 0) return;
+        if (input == "clear")
+        {
+            Console.Clear();
+            continue;
+        }
+        long[] tet12Keys = Array.ConvertAll(input.Split(" "), long.Parse);
+
+        List<List<long>> lcmsPerMelodyPerFundamental = new();
+
+        for (int fundamental = 0; fundamental < 12; fundamental++)
+        {
+            lcmsPerMelodyPerFundamental.Add([]);
+            for (int melodyKey = 0; melodyKey < 12; melodyKey++)
+            {
+                List<long> renormalizedKeys = tet12Keys.Select(key => (key - fundamental + 12) % 12).ToList();
+                long renormalizedMelodyKey = (melodyKey - fundamental + 12) % 12;
+                renormalizedKeys.Add(renormalizedMelodyKey);
+
+                if (renormalizedKeys.Any(key => standardFractions[key] == 0))
+                    lcmsPerMelodyPerFundamental[fundamental].Add(0); //0 for invalid key, no 7/5
+                else
+                {
+                    lcmsPerMelodyPerFundamental[fundamental].Add(
+                        LCM(renormalizedKeys.Select(
+                            key => (long)standardFractions[key].Denominator).ToArray()));
+                }
+            }
+        }
+
+        //Print data
+        Console.Write("".PadRight(4));        
+        for (int key = 0; key < 12; key++)
+            Console.Write($"{key}".PadRight(4));
+
+        Console.WriteLine();
+        for (int fundamental = 0; fundamental < 12; fundamental++)
+        {
+            Console.Write($"{fundamental}:".PadRight(4));
+            foreach (var lcm in lcmsPerMelodyPerFundamental[fundamental])
+            {
+                if (lcm != 0 && (24 % lcm == 0 || 15 % lcm == 0)) //only base 24 or 15 lcm, else invalid
+                    Console.Write($"{lcm}".PadRight(4));
+                else
+                    Console.Write($"".PadRight(4));
+            }
+            Console.WriteLine();
+        }
+    }
+}
 
 static void QueryReducedSubsetLCMs()
 {
