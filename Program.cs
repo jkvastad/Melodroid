@@ -101,6 +101,7 @@ SimpleIsochronicRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, be
 //List<Scale> chordProgression = [majorChord, minorChord];
 
 ////Select harmonizer
+MelodicSupersetHarmonizer harmonizer = new(new Scale(new int[] { 0, 4, 7 }));
 //ScaleClassRotationHarmonizer harmonizer = new(initialScale);
 //ChordMeasureProgressionHarmonizer harmonizer = new(chordProgression);
 //ScaleClassRotationTransposeHarmonizer harmonizer = new(initialScale);
@@ -116,11 +117,11 @@ SimpleIsochronicRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, be
 //PathWalkMeasureHarmonizer measureHarmonizer = new(initialScale, initialScale, 4);
 //BeatBox beatBox = new BeatBox(rhythmMaker, measureHarmonizer);
 
-//Write MIDI files
-//BeatBox beatBox = new BeatBox(rhythmMaker, harmonizer);
+////Write MIDI files
+BeatBox beatBox = new BeatBox(rhythmMaker, harmonizer);
 
-//List<Measure> melodyMeasures = beatBox.MakeMeasures();
-//beatBox.WriteMeasuresToMidi(melodyMeasures, folderPath, "key_multiplicity_test", true);
+List<Measure> melodyMeasures = beatBox.MakeMeasures();
+beatBox.WriteMeasuresToMidi(melodyMeasures, folderPath, "key_multiplicity_test", true);
 
 //ChordMeasureHarmonizer chordHarmonizer = new(harmonizer.ChordPerMeasure, 4);
 //List<Measure> chordMeasures = chordHarmonizer.MeasuresFromVelocities(rhythmMaker.VelocityMeasures);
@@ -371,20 +372,20 @@ double[] ConstructTet12FractionFamily(int familyNumerator, int maxNumerator = 25
     return tet12Doubles.ToArray();
 }
 
-Scale chromaticScale = new(new int[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 });
-Scale base24Scale = new(new int[] { 0, 2, 4, 5, 7, 9, 11 });
-Scale customScale0 = new(new int[] { 0, 2, 4, 5, 7, 8, 9, 11 });
-Scale majorChord = new(new int[] { 0, 4, 7 });
-Scale customScale1 = new(new int[] { 0, 2, 4, 5, 8, 9, 11 });
-Scale customScale2 = new(new int[] { 0, 2, 4, 5, 7, 8, 11 });
-Scale base15Scale = new(new int[] { 0, 1, 3, 5, 6, 8, 9, 10 });
-double[] tet12Base15Scale = ConstructTet12DoubleArray(new int[] { 0, 1, 3, 5, 6, 8, 9, 10 });
-double[] tet12Base20Scale = ConstructTet12DoubleArray(new int[] { 0, 3, 4, 6, 7, 8, 10 });
-double[] tet12Base24Scale = ConstructTet12DoubleArray(new int[] { 0, 2, 4, 5, 7, 9, 11 });
-Scale base20Scale = new(new int[] { 0, 3, 4, 6, 7, 8, 10 });
-double[] tet12MinorChord = ConstructTet12DoubleArray(new int[] { 0, 3, 7 });
-double[] tet12Custom0 = ConstructTet12DoubleArray(new int[] { 9, 10, 1, 4 });
-double[] tet12base7 = ConstructTet12FractionFamily(7);
+//Scale chromaticScale = new(new int[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 });
+//Scale base24Scale = new(new int[] { 0, 2, 4, 5, 7, 9, 11 });
+//Scale customScale0 = new(new int[] { 0, 2, 4, 5, 7, 8, 9, 11 });
+//Scale majorChord = new(new int[] { 0, 4, 7 });
+//Scale customScale1 = new(new int[] { 0, 2, 4, 5, 8, 9, 11 });
+//Scale customScale2 = new(new int[] { 0, 2, 4, 5, 7, 8, 11 });
+//Scale base15Scale = new(new int[] { 0, 1, 3, 5, 6, 8, 9, 10 });
+//double[] tet12Base15Scale = ConstructTet12DoubleArray(new int[] { 0, 1, 3, 5, 6, 8, 9, 10 });
+//double[] tet12Base20Scale = ConstructTet12DoubleArray(new int[] { 0, 3, 4, 6, 7, 8, 10 });
+//double[] tet12Base24Scale = ConstructTet12DoubleArray(new int[] { 0, 2, 4, 5, 7, 9, 11 });
+//Scale base20Scale = new(new int[] { 0, 3, 4, 6, 7, 8, 10 });
+//double[] tet12MinorChord = ConstructTet12DoubleArray(new int[] { 0, 3, 7 });
+//double[] tet12Custom0 = ConstructTet12DoubleArray(new int[] { 9, 10, 1, 4 });
+//double[] tet12base7 = ConstructTet12FractionFamily(7);
 
 //for (int i = 2; i <= 25; i++)
 //{
@@ -422,30 +423,30 @@ double[] tet12base7 = ConstructTet12FractionFamily(7);
 //Console.WriteLine("---");
 //PrintSlidingFundamentalMatchingBetweenScales(tet12base7, majorChord, false);
 //Console.WriteLine("---");
-double[] myRatios = new double[] { 6 / 5d, 4 / 3d, 5 / 3d };
-double[] myRatios2 = new double[] { 5 / 4d };
-double[] myRatios3 = new double[] { 1, 16 / 15d };
-double[] myRatios4 = new double[] { 1, 15 / 18d };
+//double[] myRatios = new double[] { 6 / 5d, 4 / 3d, 5 / 3d };
+//double[] myRatios2 = new double[] { 5 / 4d };
+//double[] myRatios3 = new double[] { 1, 16 / 15d };
+//double[] myRatios4 = new double[] { 1, 15 / 18d };
 
-double[] cumulativeDScale6 = new double[] { 1, 7 / 6d, 8 / 6d, 9 / 6d, 10 / 6d, 11 / 6d };
+//double[] cumulativeDScale6 = new double[] { 1, 7 / 6d, 8 / 6d, 9 / 6d, 10 / 6d, 11 / 6d };
 
-double[] fSharp = new double[] { 9 / 5d };
-double[] majorC = new double[] { 1, 5 / 4d, 3 / 2d };
-double[] tet12majorC = ConstructTet12DoubleArray(new int[] { 0, 4, 7 });
-double[] dimCSharp = new double[] { 16 / 15d, 5 / 4d, 3 / 2d };
-double[] dimC = new double[] { 1, 6 / 5d, 7 / 5d };
-double[] tet12dimC = ConstructTet12DoubleArray(new int[] { 0, 3, 6 });
-double[] majorD = new double[] { 9 / 8d, 7 / 5d, 5 / 3d };
-double[] tet12majorC7 = ConstructTet12DoubleArray(new int[] { 0, 4, 7, 10 });
-double[] majorC7_7_4 = new double[] { 1, 5 / 4d, 3 / 2d, 7 / 4d };
-double[] majorC7_9_5 = new double[] { 1, 5 / 4d, 3 / 2d, 9 / 5d };
-double[] majorC7_16_9 = new double[] { 1, 5 / 4d, 3 / 2d, 16 / 9d };
-double[] minorF = new double[] { 4 / 3d, 8 / 5d, 2 };
-double[] minorE = new double[] { 5 / 4d, 3 / 2d, 15 / 8d };
-double[] minorF4 = new double[] { 4 / 3d, 8 / 5d, 9 / 5d, 2 };
-double[] minorF7 = new double[] { 4 / 3d, 8 / 5d, 2, 6 / 5d };
+//double[] fSharp = new double[] { 9 / 5d };
+//double[] majorC = new double[] { 1, 5 / 4d, 3 / 2d };
+//double[] tet12majorC = ConstructTet12DoubleArray(new int[] { 0, 4, 7 });
+//double[] dimCSharp = new double[] { 16 / 15d, 5 / 4d, 3 / 2d };
+//double[] dimC = new double[] { 1, 6 / 5d, 7 / 5d };
+//double[] tet12dimC = ConstructTet12DoubleArray(new int[] { 0, 3, 6 });
+//double[] majorD = new double[] { 9 / 8d, 7 / 5d, 5 / 3d };
+//double[] tet12majorC7 = ConstructTet12DoubleArray(new int[] { 0, 4, 7, 10 });
+//double[] majorC7_7_4 = new double[] { 1, 5 / 4d, 3 / 2d, 7 / 4d };
+//double[] majorC7_9_5 = new double[] { 1, 5 / 4d, 3 / 2d, 9 / 5d };
+//double[] majorC7_16_9 = new double[] { 1, 5 / 4d, 3 / 2d, 16 / 9d };
+//double[] minorF = new double[] { 4 / 3d, 8 / 5d, 2 };
+//double[] minorE = new double[] { 5 / 4d, 3 / 2d, 15 / 8d };
+//double[] minorF4 = new double[] { 4 / 3d, 8 / 5d, 9 / 5d, 2 };
+//double[] minorF7 = new double[] { 4 / 3d, 8 / 5d, 2, 6 / 5d };
 
-double[] pentatonic = new double[] { 1, 9 / 8d, 5 / 4d, 3 / 2d, 5 / 3d };
+//double[] pentatonic = new double[] { 1, 9 / 8d, 5 / 4d, 3 / 2d, 5 / 3d };
 
 //PrintRatioFundamentalOctaveSweep(majorD.Union(minorF7).ToArray());
 //PrintRatioFundamentalOctaveSweep(minorE.Union(fSharp).ToArray());
@@ -479,7 +480,7 @@ double[] pentatonic = new double[] { 1, 9 / 8d, 5 / 4d, 3 / 2d, 5 / 3d };
 
 //TODO: Are chord progressions based on finding intervals 3/2 and 5/4 (major chord)? Implies other intervals are renormalized and must fit in with the prioritized intervals
 //TODO: Print LCM to simplify comparing interval matches, perhaps filter on max LCM.
-while (true)
+while (false)
 {
     //QueryRatioFundamentalOctaveSweep(maxDeviation: 0.033d);
     //QueryChordKeyMultiplicity(scaleCalculator);
@@ -487,7 +488,7 @@ while (true)
     //QueryFundamentalClassPerScale(scaleCalculator);
     //QueryChordProgressionFromMultiplicity(scaleCalculator);
     //QueryChordInKeySetTranslations();
-    //QuerySubsetLCMs();
+    QuerySubsetIntervalsLCMs();
     QueryReducedSubsetLCMs();
     QueryMelodicSupersetLCMs();
 }
@@ -605,7 +606,7 @@ static void QueryMelodicSupersetLCMs()
         }
 
         //Print data
-        Console.Write("".PadRight(4));        
+        Console.Write("".PadRight(4));
         for (int key = 0; key < 12; key++)
             Console.Write($"{key}".PadRight(4));
 
@@ -703,8 +704,8 @@ static void QueryReducedSubsetLCMs()
     }
 }
 
-
-static void QuerySubsetLCMs()
+//Query LCMs of all subsets of size 2
+static void QuerySubsetIntervalsLCMs()
 {
     Fraction[] standardFractions = [new(1), new(16, 15), new(9, 8), new(6, 5), new(5, 4), new(4, 3), new(0), new(3, 2), new(8, 5), new(5, 3), new(9, 5), new(15, 8)];
     while (true)
