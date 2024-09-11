@@ -850,1121 +850,1182 @@ static void QueryChordPowerSetLCMs()
                     Console.Write("!");
                 Console.WriteLine();
             }
-        }        
-    }
-}
-
-static void QueryRatioFundamentalOctaveSweep(double maxDeviation = 0.010d)
-{
-    while (true)
-    {
-        bool fullMatchOnly = false;
-        bool tet12Only = true;
-        bool repeatFractions = false;
-        Console.WriteLine($"Input space separated tet12 keys for octave sweep, empty input to exit");
-        string input = Console.ReadLine();
-
-        if (input.Length == 0) return;
-        if (input == "clear")
-        {
-            Console.Clear();
-            continue;
         }
-        string[] splitInput = input.Split(' ');
-        List<string> options = splitInput.Where(chars => !int.TryParse(chars, out _)).ToList();
-        foreach (string option in options)
+        Console.WriteLine($"LCM across fundamentals");
+        for (int fundamental = 0; fundamental < 12; fundamental++)
         {
-            switch (option)
+            Console.Write($"{fundamental,-2}: ");
+            long lcmTotal = 1;
+            foreach (var cardinality in lcmPerFundamentalPerSubsetPerCardinality.Keys)
             {
-                case "t": //allow non tet 12 keys
-                    tet12Only = false;
-                    break;
-                case "f": //fullMatchOnly
-                    fullMatchOnly = true;
-                    break;
-                case "r": //repeatFractions
-                    repeatFractions = true;
-                    break;
-                default:
-                    break;
-            };
-        }
-
-        string[] keys = splitInput.Where(chars => int.TryParse(chars, out _)).ToArray();
-        int[] tet12Keys = Array.ConvertAll(keys, int.Parse);
-
-        PrintRatioFundamentalOctaveSweep(ConstructTet12DoubleArray(tet12Keys),
-                                         maxDeviation: maxDeviation,
-                                         fullMatchOnly: fullMatchOnly,
-                                         repeatFractions: repeatFractions,
-                                         tet12Only: tet12Only);
-    }
-}
-//Default max set to catch certain scenarios
-static void PrintRatioFundamentalOctaveSweep(double[] originalRatios,
-                                             double stepSize = 0.01,
-                                             double maxDeviation = 0.01d,
-                                             bool fullMatchOnly = false,
-                                             bool repeatFractions = true,
-                                             bool tet12Only = true
-                                             )
-{
-    //No 7/5? approximates sqrt 2, might be important even though big prime in numerator
-    Fraction[] goodFractions = [new(1), new(16, 15), new(9, 8), new(6, 5), new(5, 4), new(4, 3), new(3, 2), new(8, 5), new(5, 3), new(9, 5), new(15, 8)];
-    //Fraction[] goodFractions = [new(1), new(8, 7), new(9, 7), new(10, 7), new(11, 7), new(12, 7), new(13, 7)];
-    double[] goodRatios = goodFractions.Select(fraction => fraction.ToDouble()).ToArray();
-    double fundamental = 1;
-    List<(double fundamental, double[] renormalizedRatios, Fraction[] goodFractionsFound)> dataPerStep = new();
-    //Compute renormalized ratios and bin to good ratios during octave sweep
-    while (fundamental < 2)
-    {
-        double[] renormalizedRatios = originalRatios.Select(ratio => (ratio / fundamental).ToOctave()).ToArray();
-        Fraction[] goodFractionsFound = new Fraction[originalRatios.Length];
-
-        //Match renormalized ratios to good fractions
-        for (int i = 0; i < renormalizedRatios.Count(); i++)
-        {
-            double renormalizedRatio = renormalizedRatios[i];
-            foreach (var goodFraction in goodFractions)
-            {
-                //proximity modulo 2 - check from both left and right of number line, go for smallest distance
-                if (Math.MinMagnitude(Math.Abs((double)goodFraction - renormalizedRatio), Math.Abs(((double)goodFraction - 1) + (2 - renormalizedRatio))) < maxDeviation)
-                    goodFractionsFound[i] = goodFraction;
-            }
-        }
-
-        dataPerStep.Add((fundamental, renormalizedRatios, goodFractionsFound));
-
-        fundamental += stepSize;
-    }
-    //Print data     
-
-    Fraction[] previousGoodFractions = []; //used with repeatFractions
-
-
-    var tet12Keys = CalculateTet12Values().ToList();
-    tet12Keys.Add(2);
-    foreach (var dataRow in dataPerStep)
-    {
-        Fraction[] goodFractionsFound = dataRow.goodFractionsFound;
-        long rowLcm = 0;
-
-        if (tet12Only)
-        {
-            bool match12Tet = false;
-            foreach (var tet12Key in tet12Keys)
-            {
-                if (Math.MinMagnitude(
-                    Math.Abs(dataRow.fundamental - tet12Key),
-                    Math.Abs(dataRow.fundamental - 1) + (2 - tet12Key)) < 0.01)
+                Dictionary<int, List<long>> lcmPerFundamentalPerSubset = lcmPerFundamentalPerSubsetPerCardinality[cardinality];
+                if (lcmPerFundamentalPerSubset[fundamental].Any(lcm => lcm == 0)) //no full match across power set
                 {
-                    match12Tet = true;
+                    lcmTotal = 1;
                     break;
                 }
+                lcmTotal = LCM([.. lcmPerFundamentalPerSubset[fundamental], lcmTotal]);
             }
-            if (!match12Tet)
-                continue;
-        }
-
-        //abbreviated output
-        if (goodFractionsFound.Any(goodFraction => goodFraction > 0))
-        {
-            rowLcm = LCM(dataRow.goodFractionsFound
-                .Where(goodFraction => goodFraction > 0)
-                .Select(fraction => (long)fraction.Denominator)
-                .ToArray());
-        }
-        if (!repeatFractions)
-        {
-            if (Enumerable.SequenceEqual(goodFractionsFound, previousGoodFractions))
-            {
-                previousGoodFractions = goodFractionsFound;
-                continue;
-            }
-            previousGoodFractions = goodFractionsFound;
-        }
-
-        //full match only output
-        bool isRowFullMatch = goodFractionsFound.Where(goodFraction => goodFraction > 0).Count() == originalRatios.Length;
-        if (fullMatchOnly && !isRowFullMatch)
-            continue;
-
-        //skip empty rows
-        if (rowLcm == 0)
-            continue;
-
-
-        Console.Write($"{dataRow.fundamental:0.00}:");
-
-        //Print renormalized ratios
-        for (int i = 0; i < dataRow.renormalizedRatios.Count(); i++)
-        {
-            double renormalizedRatio = dataRow.renormalizedRatios[i];
-            Console.Write($" {renormalizedRatio:0.00}");
-        }
-
-        //Pretty print good fractions
-        if (rowLcm != 0)
-        {
-            Console.Write(" <--");
-            for (int i = 0; i < dataRow.goodFractionsFound.Length; i++)
-            {
-                Fraction goodFraction = dataRow.goodFractionsFound[i];
-                if (goodFraction > 0)
-                    Console.Write($" {goodFraction}".PadRight(6));
-                else
-                    Console.Write("".PadRight(6));
-            }
-            if (isRowFullMatch)
-                Console.Write(" !");
+            if (lcmTotal == 1)
+                Console.WriteLine();
             else
-                Console.Write("  ");
-            Console.Write($" LCM:{rowLcm}");
+                Console.WriteLine(lcmTotal);
         }
-
-        Console.WriteLine();
     }
-}
 
-static void PrintClosestFractionsBetweenScales(Scale scaleToRotate, Scale scaleForReference)
-{
-    Scale currentScale = scaleToRotate;
-    List<Fraction> currentScaleFractions = currentScale.ToFractions();
-    foreach (Fraction fundamentalFraction in currentScaleFractions)
+    static void QueryRatioFundamentalOctaveSweep(double maxDeviation = 0.010d)
     {
-        List<Fraction> renormalizedFractions = [.. currentScaleFractions.Select(fraction => (fraction / fundamentalFraction).ToOctave())];
-        foreach (Fraction fraction in renormalizedFractions)
+        while (true)
         {
-            var bestFitFraction = scaleForReference.CalculateClosestFraction(fraction.ToDouble());
+            bool fullMatchOnly = false;
+            bool tet12Only = true;
+            bool repeatFractions = false;
+            Console.WriteLine($"Input space separated tet12 keys for octave sweep, empty input to exit");
+            string input = Console.ReadLine();
 
-            Console.WriteLine(
-                $"{bestFitFraction,-5} "
-                + $"{Math.Abs(RelativeDeviation(bestFitFraction.ToDouble(), fraction.ToDouble())):0.00} ".PadRight(5)
-                + $"({fraction})".PadRight(5));
+            if (input.Length == 0) return;
+            if (input == "clear")
+            {
+                Console.Clear();
+                continue;
+            }
+            string[] splitInput = input.Split(' ');
+            List<string> options = splitInput.Where(chars => !int.TryParse(chars, out _)).ToList();
+            foreach (string option in options)
+            {
+                switch (option)
+                {
+                    case "t": //allow non tet 12 keys
+                        tet12Only = false;
+                        break;
+                    case "f": //fullMatchOnly
+                        fullMatchOnly = true;
+                        break;
+                    case "r": //repeatFractions
+                        repeatFractions = true;
+                        break;
+                    default:
+                        break;
+                };
+            }
+
+            string[] keys = splitInput.Where(chars => int.TryParse(chars, out _)).ToArray();
+            int[] tet12Keys = Array.ConvertAll(keys, int.Parse);
+
+            PrintRatioFundamentalOctaveSweep(ConstructTet12DoubleArray(tet12Keys),
+                                             maxDeviation: maxDeviation,
+                                             fullMatchOnly: fullMatchOnly,
+                                             repeatFractions: repeatFractions,
+                                             tet12Only: tet12Only);
         }
-        Console.WriteLine();
     }
-}
-
-static void PrintClosestDoublesBetweenScales(double[] scaleToRotate, Scale scaleForReference)
-{
-    foreach (double fundamentalDouble in scaleToRotate)
+    //Default max set to catch certain scenarios
+    static void PrintRatioFundamentalOctaveSweep(double[] originalRatios,
+                                                 double stepSize = 0.01,
+                                                 double maxDeviation = 0.01d,
+                                                 bool fullMatchOnly = false,
+                                                 bool repeatFractions = true,
+                                                 bool tet12Only = true
+                                                 )
     {
-        List<double> renormalizedDoubles = [.. scaleToRotate.Select(scaleNote => (scaleNote / fundamentalDouble).ToOctave())];
-        foreach (double renormalizedDouble in renormalizedDoubles)
+        //No 7/5? approximates sqrt 2, might be important even though big prime in numerator
+        Fraction[] goodFractions = [new(1), new(16, 15), new(9, 8), new(6, 5), new(5, 4), new(4, 3), new(3, 2), new(8, 5), new(5, 3), new(9, 5), new(15, 8)];
+        //Fraction[] goodFractions = [new(1), new(8, 7), new(9, 7), new(10, 7), new(11, 7), new(12, 7), new(13, 7)];
+        double[] goodRatios = goodFractions.Select(fraction => fraction.ToDouble()).ToArray();
+        double fundamental = 1;
+        List<(double fundamental, double[] renormalizedRatios, Fraction[] goodFractionsFound)> dataPerStep = new();
+        //Compute renormalized ratios and bin to good ratios during octave sweep
+        while (fundamental < 2)
         {
-            var bestFitFraction = scaleForReference.CalculateClosestFraction(renormalizedDouble);
+            double[] renormalizedRatios = originalRatios.Select(ratio => (ratio / fundamental).ToOctave()).ToArray();
+            Fraction[] goodFractionsFound = new Fraction[originalRatios.Length];
 
-            Console.WriteLine(
-                $"{bestFitFraction,-5} "
-                + $"{Math.Abs(RelativeDeviation(bestFitFraction.ToDouble(), renormalizedDouble)):0.00} ".PadRight(5)
-                + $"({renormalizedDouble:0.00})".PadRight(5));
+            //Match renormalized ratios to good fractions
+            for (int i = 0; i < renormalizedRatios.Count(); i++)
+            {
+                double renormalizedRatio = renormalizedRatios[i];
+                foreach (var goodFraction in goodFractions)
+                {
+                    //proximity modulo 2 - check from both left and right of number line, go for smallest distance
+                    if (Math.MinMagnitude(Math.Abs((double)goodFraction - renormalizedRatio), Math.Abs(((double)goodFraction - 1) + (2 - renormalizedRatio))) < maxDeviation)
+                        goodFractionsFound[i] = goodFraction;
+                }
+            }
+
+            dataPerStep.Add((fundamental, renormalizedRatios, goodFractionsFound));
+
+            fundamental += stepSize;
         }
-        Console.WriteLine();
+        //Print data     
+
+        Fraction[] previousGoodFractions = []; //used with repeatFractions
+
+
+        var tet12Keys = CalculateTet12Values().ToList();
+        tet12Keys.Add(2);
+        foreach (var dataRow in dataPerStep)
+        {
+            Fraction[] goodFractionsFound = dataRow.goodFractionsFound;
+            long rowLcm = 0;
+
+            if (tet12Only)
+            {
+                bool match12Tet = false;
+                foreach (var tet12Key in tet12Keys)
+                {
+                    if (Math.MinMagnitude(
+                        Math.Abs(dataRow.fundamental - tet12Key),
+                        Math.Abs(dataRow.fundamental - 1) + (2 - tet12Key)) < 0.01)
+                    {
+                        match12Tet = true;
+                        break;
+                    }
+                }
+                if (!match12Tet)
+                    continue;
+            }
+
+            //abbreviated output
+            if (goodFractionsFound.Any(goodFraction => goodFraction > 0))
+            {
+                rowLcm = LCM(dataRow.goodFractionsFound
+                    .Where(goodFraction => goodFraction > 0)
+                    .Select(fraction => (long)fraction.Denominator)
+                    .ToArray());
+            }
+            if (!repeatFractions)
+            {
+                if (Enumerable.SequenceEqual(goodFractionsFound, previousGoodFractions))
+                {
+                    previousGoodFractions = goodFractionsFound;
+                    continue;
+                }
+                previousGoodFractions = goodFractionsFound;
+            }
+
+            //full match only output
+            bool isRowFullMatch = goodFractionsFound.Where(goodFraction => goodFraction > 0).Count() == originalRatios.Length;
+            if (fullMatchOnly && !isRowFullMatch)
+                continue;
+
+            //skip empty rows
+            if (rowLcm == 0)
+                continue;
+
+
+            Console.Write($"{dataRow.fundamental:0.00}:");
+
+            //Print renormalized ratios
+            for (int i = 0; i < dataRow.renormalizedRatios.Count(); i++)
+            {
+                double renormalizedRatio = dataRow.renormalizedRatios[i];
+                Console.Write($" {renormalizedRatio:0.00}");
+            }
+
+            //Pretty print good fractions
+            if (rowLcm != 0)
+            {
+                Console.Write(" <--");
+                for (int i = 0; i < dataRow.goodFractionsFound.Length; i++)
+                {
+                    Fraction goodFraction = dataRow.goodFractionsFound[i];
+                    if (goodFraction > 0)
+                        Console.Write($" {goodFraction}".PadRight(6));
+                    else
+                        Console.Write("".PadRight(6));
+                }
+                if (isRowFullMatch)
+                    Console.Write(" !");
+                else
+                    Console.Write("  ");
+                Console.Write($" LCM:{rowLcm}");
+            }
+
+            Console.WriteLine();
+        }
     }
-}
 
-static void PrintSlidingFundamentalMatchingBetweenScales(double[] scaleToSlide, Scale scaleForReference, bool printMaxMatchOnly = false, double keyFitCriteria = 0.02d)
-{
-    double fundamental = 1;
-    double stepSize = 0.01; //12 tet key diff is about 0.06    
-    while (fundamental > 0.5)
+    static void PrintClosestFractionsBetweenScales(Scale scaleToRotate, Scale scaleForReference)
     {
-        List<double> renormalizedDoubles = [.. scaleToSlide.Select(scaleNote => (scaleNote * fundamental).ToOctave())];
-        double errorSum = 0;
-        int goodKeyFits = 0;
-        List<string> output = new();
-        foreach (double renormalizedDouble in renormalizedDoubles)
+        Scale currentScale = scaleToRotate;
+        List<Fraction> currentScaleFractions = currentScale.ToFractions();
+        foreach (Fraction fundamentalFraction in currentScaleFractions)
         {
-            var bestFitFraction = scaleForReference.CalculateClosestFraction(renormalizedDouble);
-            double relativeDeviation = Math.Abs(RelativeDeviation(bestFitFraction.ToDouble(), renormalizedDouble));
-            errorSum += relativeDeviation;
-            if (relativeDeviation < keyFitCriteria)
-                goodKeyFits++;
+            List<Fraction> renormalizedFractions = [.. currentScaleFractions.Select(fraction => (fraction / fundamentalFraction).ToOctave())];
+            foreach (Fraction fraction in renormalizedFractions)
+            {
+                var bestFitFraction = scaleForReference.CalculateClosestFraction(fraction.ToDouble());
 
-            output.Add(
-                $"{bestFitFraction,-5} "
-                + $"{relativeDeviation:0.00} ".PadRight(5)
-                + $"({renormalizedDouble:0.00})".PadRight(5));
+                Console.WriteLine(
+                    $"{bestFitFraction,-5} "
+                    + $"{Math.Abs(RelativeDeviation(bestFitFraction.ToDouble(), fraction.ToDouble())):0.00} ".PadRight(5)
+                    + $"({fraction})".PadRight(5));
+            }
+            Console.WriteLine();
         }
-        if (printMaxMatchOnly)
+    }
+
+    static void PrintClosestDoublesBetweenScales(double[] scaleToRotate, Scale scaleForReference)
+    {
+        foreach (double fundamentalDouble in scaleToRotate)
         {
-            if (goodKeyFits == scaleToSlide.Length)
+            List<double> renormalizedDoubles = [.. scaleToRotate.Select(scaleNote => (scaleNote / fundamentalDouble).ToOctave())];
+            foreach (double renormalizedDouble in renormalizedDoubles)
+            {
+                var bestFitFraction = scaleForReference.CalculateClosestFraction(renormalizedDouble);
+
+                Console.WriteLine(
+                    $"{bestFitFraction,-5} "
+                    + $"{Math.Abs(RelativeDeviation(bestFitFraction.ToDouble(), renormalizedDouble)):0.00} ".PadRight(5)
+                    + $"({renormalizedDouble:0.00})".PadRight(5));
+            }
+            Console.WriteLine();
+        }
+    }
+
+    static void PrintSlidingFundamentalMatchingBetweenScales(double[] scaleToSlide, Scale scaleForReference, bool printMaxMatchOnly = false, double keyFitCriteria = 0.02d)
+    {
+        double fundamental = 1;
+        double stepSize = 0.01; //12 tet key diff is about 0.06    
+        while (fundamental > 0.5)
+        {
+            List<double> renormalizedDoubles = [.. scaleToSlide.Select(scaleNote => (scaleNote * fundamental).ToOctave())];
+            double errorSum = 0;
+            int goodKeyFits = 0;
+            List<string> output = new();
+            foreach (double renormalizedDouble in renormalizedDoubles)
+            {
+                var bestFitFraction = scaleForReference.CalculateClosestFraction(renormalizedDouble);
+                double relativeDeviation = Math.Abs(RelativeDeviation(bestFitFraction.ToDouble(), renormalizedDouble));
+                errorSum += relativeDeviation;
+                if (relativeDeviation < keyFitCriteria)
+                    goodKeyFits++;
+
+                output.Add(
+                    $"{bestFitFraction,-5} "
+                    + $"{relativeDeviation:0.00} ".PadRight(5)
+                    + $"({renormalizedDouble:0.00})".PadRight(5));
+            }
+            if (printMaxMatchOnly)
+            {
+                if (goodKeyFits == scaleToSlide.Length)
+                {
+                    foreach (var line in output)
+                        Console.WriteLine(line);
+                    Console.WriteLine($"{fundamental} ({fundamental.ToOctave():0.00}) - {errorSum} : {goodKeyFits}");
+                }
+            }
+            else
             {
                 foreach (var line in output)
                     Console.WriteLine(line);
                 Console.WriteLine($"{fundamental} ({fundamental.ToOctave():0.00}) - {errorSum} : {goodKeyFits}");
             }
+
+            fundamental -= stepSize;
         }
-        else
+    }
+
+    //Ambiguity is the number of fundamental note placements in the scaleclass producing identical scales - e.g. 0 3 6 9 has ambiguity 4, while 0 4 7 has ambiguity 1
+    void PrintScaleClassAmbiguity(ScaleCalculator scaleCalculator, bool printBase = true)
+    {
+        Dictionary<int, List<HashSet<Scale>>> scaleClassesByAmbiguity = new();
+        foreach (var scaleClass in scaleCalculator.ScaleClasses)
         {
-            foreach (var line in output)
-                Console.WriteLine(line);
-            Console.WriteLine($"{fundamental} ({fundamental.ToOctave():0.00}) - {errorSum} : {goodKeyFits}");
+            HashSet<Scale> uniqueScales = [.. scaleClass];
+            int ambiguity = 1 + scaleClass.First().NumberOfKeys() - uniqueScales.Count;
+
+            if (!scaleClassesByAmbiguity.ContainsKey(ambiguity))
+                scaleClassesByAmbiguity[ambiguity] = new();
+            scaleClassesByAmbiguity[ambiguity].Add(uniqueScales);
         }
-
-        fundamental -= stepSize;
-    }
-}
-
-//Ambiguity is the number of fundamental note placements in the scaleclass producing identical scales - e.g. 0 3 6 9 has ambiguity 4, while 0 4 7 has ambiguity 1
-void PrintScaleClassAmbiguity(ScaleCalculator scaleCalculator, bool printBase = true)
-{
-    Dictionary<int, List<HashSet<Scale>>> scaleClassesByAmbiguity = new();
-    foreach (var scaleClass in scaleCalculator.ScaleClasses)
-    {
-        HashSet<Scale> uniqueScales = [.. scaleClass];
-        int ambiguity = 1 + scaleClass.First().NumberOfKeys() - uniqueScales.Count;
-
-        if (!scaleClassesByAmbiguity.ContainsKey(ambiguity))
-            scaleClassesByAmbiguity[ambiguity] = new();
-        scaleClassesByAmbiguity[ambiguity].Add(uniqueScales);
-    }
-    foreach (int ambiguity in scaleClassesByAmbiguity.Keys.OrderByDescending(key => key))
-    {
-        Console.WriteLine($"Ambiguity {ambiguity} ({scaleClassesByAmbiguity[ambiguity].Count}): ");
-        foreach (var uniqueScales in scaleClassesByAmbiguity[ambiguity].OrderByDescending(scaleClass => scaleClass.First().NumberOfKeys()))
+        foreach (int ambiguity in scaleClassesByAmbiguity.Keys.OrderByDescending(key => key))
         {
-            Console.WriteLine();
-            foreach (var uniqueScale in uniqueScales)
+            Console.WriteLine($"Ambiguity {ambiguity} ({scaleClassesByAmbiguity[ambiguity].Count}): ");
+            foreach (var uniqueScales in scaleClassesByAmbiguity[ambiguity].OrderByDescending(scaleClass => scaleClass.First().NumberOfKeys()))
             {
-                if (printBase)
-                    Console.Write($"{uniqueScale.CalculateBase(),-4} ");
-                Console.WriteLine(uniqueScale);
+                Console.WriteLine();
+                foreach (var uniqueScale in uniqueScales)
+                {
+                    if (printBase)
+                        Console.Write($"{uniqueScale.CalculateBase(),-4} ");
+                    Console.WriteLine(uniqueScale);
+                }
             }
         }
     }
-}
-//Uniqueness is the number of distinct scales in a scale class, e.g. 0 3 6 9 has uniqueness 1 despite having 4 rotations.
-void PrintScaleClassUniqueness(ScaleCalculator scaleCalculator, bool printBase = true)
-{
-    Dictionary<int, List<HashSet<Scale>>> scaleClassByUniqueness = new();
-    foreach (var scaleClass in scaleCalculator.ScaleClasses)
+    //Uniqueness is the number of distinct scales in a scale class, e.g. 0 3 6 9 has uniqueness 1 despite having 4 rotations.
+    void PrintScaleClassUniqueness(ScaleCalculator scaleCalculator, bool printBase = true)
     {
-        HashSet<Scale> uniqueScales = [.. scaleClass];
-
-        if (!scaleClassByUniqueness.ContainsKey(uniqueScales.Count))
-            scaleClassByUniqueness[uniqueScales.Count] = new();
-        scaleClassByUniqueness[uniqueScales.Count].Add(uniqueScales);
-    }
-    foreach (int uniqueness in scaleClassByUniqueness.Keys.OrderByDescending(key => key))
-    {
-        Console.WriteLine($"Uniqueness {uniqueness}:");
-        foreach (var uniqueScales in scaleClassByUniqueness[uniqueness].OrderByDescending(scaleClass => scaleClass.First().NumberOfKeys()))
+        Dictionary<int, List<HashSet<Scale>>> scaleClassByUniqueness = new();
+        foreach (var scaleClass in scaleCalculator.ScaleClasses)
         {
-            Console.WriteLine();
-            foreach (var uniqueScale in uniqueScales)
+            HashSet<Scale> uniqueScales = [.. scaleClass];
+
+            if (!scaleClassByUniqueness.ContainsKey(uniqueScales.Count))
+                scaleClassByUniqueness[uniqueScales.Count] = new();
+            scaleClassByUniqueness[uniqueScales.Count].Add(uniqueScales);
+        }
+        foreach (int uniqueness in scaleClassByUniqueness.Keys.OrderByDescending(key => key))
+        {
+            Console.WriteLine($"Uniqueness {uniqueness}:");
+            foreach (var uniqueScales in scaleClassByUniqueness[uniqueness].OrderByDescending(scaleClass => scaleClass.First().NumberOfKeys()))
             {
-                if (printBase)
-                    Console.Write($"{uniqueScale.CalculateBase(),-4} ");
-                Console.WriteLine(uniqueScale);
+                Console.WriteLine();
+                foreach (var uniqueScale in uniqueScales)
+                {
+                    if (printBase)
+                        Console.Write($"{uniqueScale.CalculateBase(),-4} ");
+                    Console.WriteLine(uniqueScale);
+                }
             }
         }
     }
-}
 
-void PrintAllSymmetricScaleClasses(ScaleCalculator scaleCalculator)
-{
-    foreach (var scaleClass in scaleCalculator.ScaleClasses)
+    void PrintAllSymmetricScaleClasses(ScaleCalculator scaleCalculator)
     {
-        Scale firstScale = scaleClass.First();
-        bool isSymmetric = true;
-        foreach (var scale in scaleClass)
+        foreach (var scaleClass in scaleCalculator.ScaleClasses)
         {
-            if (firstScale != scale)
+            Scale firstScale = scaleClass.First();
+            bool isSymmetric = true;
+            foreach (var scale in scaleClass)
             {
-                isSymmetric = false;
-                break;
+                if (firstScale != scale)
+                {
+                    isSymmetric = false;
+                    break;
+                }
+            }
+            if (isSymmetric)
+            {
+                Console.WriteLine(firstScale);
             }
         }
-        if (isSymmetric)
-        {
-            Console.WriteLine(firstScale);
-        }
-    }
-}
-
-//Check if a chord is a subset of any key set translation in the octave
-void QueryChordInKeySetTranslations()
-{
-    while (true)
-    {
-        Console.WriteLine($"Input space separated tet12 keys for chord");
-        string input = Console.ReadLine();
-
-        Scale chord = new(Array.ConvertAll(input.Split(' '), int.Parse));
-
-        Console.WriteLine($"Input space separated tet12 keys for key set to find chord in. (empty input to exit)");
-        input = Console.ReadLine();
-
-        if (input.Length == 0) return;
-        Tet12KeySet inputKeys = new(Array.ConvertAll(input.Split(' '), int.Parse));
-
-        for (int i = 0; i < 12; i++)
-        {
-            Tet12KeySet translatedKeySet = inputKeys >> i;
-            if ((translatedKeySet.BinaryRepresentation & chord.KeySet.BinaryRepresentation) == chord.KeySet.BinaryRepresentation)
-                Console.WriteLine($"{i,-2}: {translatedKeySet.ToIntervalString()}");
-        }
-    }
-}
-
-//A chord can belong to many scales.
-//e.g. for chord 0 4 7 and scale 0 2 4 5 7 9 11 the chord matches at positions 0, 5 and 7.
-//e.g. for chord 0 4 7 and scale 0 1 3 5 6 8 9 the chord matches at positions 1, 5 and 8.
-// - Given chord 0 4 7, it could belong to either of the above scales, and the scales' fundamentals could be at key 0, 7, 5 or key 11, 7, 4, respectively.
-//This is called chord multiplicity: a chord can belong to different scales, but also belong to different positions in a scale.
-// - Which different scales the chord belong to is called "chord scale multiplicity":
-// -- given a chord, there is a set (a multiplicity) of different scales containing that chord.
-// - Which positions the chord can hold in a scale is related to the "chord scale fundamental set":
-// -- given a chord and scale, there is a set of fundamentals for that scale so that the scale contains the chord.
-//Given a chord and scale, applying the chord scale fundamental set to the scale produces a key set for each fundamental.
-// - each key thus belongs to a number (possibly 0) of fundamentals, this is called "chord key multiplicity" or simply key multiplicity
-// -- chord key multiplicity tells us which keys imply which scales, possibly the basis for melody
-void QueryChordKeyMultiplicity(ScaleCalculator scaleCalculator)
-{
-    List<Scale> scalesOfInterest = [
-        //new([0, 1, 3, 5, 6, 8, 9, 10]), //full base 15
-        //new([0, 1, 3, 5, 6, 9, 10]), //base 15 - seems like the full base 15 collapses to base 24 due to the 8/5 creating base24 at C or G for base 15 at B
-        new([0, 1, 3, 5, 9, 10]), //natural base 15 - no 8 as it collapses to 24 on 1, no 6 as 7 is bad numerator in 7/5
-        //new([0, 3, 4, 6, 7, 8, 10]), //full base 20
-        //new([0, 2, 4, 6, 8, 9]), //full base 7
-        //new([0, 2, 4, 7, 11]),  //base 8
-        new([0, 2, 4, 5, 7, 9, 11])  //base 24 - 1, 9/8, 5/4, 5/4, 3/2, 5/3, 15/8
-        ];
-
-    Console.WriteLine("Matching input against scales:");
-    foreach (Scale scale in scalesOfInterest)
-    {
-        Console.WriteLine($"{scale.CalculateBase(),-2}: {scale}");
     }
 
-    while (true)
+    //Check if a chord is a subset of any key set translation in the octave
+    void QueryChordInKeySetTranslations()
     {
-        Console.WriteLine($"Input space separated tet12 keys for chord to calculate chord key multiplicity (see method comment for theory - empty input to exit)");
-        string chordInput = Console.ReadLine();
-
-        if (chordInput.Length == 0)
-            return;
-
-        Tet12KeySet chord = new(Array.ConvertAll(chordInput.Split(' '), int.Parse));
-        //Find all matches for chord per scale of interest
-        foreach (Scale scale in scalesOfInterest)
+        while (true)
         {
-            List<int>[] chordKeyMultiplicity = scale.CalculateKeyMultiplicity(chord);
-            //Print results
+            Console.WriteLine($"Input space separated tet12 keys for chord");
+            string input = Console.ReadLine();
+
+            Scale chord = new(Array.ConvertAll(input.Split(' '), int.Parse));
+
+            Console.WriteLine($"Input space separated tet12 keys for key set to find chord in. (empty input to exit)");
+            input = Console.ReadLine();
+
+            if (input.Length == 0) return;
+            Tet12KeySet inputKeys = new(Array.ConvertAll(input.Split(' '), int.Parse));
+
             for (int i = 0; i < 12; i++)
             {
-                Console.Write($"{i}".PadRight(3));
+                Tet12KeySet translatedKeySet = inputKeys >> i;
+                if ((translatedKeySet.BinaryRepresentation & chord.KeySet.BinaryRepresentation) == chord.KeySet.BinaryRepresentation)
+                    Console.WriteLine($"{i,-2}: {translatedKeySet.ToIntervalString()}");
             }
-            Console.WriteLine();
-            Console.WriteLine();
-            for (int row = 0; row < chordKeyMultiplicity.Max(columnValues => columnValues.Count); row++)
-            {
-                for (int column = 0; column < 12; column++)
-                {
-                    //print scale root
-                    if (row < chordKeyMultiplicity[column].Count)
-                        Console.Write($"{chordKeyMultiplicity[column][row]}".PadRight(3));
-                    else
-                        Console.Write("   ");
-                }
-                Console.WriteLine();
-            }
-            Console.WriteLine();
         }
     }
-}
 
-void QueryChordKeyMultiplicityPowerSets(ScaleCalculator scaleCalculator, int minSubsetLength = 2)
-{
-    List<Scale> scalesOfInterest = [
-        //new([0, 1, 3, 5, 6, 8, 9, 10]), //full base 15
-        //new([0, 1, 3, 5, 6, 9, 10]), //base 15 - seems like the full base 15 collapses to base 24 due to the 8/5 creating base24 at C or G for base 15 at B
-        new([0, 1, 3, 5, 9, 10]), //natural base 15 - no 8 as it collapses to 24 on 1, no 6 as 7 is bad numerator in 7/5
-        //new([0, 3, 4, 6, 7, 8, 10]), //full base 20
-        //new([0, 2, 4, 6, 8, 9]), //full base 7
-        //new([0, 2, 4, 7, 11]),  //base 8
-        new([0, 2, 4, 5, 7, 9, 11])  //base 24 - 1, 9/8, 5/4, 5/4, 3/2, 5/3, 15/8
-        ];
-
-    Console.WriteLine("Matching input against scales:");
-    foreach (Scale scale in scalesOfInterest)
+    //A chord can belong to many scales.
+    //e.g. for chord 0 4 7 and scale 0 2 4 5 7 9 11 the chord matches at positions 0, 5 and 7.
+    //e.g. for chord 0 4 7 and scale 0 1 3 5 6 8 9 the chord matches at positions 1, 5 and 8.
+    // - Given chord 0 4 7, it could belong to either of the above scales, and the scales' fundamentals could be at key 0, 7, 5 or key 11, 7, 4, respectively.
+    //This is called chord multiplicity: a chord can belong to different scales, but also belong to different positions in a scale.
+    // - Which different scales the chord belong to is called "chord scale multiplicity":
+    // -- given a chord, there is a set (a multiplicity) of different scales containing that chord.
+    // - Which positions the chord can hold in a scale is related to the "chord scale fundamental set":
+    // -- given a chord and scale, there is a set of fundamentals for that scale so that the scale contains the chord.
+    //Given a chord and scale, applying the chord scale fundamental set to the scale produces a key set for each fundamental.
+    // - each key thus belongs to a number (possibly 0) of fundamentals, this is called "chord key multiplicity" or simply key multiplicity
+    // -- chord key multiplicity tells us which keys imply which scales, possibly the basis for melody
+    void QueryChordKeyMultiplicity(ScaleCalculator scaleCalculator)
     {
-        Console.WriteLine($"{scale.CalculateBase(),-2}: {scale}");
-    }
+        List<Scale> scalesOfInterest = [
+            //new([0, 1, 3, 5, 6, 8, 9, 10]), //full base 15
+            //new([0, 1, 3, 5, 6, 9, 10]), //base 15 - seems like the full base 15 collapses to base 24 due to the 8/5 creating base24 at C or G for base 15 at B
+            new([0, 1, 3, 5, 9, 10]), //natural base 15 - no 8 as it collapses to 24 on 1, no 6 as 7 is bad numerator in 7/5
+                                      //new([0, 3, 4, 6, 7, 8, 10]), //full base 20
+                                      //new([0, 2, 4, 6, 8, 9]), //full base 7
+                                      //new([0, 2, 4, 7, 11]),  //base 8
+            new([0, 2, 4, 5, 7, 9, 11])  //base 24 - 1, 9/8, 5/4, 5/4, 3/2, 5/3, 15/8
+            ];
 
-    while (true)
-    {
-        Console.WriteLine($"Input space separated tet12 keys for chord to calculate chord key multiplicity power sets - empty input to exit");
-        string chordInput = Console.ReadLine();
-
-        if (chordInput.Length == 0)
-            return;
-
-        bool isTargetChordQueried = false;
-        Tet12KeySet targetChord = new();
-        int[] keys;
-        int localMinSubsetLength = minSubsetLength;
-        if (chordInput.Contains(":"))
+        Console.WriteLine("Matching input against scales:");
+        foreach (Scale scale in scalesOfInterest)
         {
-            isTargetChordQueried = true;
-
-            string[] splitInput = chordInput.Split(":").Select(split => split.Trim(' ')).ToArray();
-            int[] targetChordKeys = Array.ConvertAll(splitInput[1].Split(' '), int.Parse);
-            targetChord = new(targetChordKeys);
-            keys = [.. Array.ConvertAll(splitInput[0].Split(' '), int.Parse), .. targetChordKeys];
-            //localMinSubsetLength += targetChordKeys.Count();
+            Console.WriteLine($"{scale.CalculateBase(),-2}: {scale}");
         }
-        else
-            keys = Array.ConvertAll(chordInput.Split(' '), int.Parse);
 
-        List<List<int>> powerSetOfChords = GetPowerSet(keys)
-            .Where(set => set.Count >= localMinSubsetLength)
-            .OrderBy(set => set.Count).ToList();
-
-        //Find all matches for chord per scale of interest
-        int setIndex = 0;
-        while (setIndex < powerSetOfChords.Count)
+        while (true)
         {
-            //Calculate data
-            Tet12KeySet chord = new(powerSetOfChords[setIndex].ToArray());
-            if (isTargetChordQueried && !targetChord.IsSubsetTo(chord))
-            {
-                setIndex++;
-                continue;
-            }
+            Console.WriteLine($"Input space separated tet12 keys for chord to calculate chord key multiplicity (see method comment for theory - empty input to exit)");
+            string chordInput = Console.ReadLine();
 
-            List<List<int>[]> chordKeyMultiplicities = new();
+            if (chordInput.Length == 0)
+                return;
+
+            Tet12KeySet chord = new(Array.ConvertAll(chordInput.Split(' '), int.Parse));
+            //Find all matches for chord per scale of interest
             foreach (Scale scale in scalesOfInterest)
-                chordKeyMultiplicities.Add(scale.CalculateKeyMultiplicity(chord));
-
-            //Print data             
-            if (chordKeyMultiplicities.Any(multiplicity => multiplicity.Any(fundamentals => fundamentals.Count > 0)))
             {
-                Console.WriteLine(chord.ToIntervalString());
-                for (int i = 0; i < scalesOfInterest.Count; i++)
+                List<int>[] chordKeyMultiplicity = scale.CalculateKeyMultiplicity(chord);
+                //Print results
+                for (int i = 0; i < 12; i++)
                 {
-                    int maxFundamentals = chordKeyMultiplicities[i].Max(fundamentals => fundamentals.Count); //get all possible fundamentals - max includes all possibilities
-                    Console.WriteLine($"  {string.Join(" ", chordKeyMultiplicities[i].First(fundamentals => fundamentals.Count == maxFundamentals))}");
+                    Console.Write($"{i}".PadRight(3));
                 }
-            }
-            setIndex++;
-        }
-    }
-}
-
-void QueryChordProgressionFromMultiplicity(ScaleCalculator scaleCalculator)
-{
-    List<Scale> scalesOfInterest = [
-        new([0, 1, 3, 5, 6, 8, 9, 10]), //base 15
-        new([0, 2, 4, 5, 7, 9, 11])  //base 24
-        ];
-
-    Console.WriteLine("Matching input against scales:");
-    foreach (Scale scale in scalesOfInterest)
-    {
-        Console.WriteLine($"{scale.CalculateBase(),-2}: {scale}");
-    }
-
-    while (true)
-    {
-        Console.WriteLine($"Input space separated tet12 keys for current chord. Empty input to exit.");
-        string chordInput = Console.ReadLine();
-
-        if (chordInput.Length == 0)
-            return;
-        //TODO remake progressions to work from previosu chords
-        Tet12KeySet currentChord = new(Array.ConvertAll(chordInput.Split(' '), int.Parse));
-
-        Console.WriteLine($"Input space separated tet12 keys for previous chord.");
-        chordInput = Console.ReadLine();
-
-        Scale previousChord = new(Array.ConvertAll(chordInput.Split(' '), int.Parse));
-        foreach (Scale scale in scalesOfInterest)
-        {
-            //calculate multiplicity to get all scale fundamental shifts
-            var multiplicity = scale.CalculateKeyMultiplicity(currentChord);
-            //Combine with all occurences of the progression chord in the scale for all progressions root positions
-            List<int> chordPositionsInScale = new();
-            for (int i = 0; i < 12; i++)
-            {
-                //chord in scale rotation?
-                if (((scale >> i).BinaryRepresentation & previousChord.KeySet.BinaryRepresentation) == previousChord.KeySet.BinaryRepresentation)
+                Console.WriteLine();
+                Console.WriteLine();
+                for (int row = 0; row < chordKeyMultiplicity.Max(columnValues => columnValues.Count); row++)
                 {
-                    chordPositionsInScale.Add(i);
-                }
-            }
-            HashSet<int> chordPositions = new();
-            foreach (int fundamentalShift in multiplicity[0])
-            {
-                foreach (int chordPositionInScale in chordPositionsInScale)
-                {
-                    chordPositions.Add((fundamentalShift + chordPositionInScale) % 12);
-                }
-            }
-            Console.WriteLine($"{string.Join(" ", chordPositions.OrderBy(position => position)),-25} ({string.Join(" ", chordPositionsInScale.OrderBy(position => position))})");
-        }
-    }
-}
-
-void QueryChordsInScale(ScaleCalculator scaleCalculator)
-{
-    List<Scale> scalesOfInterest = [new([0, 1, 3, 5, 6, 8, 9]), new([0, 2, 4, 5, 7, 9, 11])];
-    Console.WriteLine("Matching input against scales:");
-    foreach (Scale scale in scalesOfInterest)
-    {
-        Console.WriteLine($"{scale.CalculateBase(),-2}: {scale}");
-    }
-
-    while (true)
-    {
-        Console.WriteLine($"Input space separated tet12 keys for chord progression source. (empty input to exit)");
-        string sourceChordInput = Console.ReadLine();
-
-        if (sourceChordInput.Length == 0)
-            return;
-
-        Scale sourceChord = new(Array.ConvertAll(sourceChordInput.Split(' '), int.Parse));
-
-        Console.WriteLine($"Input space separated tet12 keys for chord progression target. (empty input to exit)");
-        string targetChordInput = Console.ReadLine();
-
-        if (targetChordInput.Length == 0)
-            return;
-
-        Scale targetChord = new(Array.ConvertAll(targetChordInput.Split(' '), int.Parse));
-
-        foreach (Scale scale in scalesOfInterest)
-        {
-            for (int i = 0; i < 12; i++)
-            {
-                //Check if rotated scale is still a scale
-                Tet12KeySet rotatedKeys = scale >> i;
-                if ((rotatedKeys.BinaryRepresentation & 1) == 1)
-                {
-                    Scale rotatedScale = new(rotatedKeys);
-                    if (rotatedScale.Contains(sourceChord))
+                    for (int column = 0; column < 12; column++)
                     {
-                        Console.Write($"{i} (");
-                        StringBuilder sb = new();
-                        //look for targets
-                        for (int j = 0; j < 12; j++)
-                        {
-                            Tet12KeySet rotatedKeys2 = rotatedScale >> j;
-                            if ((rotatedKeys2.BinaryRepresentation & 1) == 1)
-                            {
-                                Scale rotatedScale2 = new(rotatedKeys2);
-                                if (rotatedScale2.Contains(targetChord))
-                                {
-                                    sb.Append($"{j} ");
-                                }
-                            }
-                        }
-                        sb.Length--;
-                        Console.Write(sb.ToString() + ") ");
+                        //print scale root
+                        if (row < chordKeyMultiplicity[column].Count)
+                            Console.Write($"{chordKeyMultiplicity[column][row]}".PadRight(3));
+                        else
+                            Console.Write("   ");
                     }
-                }
-            }
-            Console.WriteLine();
-        }
-    }
-}
-void QueryScaleClassProgressionsFromScale(ScaleCalculator scaleCalculator)
-{
-    while (true)
-    {
-        Console.WriteLine($"Input space separated tet12 keys for scale class progressions. (empty input to exit)");
-        string input = Console.ReadLine();
-
-        if (input.Length == 0)
-            return;
-
-        Scale inputScale = new(Array.ConvertAll(input.Split(' '), int.Parse));
-        int formatLength = inputScale.NumberOfKeys() * 3;
-        //Get scale class of input scale with fundamental shifts
-        IEnumerable<(int shift, Scale scale)> scaleClass =
-            inputScale.KeySet.CalculateFundamentalClass().Where(shiftAndScale => shiftAndScale.scale.NumberOfKeys() == inputScale.NumberOfKeys());
-        foreach (var outerScale in scaleClass)
-        {
-            Console.Write($"{outerScale.shift,-2}{$"({outerScale.scale.CalculateBase()})",-4}: {outerScale.scale.ToString().PadRight(formatLength)} - ");
-            foreach (var innerScale in scaleClass)
-            {
-                if (outerScale == innerScale)
-                    continue;
-                //inner scale progression from outer scale expressed as input scale
-                int scaleShift = (12 + (outerScale.shift - innerScale.shift)) % 12;
-                Console.Write($"{scaleShift,-2}{$"({innerScale.scale.CalculateBase()})",-4}: {innerScale.scale.ToString().PadRight(formatLength)} / ");
-            }
-            Console.WriteLine();
-        }
-    }
-}
-
-void QueryFundamentalClassPerScale(ScaleCalculator scaleCalculator)
-{
-    //Calculate all fundamental classes for all scales
-    Dictionary<Scale, List<(int shift, Scale scale)>> FundamentalClassForScale = new();
-    foreach (List<Scale> scaleClass in scaleCalculator.ScaleClasses)
-    {
-        foreach (Scale scale in scaleClass)
-        {
-            FundamentalClassForScale[scale] = scale.KeySet.CalculateFundamentalClass().
-                OrderByDescending(item => item.scale.CalculateBase()).ThenByDescending(item => item.scale.ToString()).ToList();
-        }
-    }
-    //Read input
-    while (true)
-    {
-        Console.WriteLine($"Input space separated tet12 keys for fundamental class. (empty input to exit)");
-        string input = Console.ReadLine();
-
-        if (input.Length == 0)
-            return;
-        //Reverse lookup - print all scale classes containing input keys
-        else if (input.Split(' ').First() == "r")
-        {
-            Scale inputKeys = new(Array.ConvertAll(input.Split(' ')[1..], int.Parse));
-            foreach (List<(int shift, Scale scale)> scaleClass in FundamentalClassForScale.Values)
-            {
-                if (scaleClass.Select(item => item.scale).Contains(inputKeys))
-                {
-                    Console.WriteLine($"Fundamental class containing {inputKeys} found");
-                    foreach (var item in scaleClass)
-                    {
-                        Console.WriteLine($"{item.scale.CalculateBase(),-3} - {(item.shift.ToString() + ":"),-3} {item.scale}");
-                    }
-                }
-            }
-        }
-        //ordinary lookup, print the fundamental class for input keys
-        else
-        {
-            Scale inputKeys = new(Array.ConvertAll(input.Split(' '), int.Parse));
-            //sort fundamental class by scale classes
-            Dictionary<HashSet<Scale>, HashSet<(int shift, Scale scale)>> scalesByScaleClass = new(HashSet<Scale>.CreateSetComparer());
-            foreach ((int shift, Scale scale) item in FundamentalClassForScale[inputKeys])
-            {
-                var scaleClass = item.scale.CalculateScaleClass();
-                if (!scalesByScaleClass.ContainsKey(scaleClass))
-                    scalesByScaleClass[scaleClass] = new();
-                scalesByScaleClass[scaleClass].Add(item);
-            }
-            //print scales grouped by scale classes            
-            foreach (HashSet<(int shift, Scale scale)>? scaleClass in
-                scalesByScaleClass.Values.OrderByDescending(item => item.First().scale.NumberOfKeys()))
-            {
-                foreach ((int shift, Scale scale) item in
-                    scaleClass.OrderByDescending(item => item.scale.CalculateBase()).ThenByDescending(item => item.scale.ToString()).ToList())
-                {
-                    Console.WriteLine($"" +
-                        $"{item.scale.CalculateBase(),-3} - " +
-                        $"{item.shift.ToString() + ":",-3} " +
-                        $"{item.scale.ToString().PadRight(3 * item.scale.NumberOfKeys())} - " +
-                        $"{item.scale.Transpose().CalculateBase(),-3} " +
-                        $"{item.scale.Transpose().ToString().PadRight(3 * item.scale.NumberOfKeys())} " +
-                        $"({$"{new Tet12KeySet(item.scale.Transpose().ToIntervals().Select(interval => (interval + item.shift) % 12).ToArray())
-                        .ToIntervalString()})"
-                        .PadRight(3 * item.scale.NumberOfKeys())}");
+                    Console.WriteLine();
                 }
                 Console.WriteLine();
             }
         }
     }
-}
 
-void QueryLEQSuperclass(Dictionary<Scale, List<Scale>> leqScalesPerScale)
-{
-    while (true)
+    void QueryChordKeyMultiplicityPowerSets(ScaleCalculator scaleCalculator, int minSubsetLength = 2)
     {
-        Console.WriteLine($"Input space separated tet12 keys for all LEQ occurences. (empty input to exit)");
-        string input = Console.ReadLine();
+        List<Scale> scalesOfInterest = [
+            //new([0, 1, 3, 5, 6, 8, 9, 10]), //full base 15
+            //new([0, 1, 3, 5, 6, 9, 10]), //base 15 - seems like the full base 15 collapses to base 24 due to the 8/5 creating base24 at C or G for base 15 at B
+            new([0, 1, 3, 5, 9, 10]), //natural base 15 - no 8 as it collapses to 24 on 1, no 6 as 7 is bad numerator in 7/5
+                                      //new([0, 3, 4, 6, 7, 8, 10]), //full base 20
+                                      //new([0, 2, 4, 6, 8, 9]), //full base 7
+                                      //new([0, 2, 4, 7, 11]),  //base 8
+            new([0, 2, 4, 5, 7, 9, 11])  //base 24 - 1, 9/8, 5/4, 5/4, 3/2, 5/3, 15/8
+            ];
 
-        if (input.Length == 0) return;
-        Tet12KeySet inputKeys = new(Array.ConvertAll(input.Split(' '), int.Parse));
-
-        foreach (Scale scale in leqScalesPerScale.Keys.OrderByDescending(key => key.NumberOfKeys()).ThenByDescending(key => key.ToString()))
+        Console.WriteLine("Matching input against scales:");
+        foreach (Scale scale in scalesOfInterest)
         {
-            if (scale.Contains(inputKeys) || leqScalesPerScale[scale].Any(leqScale => leqScale.Contains(inputKeys)))
-            {
-                Console.WriteLine($"{scale.CalculateBase(),-2} - {scale}:");
-                foreach (var leqScale in leqScalesPerScale[scale].OrderByDescending(leqScale => leqScale.CalculateBase()).ThenByDescending(leqScale => leqScale.NumberOfKeys()))
-                {
-                    //print which keys in the leq scale the original scale matches to, and the fundamental note shift
-                    List<int> scaleIntervalsInLeqScale = new();
-                    int fundamentalShift = 0;
-                    for (int i = 0; i < 12; i++)
-                    {
-                        if (((leqScale.KeySet.BinaryRepresentation >> i) & scale.KeySet.BinaryRepresentation) == scale.KeySet.BinaryRepresentation)
-                        {
-                            scaleIntervalsInLeqScale = scale.ToIntervals().Select(interval => (interval + i) % 12).OrderBy(interval => interval).ToList();
-                            fundamentalShift = (12 - i) % 12; //rotations of leq scale fundamental to match up with scale fundamental
-                            break;
-                        }
-                    }
-                    Console.WriteLine($" - {leqScale.CalculateBase(),-2} - {leqScale,-17}  -> {fundamentalShift} : {string.Join(" ", scaleIntervalsInLeqScale)}");
-                }
-            }
-        }
-    }
-}
-
-//Use with printing all chord progressions and origins for faster than manual lookup
-void QueryChordInProgression(Dictionary<Tet12KeySet, List<(int keySteps, Scale legalBaseScale)>> chordProgressionsAndOrigins)
-{
-    while (true)
-    {
-        Console.WriteLine($"Input space separated tet12 keys for progression containing chord. (empty input to exit)");
-        string input = Console.ReadLine();
-
-        if (input.Length == 0) return;
-        Tet12KeySet inputKeys = new(Array.ConvertAll(input.Split(' '), int.Parse));
-
-        foreach (Tet12KeySet progression in chordProgressionsAndOrigins.Keys)
-        {
-            if (inputKeys.IsSubsetTo(progression))
-            {
-                Console.Write($"{$"{progression.ToIntervalString()}",-20} : ");
-                foreach ((int keySteps, Scale legalBaseScale) origin in chordProgressionsAndOrigins[progression])
-                {
-                    Console.Write($"{$"({origin.legalBaseScale.CalculateBase()}, {origin.keySteps}, {origin.legalBaseScale})",-25} - ");
-                }
-                Console.WriteLine();
-            }
-        }
-    }
-}
-
-//Prints possible pattern lengths of inputed keys based on fraction approximations
-void QueryKeySetCompatiblePatternLengths(int maxPatternLength = 50)
-{
-    //Note that transposed keys can display approximations with larger denominators than the pattern length
-    // - this is because the key is matched to a fraction approximation inside the octave which is then scaled based on number of transpositions    
-    Dictionary<int, HashSet<(int key, Fraction approximation)>> keysCompatibleWithPatternLength = CalculateKeysCompatibleWithPatternLength(maxPatternLength: maxPatternLength);
-    while (true)
-    {
-        Console.WriteLine($"Input space separated tet12 keys for possible pattern lengths of max {maxPatternLength}. (empty input to exit)");
-        string input = Console.ReadLine();
-
-        if (input.Length == 0) return;
-        int[] inputKeys = Array.ConvertAll(input.Split(' '), int.Parse);
-
-        List<int[]> allRotatedKeys = new();
-        foreach (int key in inputKeys)
-        {
-            allRotatedKeys.Add(inputKeys.Select(inputKey => inputKey - key).ToArray());
-        }
-        List<List<(int patternLength, List<(int key, Fraction approximation)> keysAndApproximations)>> allPatternsAllRotations = new();
-        foreach (int[] rotatedKeySet in allRotatedKeys)
-        {
-            allPatternsAllRotations.Add(CalculatePatternLengthsCompatibleWithInputKeys(keysCompatibleWithPatternLength, rotatedKeySet));
+            Console.WriteLine($"{scale.CalculateBase(),-2}: {scale}");
         }
 
-        for (int rotationIndex = 0; rotationIndex < allPatternsAllRotations.Count; rotationIndex++)
+        while (true)
         {
-            Console.WriteLine($"{string.Join(" ", allRotatedKeys[rotationIndex])} ({string.Join(" ", allRotatedKeys[rotationIndex].OctaveTransposed())})");
-            foreach (var pattern in allPatternsAllRotations[rotationIndex])
+            Console.WriteLine($"Input space separated tet12 keys for chord to calculate chord key multiplicity power sets - empty input to exit");
+            string chordInput = Console.ReadLine();
+
+            if (chordInput.Length == 0)
+                return;
+
+            bool isTargetChordQueried = false;
+            Tet12KeySet targetChord = new();
+            int[] keys;
+            int localMinSubsetLength = minSubsetLength;
+            if (chordInput.Contains(":"))
             {
-                if (pattern.keysAndApproximations.Any(keyAndApproximation =>
-                {
-                    var octaveTransposedApproximation = keyAndApproximation.approximation.OctaveTransposed();
-                    if (
-                    octaveTransposedApproximation.Numerator == 21 ||
-                    octaveTransposedApproximation.Numerator == 14 ||
-                    octaveTransposedApproximation.Numerator == 25 ||
-                    octaveTransposedApproximation.Numerator == 28 ||
-                    octaveTransposedApproximation.Numerator == 35 ||
-                    octaveTransposedApproximation.Numerator == 27)
-                        return true;
-                    return false;
+                isTargetChordQueried = true;
 
-                }))
-                    continue;
-                Console.WriteLine($"\t{pattern.patternLength}: " +
-                    $"{string.Join(" ", pattern.keysAndApproximations.Select(keyAndApproximation => keyAndApproximation.approximation))} " +
-                    $"({string.Join(" ", pattern.keysAndApproximations.Select(keyAndApproximation => keyAndApproximation.approximation.OctaveTransposed()))})");
-            }
-        }
-    }
-}
-void WriteMeasuresToMidi(List<Measure> measures, string folderPath, string fileName, bool overWrite = false)
-{
-
-    /** Example Usage
-        string folderPath = @"E:\Documents\Reaper Projects\Melodroid\MIDI_write_testing\";
-        int timeDivision = 8;
-        NoteValue?[] noteValues = new NoteValue?[timeDivision];
-        noteValues[3] = new(NoteName.A, 4, 64);
-        Measure measure = new(noteValues);
-        List<Measure> measureList = new();
-        measureList.Add(measure);
-        WriteMeasuresToMidi(measureList, folderPath, "test", true);
-    **/
-
-    MidiFile midiFile = new MidiFile();
-
-    //TODO set tempo
-
-    TrackChunk trackChunk = new TrackChunk();
-    using (TimedObjectsManager<Melanchall.DryWetMidi.Interaction.Note> notesManager = trackChunk.ManageNotes())
-    {
-        TimedObjectsCollection<Melanchall.DryWetMidi.Interaction.Note> notes = notesManager.Objects;
-        NoteBuilder nb = new NoteBuilder(measures);
-        midiFile.TimeDivision = new TicksPerQuarterNoteTimeDivision(nb.MidiTimeDivision);
-        foreach (var note in nb.Notes)
-        {
-            notes.Add(note);
-        }
-    }
-
-    midiFile.Chunks.Add(trackChunk);
-    midiFile.Write(Path.Combine(folderPath, fileName + ".mid"), overWrite);
-}
-
-void PrintLengthOf(ITimeSpan length, long time, TempoMap tempo)
-{
-    Console.WriteLine($"tempo.TimeDivision: {tempo.TimeDivision}");
-    Console.WriteLine($"{nameof(length)}: {length}");
-    Console.WriteLine($"{nameof(time)}: {time}");
-    Console.WriteLine($"tempo.GetTempoAtTime(length).BeatsPerMinute: {tempo.GetTempoAtTime(length).BeatsPerMinute}");
-    Console.WriteLine($"LengthConverter.ConvertFrom(length, time, tempo): {LengthConverter.ConvertFrom(length, time, tempo)}");
-}
-
-void WriteMIDIWithMidiEvents(string fullWritePath)
-{
-    MidiFile midiFile = new MidiFile();
-    new TrackChunk(new SetTempoEvent(500000));
-    //... etc., seems clunky
-    midiFile.Write(fullWritePath);
-}
-
-void WriteMIDIWithTimedObjectManager(string fullWritePath)
-{
-    MidiFile midiFile = new MidiFile();
-
-    using (var tempoManager = new TempoMapManager())
-    {
-        tempoManager.SetTempo(0, Tempo.FromBeatsPerMinute(60));
-        tempoManager.SetTempo(48, Tempo.FromBeatsPerMinute(120));
-        tempoManager.SetTempo(144, Tempo.FromBeatsPerMinute(60));
-        midiFile.ReplaceTempoMap(tempoManager.TempoMap);
-    }
-
-    TrackChunk trackChunk = new TrackChunk();
-    using (TimedObjectsManager<Melanchall.DryWetMidi.Interaction.Note> notesManager = trackChunk.ManageNotes())
-    {
-        TimedObjectsCollection<Melanchall.DryWetMidi.Interaction.Note> notes = notesManager.Objects;
-
-        notes.Add(new Melanchall.DryWetMidi.Interaction.Note(NoteName.A, 4)
-        {
-            Velocity = (SevenBitNumber)64,
-            Time = 0,
-            Length = 192,
-        });
-        notes.Add(new Melanchall.DryWetMidi.Interaction.Note(NoteName.B, 4)
-        {
-            Velocity = (SevenBitNumber)64,
-            Time = 96,
-            Length = 192,
-        });
-    }
-
-    midiFile.Chunks.Add(trackChunk);
-    midiFile.Write(fullWritePath, true);
-}
-
-static List<(int patternLength, List<(int key, Fraction approximation)> keysAndApproximations)> CalculatePatternLengthsCompatibleWithInputKeys(
-    Dictionary<int, HashSet<(int key, Fraction approximation)>> keysCompatibleWithPatternLength, int[] inputKeys)
-{
-    List<(int patternLength, List<(int key, Fraction approximation)> keysAndApproximations)> compatiblePatternLengths = new();
-    foreach (var entry in new SortedDictionary<int, HashSet<(int key, Fraction approximation)>>(keysCompatibleWithPatternLength))
-    {
-        bool allKeysCompatibleWithPatternLength = true;
-        List<(int key, Fraction approximation)> keysAndApproximations = new();
-        foreach (int key in inputKeys)
-        {
-            int octaveTransposedKey = key;
-            int transpositions = 0;
-            while (octaveTransposedKey < 0)
-            {
-                octaveTransposedKey += 12;
-                transpositions++;
-            }
-            while (octaveTransposedKey >= 12)
-            {
-                octaveTransposedKey -= 12;
-                transpositions--;
-            }
-
-            //get lowest denominator match for transposed key
-            List<(int key, Fraction approximation)> candidates = new();
-            foreach (var keyAndFraction in entry.Value)
-            {
-                if (octaveTransposedKey == keyAndFraction.key)
-                {
-                    Fraction transposedApproximation = keyAndFraction.approximation;
-                    if (transpositions > 0)
-                        transposedApproximation = new Fraction(
-                            keyAndFraction.approximation.Numerator,
-                            keyAndFraction.approximation.Denominator * BigInteger.Pow(2, Math.Abs(transpositions)));
-                    if (transpositions < 0)
-                        transposedApproximation = new Fraction(
-                            keyAndFraction.approximation.Numerator * BigInteger.Pow(2, Math.Abs(transpositions)),
-                            keyAndFraction.approximation.Denominator);
-
-                    candidates.Add((key, transposedApproximation));
-                }
-            }
-            if (candidates.Count > 0)
-            {
-                (int key, Fraction approximation) bestCandidate = candidates[0];
-                foreach (var candidate in candidates)
-                {
-                    if (bestCandidate.approximation.Denominator > candidate.approximation.Denominator)
-                    {
-                        bestCandidate = candidate;
-                    }
-                }
-                keysAndApproximations.Add(bestCandidate);
+                string[] splitInput = chordInput.Split(":").Select(split => split.Trim(' ')).ToArray();
+                int[] targetChordKeys = Array.ConvertAll(splitInput[1].Split(' '), int.Parse);
+                targetChord = new(targetChordKeys);
+                keys = [.. Array.ConvertAll(splitInput[0].Split(' '), int.Parse), .. targetChordKeys];
+                //localMinSubsetLength += targetChordKeys.Count();
             }
             else
+                keys = Array.ConvertAll(chordInput.Split(' '), int.Parse);
+
+            List<List<int>> powerSetOfChords = GetPowerSet(keys)
+                .Where(set => set.Count >= localMinSubsetLength)
+                .OrderBy(set => set.Count).ToList();
+
+            //Find all matches for chord per scale of interest
+            int setIndex = 0;
+            while (setIndex < powerSetOfChords.Count)
             {
-                allKeysCompatibleWithPatternLength = false;
-                break; //all keys must be compatible, no need to check the others.
+                //Calculate data
+                Tet12KeySet chord = new(powerSetOfChords[setIndex].ToArray());
+                if (isTargetChordQueried && !targetChord.IsSubsetTo(chord))
+                {
+                    setIndex++;
+                    continue;
+                }
+
+                List<List<int>[]> chordKeyMultiplicities = new();
+                foreach (Scale scale in scalesOfInterest)
+                    chordKeyMultiplicities.Add(scale.CalculateKeyMultiplicity(chord));
+
+                //Print data             
+                if (chordKeyMultiplicities.Any(multiplicity => multiplicity.Any(fundamentals => fundamentals.Count > 0)))
+                {
+                    Console.WriteLine(chord.ToIntervalString());
+                    for (int i = 0; i < scalesOfInterest.Count; i++)
+                    {
+                        int maxFundamentals = chordKeyMultiplicities[i].Max(fundamentals => fundamentals.Count); //get all possible fundamentals - max includes all possibilities
+                        Console.WriteLine($"  {string.Join(" ", chordKeyMultiplicities[i].First(fundamentals => fundamentals.Count == maxFundamentals))}");
+                    }
+                }
+                setIndex++;
             }
         }
-        if (allKeysCompatibleWithPatternLength)
+    }
+
+    void QueryChordProgressionFromMultiplicity(ScaleCalculator scaleCalculator)
+    {
+        List<Scale> scalesOfInterest = [
+            new([0, 1, 3, 5, 6, 8, 9, 10]), //base 15
+            new([0, 2, 4, 5, 7, 9, 11])  //base 24
+            ];
+
+        Console.WriteLine("Matching input against scales:");
+        foreach (Scale scale in scalesOfInterest)
         {
-            compatiblePatternLengths.Add((entry.Key, keysAndApproximations));
+            Console.WriteLine($"{scale.CalculateBase(),-2}: {scale}");
+        }
+
+        while (true)
+        {
+            Console.WriteLine($"Input space separated tet12 keys for current chord. Empty input to exit.");
+            string chordInput = Console.ReadLine();
+
+            if (chordInput.Length == 0)
+                return;
+            //TODO remake progressions to work from previosu chords
+            Tet12KeySet currentChord = new(Array.ConvertAll(chordInput.Split(' '), int.Parse));
+
+            Console.WriteLine($"Input space separated tet12 keys for previous chord.");
+            chordInput = Console.ReadLine();
+
+            Scale previousChord = new(Array.ConvertAll(chordInput.Split(' '), int.Parse));
+            foreach (Scale scale in scalesOfInterest)
+            {
+                //calculate multiplicity to get all scale fundamental shifts
+                var multiplicity = scale.CalculateKeyMultiplicity(currentChord);
+                //Combine with all occurences of the progression chord in the scale for all progressions root positions
+                List<int> chordPositionsInScale = new();
+                for (int i = 0; i < 12; i++)
+                {
+                    //chord in scale rotation?
+                    if (((scale >> i).BinaryRepresentation & previousChord.KeySet.BinaryRepresentation) == previousChord.KeySet.BinaryRepresentation)
+                    {
+                        chordPositionsInScale.Add(i);
+                    }
+                }
+                HashSet<int> chordPositions = new();
+                foreach (int fundamentalShift in multiplicity[0])
+                {
+                    foreach (int chordPositionInScale in chordPositionsInScale)
+                    {
+                        chordPositions.Add((fundamentalShift + chordPositionInScale) % 12);
+                    }
+                }
+                Console.WriteLine($"{string.Join(" ", chordPositions.OrderBy(position => position)),-25} ({string.Join(" ", chordPositionsInScale.OrderBy(position => position))})");
+            }
         }
     }
-    return compatiblePatternLengths;
-}
 
-void WriteScalesOfBaseToMidi(List<Scale> scales, string folderPath)
-{
-    /** Example usage
-    ScaleCalculator scaleCalculator = new();
-    foreach (var baseValue in scaleCalculator.ScalesWithBase.Keys.Order())
+    void QueryChordsInScale(ScaleCalculator scaleCalculator)
     {
-        Console.WriteLine($"Base: {baseValue}");
-        var scales = scaleCalculator.ScalesWithBase[baseValue].OrderBy(scale => scale.NumberOfKeys());
-        WriteScalesOfBaseToMidi(scales.ToList(), folderPath);
-        foreach (var scale in scales)
+        List<Scale> scalesOfInterest = [new([0, 1, 3, 5, 6, 8, 9]), new([0, 2, 4, 5, 7, 9, 11])];
+        Console.WriteLine("Matching input against scales:");
+        foreach (Scale scale in scalesOfInterest)
         {
-            Console.WriteLine($"{scale}");
+            Console.WriteLine($"{scale.CalculateBase(),-2}: {scale}");
         }
-    } 
-     **/
 
-    for (int i = 0; i < scales.Count; i++)
-    {
-        Scale scale = scales[i];
-        NoteValue?[] noteValues = ScaleCalculator.ScaleToNoteValues(scale);
-
-        Measure measure = new(noteValues);
-        List<Measure> measureList = [measure];
-        WriteMeasuresToMidi(measureList, folderPath, $"base_{scale.CalculateBase()}_keys_{scale.NumberOfKeys()}_number_{i}", true);
-    }
-}
-void WriteAllScaleClassesToMidi(string folderPath)
-{
-    ScaleCalculator scaleCalculator = new ScaleCalculator();
-    Console.WriteLine($"Number of scales: {scaleCalculator.ScaleClassForScale.Keys.Count}");
-    Console.WriteLine($"Number of scale classes: {scaleCalculator.ScaleClasses.Count}");
-    foreach (var length in scaleCalculator.ScaleClassesOfLength.Keys)
-        Console.WriteLine($"Scale classes of length {length}: {scaleCalculator.ScaleClassesOfLength[length].Count}");
-    foreach (var length in scaleCalculator.ScaleClassesOfLength.Keys)
-    {
-        int scaleClassIndex = 0;
-        foreach (var scaleClass in scaleCalculator.ScaleClassesOfLength[length])
+        while (true)
         {
-            int scaleIndex = 0;
-            Console.WriteLine($"Scales in scale class {length}:{scaleClassIndex}");
-            Log.Information($"Scales in scale class {length}:{scaleClassIndex}");
+            Console.WriteLine($"Input space separated tet12 keys for chord progression source. (empty input to exit)");
+            string sourceChordInput = Console.ReadLine();
+
+            if (sourceChordInput.Length == 0)
+                return;
+
+            Scale sourceChord = new(Array.ConvertAll(sourceChordInput.Split(' '), int.Parse));
+
+            Console.WriteLine($"Input space separated tet12 keys for chord progression target. (empty input to exit)");
+            string targetChordInput = Console.ReadLine();
+
+            if (targetChordInput.Length == 0)
+                return;
+
+            Scale targetChord = new(Array.ConvertAll(targetChordInput.Split(' '), int.Parse));
+
+            foreach (Scale scale in scalesOfInterest)
+            {
+                for (int i = 0; i < 12; i++)
+                {
+                    //Check if rotated scale is still a scale
+                    Tet12KeySet rotatedKeys = scale >> i;
+                    if ((rotatedKeys.BinaryRepresentation & 1) == 1)
+                    {
+                        Scale rotatedScale = new(rotatedKeys);
+                        if (rotatedScale.Contains(sourceChord))
+                        {
+                            Console.Write($"{i} (");
+                            StringBuilder sb = new();
+                            //look for targets
+                            for (int j = 0; j < 12; j++)
+                            {
+                                Tet12KeySet rotatedKeys2 = rotatedScale >> j;
+                                if ((rotatedKeys2.BinaryRepresentation & 1) == 1)
+                                {
+                                    Scale rotatedScale2 = new(rotatedKeys2);
+                                    if (rotatedScale2.Contains(targetChord))
+                                    {
+                                        sb.Append($"{j} ");
+                                    }
+                                }
+                            }
+                            sb.Length--;
+                            Console.Write(sb.ToString() + ") ");
+                        }
+                    }
+                }
+                Console.WriteLine();
+            }
+        }
+    }
+    void QueryScaleClassProgressionsFromScale(ScaleCalculator scaleCalculator)
+    {
+        while (true)
+        {
+            Console.WriteLine($"Input space separated tet12 keys for scale class progressions. (empty input to exit)");
+            string input = Console.ReadLine();
+
+            if (input.Length == 0)
+                return;
+
+            Scale inputScale = new(Array.ConvertAll(input.Split(' '), int.Parse));
+            int formatLength = inputScale.NumberOfKeys() * 3;
+            //Get scale class of input scale with fundamental shifts
+            IEnumerable<(int shift, Scale scale)> scaleClass =
+                inputScale.KeySet.CalculateFundamentalClass().Where(shiftAndScale => shiftAndScale.scale.NumberOfKeys() == inputScale.NumberOfKeys());
+            foreach (var outerScale in scaleClass)
+            {
+                Console.Write($"{outerScale.shift,-2}{$"({outerScale.scale.CalculateBase()})",-4}: {outerScale.scale.ToString().PadRight(formatLength)} - ");
+                foreach (var innerScale in scaleClass)
+                {
+                    if (outerScale == innerScale)
+                        continue;
+                    //inner scale progression from outer scale expressed as input scale
+                    int scaleShift = (12 + (outerScale.shift - innerScale.shift)) % 12;
+                    Console.Write($"{scaleShift,-2}{$"({innerScale.scale.CalculateBase()})",-4}: {innerScale.scale.ToString().PadRight(formatLength)} / ");
+                }
+                Console.WriteLine();
+            }
+        }
+    }
+
+    void QueryFundamentalClassPerScale(ScaleCalculator scaleCalculator)
+    {
+        //Calculate all fundamental classes for all scales
+        Dictionary<Scale, List<(int shift, Scale scale)>> FundamentalClassForScale = new();
+        foreach (List<Scale> scaleClass in scaleCalculator.ScaleClasses)
+        {
+            foreach (Scale scale in scaleClass)
+            {
+                FundamentalClassForScale[scale] = scale.KeySet.CalculateFundamentalClass().
+                    OrderByDescending(item => item.scale.CalculateBase()).ThenByDescending(item => item.scale.ToString()).ToList();
+            }
+        }
+        //Read input
+        while (true)
+        {
+            Console.WriteLine($"Input space separated tet12 keys for fundamental class. (empty input to exit)");
+            string input = Console.ReadLine();
+
+            if (input.Length == 0)
+                return;
+            //Reverse lookup - print all scale classes containing input keys
+            else if (input.Split(' ').First() == "r")
+            {
+                Scale inputKeys = new(Array.ConvertAll(input.Split(' ')[1..], int.Parse));
+                foreach (List<(int shift, Scale scale)> scaleClass in FundamentalClassForScale.Values)
+                {
+                    if (scaleClass.Select(item => item.scale).Contains(inputKeys))
+                    {
+                        Console.WriteLine($"Fundamental class containing {inputKeys} found");
+                        foreach (var item in scaleClass)
+                        {
+                            Console.WriteLine($"{item.scale.CalculateBase(),-3} - {(item.shift.ToString() + ":"),-3} {item.scale}");
+                        }
+                    }
+                }
+            }
+            //ordinary lookup, print the fundamental class for input keys
+            else
+            {
+                Scale inputKeys = new(Array.ConvertAll(input.Split(' '), int.Parse));
+                //sort fundamental class by scale classes
+                Dictionary<HashSet<Scale>, HashSet<(int shift, Scale scale)>> scalesByScaleClass = new(HashSet<Scale>.CreateSetComparer());
+                foreach ((int shift, Scale scale) item in FundamentalClassForScale[inputKeys])
+                {
+                    var scaleClass = item.scale.CalculateScaleClass();
+                    if (!scalesByScaleClass.ContainsKey(scaleClass))
+                        scalesByScaleClass[scaleClass] = new();
+                    scalesByScaleClass[scaleClass].Add(item);
+                }
+                //print scales grouped by scale classes            
+                foreach (HashSet<(int shift, Scale scale)>? scaleClass in
+                    scalesByScaleClass.Values.OrderByDescending(item => item.First().scale.NumberOfKeys()))
+                {
+                    foreach ((int shift, Scale scale) item in
+                        scaleClass.OrderByDescending(item => item.scale.CalculateBase()).ThenByDescending(item => item.scale.ToString()).ToList())
+                    {
+                        Console.WriteLine($"" +
+                            $"{item.scale.CalculateBase(),-3} - " +
+                            $"{item.shift.ToString() + ":",-3} " +
+                            $"{item.scale.ToString().PadRight(3 * item.scale.NumberOfKeys())} - " +
+                            $"{item.scale.Transpose().CalculateBase(),-3} " +
+                            $"{item.scale.Transpose().ToString().PadRight(3 * item.scale.NumberOfKeys())} " +
+                            $"({$"{new Tet12KeySet(item.scale.Transpose().ToIntervals().Select(interval => (interval + item.shift) % 12).ToArray())
+                            .ToIntervalString()})"
+                            .PadRight(3 * item.scale.NumberOfKeys())}");
+                    }
+                    Console.WriteLine();
+                }
+            }
+        }
+    }
+
+    void QueryLEQSuperclass(Dictionary<Scale, List<Scale>> leqScalesPerScale)
+    {
+        while (true)
+        {
+            Console.WriteLine($"Input space separated tet12 keys for all LEQ occurences. (empty input to exit)");
+            string input = Console.ReadLine();
+
+            if (input.Length == 0) return;
+            Tet12KeySet inputKeys = new(Array.ConvertAll(input.Split(' '), int.Parse));
+
+            foreach (Scale scale in leqScalesPerScale.Keys.OrderByDescending(key => key.NumberOfKeys()).ThenByDescending(key => key.ToString()))
+            {
+                if (scale.Contains(inputKeys) || leqScalesPerScale[scale].Any(leqScale => leqScale.Contains(inputKeys)))
+                {
+                    Console.WriteLine($"{scale.CalculateBase(),-2} - {scale}:");
+                    foreach (var leqScale in leqScalesPerScale[scale].OrderByDescending(leqScale => leqScale.CalculateBase()).ThenByDescending(leqScale => leqScale.NumberOfKeys()))
+                    {
+                        //print which keys in the leq scale the original scale matches to, and the fundamental note shift
+                        List<int> scaleIntervalsInLeqScale = new();
+                        int fundamentalShift = 0;
+                        for (int i = 0; i < 12; i++)
+                        {
+                            if (((leqScale.KeySet.BinaryRepresentation >> i) & scale.KeySet.BinaryRepresentation) == scale.KeySet.BinaryRepresentation)
+                            {
+                                scaleIntervalsInLeqScale = scale.ToIntervals().Select(interval => (interval + i) % 12).OrderBy(interval => interval).ToList();
+                                fundamentalShift = (12 - i) % 12; //rotations of leq scale fundamental to match up with scale fundamental
+                                break;
+                            }
+                        }
+                        Console.WriteLine($" - {leqScale.CalculateBase(),-2} - {leqScale,-17}  -> {fundamentalShift} : {string.Join(" ", scaleIntervalsInLeqScale)}");
+                    }
+                }
+            }
+        }
+    }
+
+    //Use with printing all chord progressions and origins for faster than manual lookup
+    void QueryChordInProgression(Dictionary<Tet12KeySet, List<(int keySteps, Scale legalBaseScale)>> chordProgressionsAndOrigins)
+    {
+        while (true)
+        {
+            Console.WriteLine($"Input space separated tet12 keys for progression containing chord. (empty input to exit)");
+            string input = Console.ReadLine();
+
+            if (input.Length == 0) return;
+            Tet12KeySet inputKeys = new(Array.ConvertAll(input.Split(' '), int.Parse));
+
+            foreach (Tet12KeySet progression in chordProgressionsAndOrigins.Keys)
+            {
+                if (inputKeys.IsSubsetTo(progression))
+                {
+                    Console.Write($"{$"{progression.ToIntervalString()}",-20} : ");
+                    foreach ((int keySteps, Scale legalBaseScale) origin in chordProgressionsAndOrigins[progression])
+                    {
+                        Console.Write($"{$"({origin.legalBaseScale.CalculateBase()}, {origin.keySteps}, {origin.legalBaseScale})",-25} - ");
+                    }
+                    Console.WriteLine();
+                }
+            }
+        }
+    }
+
+    //Prints possible pattern lengths of inputed keys based on fraction approximations
+    void QueryKeySetCompatiblePatternLengths(int maxPatternLength = 50)
+    {
+        //Note that transposed keys can display approximations with larger denominators than the pattern length
+        // - this is because the key is matched to a fraction approximation inside the octave which is then scaled based on number of transpositions    
+        Dictionary<int, HashSet<(int key, Fraction approximation)>> keysCompatibleWithPatternLength = CalculateKeysCompatibleWithPatternLength(maxPatternLength: maxPatternLength);
+        while (true)
+        {
+            Console.WriteLine($"Input space separated tet12 keys for possible pattern lengths of max {maxPatternLength}. (empty input to exit)");
+            string input = Console.ReadLine();
+
+            if (input.Length == 0) return;
+            int[] inputKeys = Array.ConvertAll(input.Split(' '), int.Parse);
+
+            List<int[]> allRotatedKeys = new();
+            foreach (int key in inputKeys)
+            {
+                allRotatedKeys.Add(inputKeys.Select(inputKey => inputKey - key).ToArray());
+            }
+            List<List<(int patternLength, List<(int key, Fraction approximation)> keysAndApproximations)>> allPatternsAllRotations = new();
+            foreach (int[] rotatedKeySet in allRotatedKeys)
+            {
+                allPatternsAllRotations.Add(CalculatePatternLengthsCompatibleWithInputKeys(keysCompatibleWithPatternLength, rotatedKeySet));
+            }
+
+            for (int rotationIndex = 0; rotationIndex < allPatternsAllRotations.Count; rotationIndex++)
+            {
+                Console.WriteLine($"{string.Join(" ", allRotatedKeys[rotationIndex])} ({string.Join(" ", allRotatedKeys[rotationIndex].OctaveTransposed())})");
+                foreach (var pattern in allPatternsAllRotations[rotationIndex])
+                {
+                    if (pattern.keysAndApproximations.Any(keyAndApproximation =>
+                    {
+                        var octaveTransposedApproximation = keyAndApproximation.approximation.OctaveTransposed();
+                        if (
+                        octaveTransposedApproximation.Numerator == 21 ||
+                        octaveTransposedApproximation.Numerator == 14 ||
+                        octaveTransposedApproximation.Numerator == 25 ||
+                        octaveTransposedApproximation.Numerator == 28 ||
+                        octaveTransposedApproximation.Numerator == 35 ||
+                        octaveTransposedApproximation.Numerator == 27)
+                            return true;
+                        return false;
+
+                    }))
+                        continue;
+                    Console.WriteLine($"\t{pattern.patternLength}: " +
+                        $"{string.Join(" ", pattern.keysAndApproximations.Select(keyAndApproximation => keyAndApproximation.approximation))} " +
+                        $"({string.Join(" ", pattern.keysAndApproximations.Select(keyAndApproximation => keyAndApproximation.approximation.OctaveTransposed()))})");
+                }
+            }
+        }
+    }
+    void WriteMeasuresToMidi(List<Measure> measures, string folderPath, string fileName, bool overWrite = false)
+    {
+
+        /** Example Usage
+            string folderPath = @"E:\Documents\Reaper Projects\Melodroid\MIDI_write_testing\";
+            int timeDivision = 8;
+            NoteValue?[] noteValues = new NoteValue?[timeDivision];
+            noteValues[3] = new(NoteName.A, 4, 64);
+            Measure measure = new(noteValues);
+            List<Measure> measureList = new();
+            measureList.Add(measure);
+            WriteMeasuresToMidi(measureList, folderPath, "test", true);
+        **/
+
+        MidiFile midiFile = new MidiFile();
+
+        //TODO set tempo
+
+        TrackChunk trackChunk = new TrackChunk();
+        using (TimedObjectsManager<Melanchall.DryWetMidi.Interaction.Note> notesManager = trackChunk.ManageNotes())
+        {
+            TimedObjectsCollection<Melanchall.DryWetMidi.Interaction.Note> notes = notesManager.Objects;
+            NoteBuilder nb = new NoteBuilder(measures);
+            midiFile.TimeDivision = new TicksPerQuarterNoteTimeDivision(nb.MidiTimeDivision);
+            foreach (var note in nb.Notes)
+            {
+                notes.Add(note);
+            }
+        }
+
+        midiFile.Chunks.Add(trackChunk);
+        midiFile.Write(Path.Combine(folderPath, fileName + ".mid"), overWrite);
+    }
+
+    void PrintLengthOf(ITimeSpan length, long time, TempoMap tempo)
+    {
+        Console.WriteLine($"tempo.TimeDivision: {tempo.TimeDivision}");
+        Console.WriteLine($"{nameof(length)}: {length}");
+        Console.WriteLine($"{nameof(time)}: {time}");
+        Console.WriteLine($"tempo.GetTempoAtTime(length).BeatsPerMinute: {tempo.GetTempoAtTime(length).BeatsPerMinute}");
+        Console.WriteLine($"LengthConverter.ConvertFrom(length, time, tempo): {LengthConverter.ConvertFrom(length, time, tempo)}");
+    }
+
+    void WriteMIDIWithMidiEvents(string fullWritePath)
+    {
+        MidiFile midiFile = new MidiFile();
+        new TrackChunk(new SetTempoEvent(500000));
+        //... etc., seems clunky
+        midiFile.Write(fullWritePath);
+    }
+
+    void WriteMIDIWithTimedObjectManager(string fullWritePath)
+    {
+        MidiFile midiFile = new MidiFile();
+
+        using (var tempoManager = new TempoMapManager())
+        {
+            tempoManager.SetTempo(0, Tempo.FromBeatsPerMinute(60));
+            tempoManager.SetTempo(48, Tempo.FromBeatsPerMinute(120));
+            tempoManager.SetTempo(144, Tempo.FromBeatsPerMinute(60));
+            midiFile.ReplaceTempoMap(tempoManager.TempoMap);
+        }
+
+        TrackChunk trackChunk = new TrackChunk();
+        using (TimedObjectsManager<Melanchall.DryWetMidi.Interaction.Note> notesManager = trackChunk.ManageNotes())
+        {
+            TimedObjectsCollection<Melanchall.DryWetMidi.Interaction.Note> notes = notesManager.Objects;
+
+            notes.Add(new Melanchall.DryWetMidi.Interaction.Note(NoteName.A, 4)
+            {
+                Velocity = (SevenBitNumber)64,
+                Time = 0,
+                Length = 192,
+            });
+            notes.Add(new Melanchall.DryWetMidi.Interaction.Note(NoteName.B, 4)
+            {
+                Velocity = (SevenBitNumber)64,
+                Time = 96,
+                Length = 192,
+            });
+        }
+
+        midiFile.Chunks.Add(trackChunk);
+        midiFile.Write(fullWritePath, true);
+    }
+
+    static List<(int patternLength, List<(int key, Fraction approximation)> keysAndApproximations)> CalculatePatternLengthsCompatibleWithInputKeys(
+        Dictionary<int, HashSet<(int key, Fraction approximation)>> keysCompatibleWithPatternLength, int[] inputKeys)
+    {
+        List<(int patternLength, List<(int key, Fraction approximation)> keysAndApproximations)> compatiblePatternLengths = new();
+        foreach (var entry in new SortedDictionary<int, HashSet<(int key, Fraction approximation)>>(keysCompatibleWithPatternLength))
+        {
+            bool allKeysCompatibleWithPatternLength = true;
+            List<(int key, Fraction approximation)> keysAndApproximations = new();
+            foreach (int key in inputKeys)
+            {
+                int octaveTransposedKey = key;
+                int transpositions = 0;
+                while (octaveTransposedKey < 0)
+                {
+                    octaveTransposedKey += 12;
+                    transpositions++;
+                }
+                while (octaveTransposedKey >= 12)
+                {
+                    octaveTransposedKey -= 12;
+                    transpositions--;
+                }
+
+                //get lowest denominator match for transposed key
+                List<(int key, Fraction approximation)> candidates = new();
+                foreach (var keyAndFraction in entry.Value)
+                {
+                    if (octaveTransposedKey == keyAndFraction.key)
+                    {
+                        Fraction transposedApproximation = keyAndFraction.approximation;
+                        if (transpositions > 0)
+                            transposedApproximation = new Fraction(
+                                keyAndFraction.approximation.Numerator,
+                                keyAndFraction.approximation.Denominator * BigInteger.Pow(2, Math.Abs(transpositions)));
+                        if (transpositions < 0)
+                            transposedApproximation = new Fraction(
+                                keyAndFraction.approximation.Numerator * BigInteger.Pow(2, Math.Abs(transpositions)),
+                                keyAndFraction.approximation.Denominator);
+
+                        candidates.Add((key, transposedApproximation));
+                    }
+                }
+                if (candidates.Count > 0)
+                {
+                    (int key, Fraction approximation) bestCandidate = candidates[0];
+                    foreach (var candidate in candidates)
+                    {
+                        if (bestCandidate.approximation.Denominator > candidate.approximation.Denominator)
+                        {
+                            bestCandidate = candidate;
+                        }
+                    }
+                    keysAndApproximations.Add(bestCandidate);
+                }
+                else
+                {
+                    allKeysCompatibleWithPatternLength = false;
+                    break; //all keys must be compatible, no need to check the others.
+                }
+            }
+            if (allKeysCompatibleWithPatternLength)
+            {
+                compatiblePatternLengths.Add((entry.Key, keysAndApproximations));
+            }
+        }
+        return compatiblePatternLengths;
+    }
+
+    void WriteScalesOfBaseToMidi(List<Scale> scales, string folderPath)
+    {
+        /** Example usage
+        ScaleCalculator scaleCalculator = new();
+        foreach (var baseValue in scaleCalculator.ScalesWithBase.Keys.Order())
+        {
+            Console.WriteLine($"Base: {baseValue}");
+            var scales = scaleCalculator.ScalesWithBase[baseValue].OrderBy(scale => scale.NumberOfKeys());
+            WriteScalesOfBaseToMidi(scales.ToList(), folderPath);
+            foreach (var scale in scales)
+            {
+                Console.WriteLine($"{scale}");
+            }
+        } 
+         **/
+
+        for (int i = 0; i < scales.Count; i++)
+        {
+            Scale scale = scales[i];
+            NoteValue?[] noteValues = ScaleCalculator.ScaleToNoteValues(scale);
+
+            Measure measure = new(noteValues);
+            List<Measure> measureList = [measure];
+            WriteMeasuresToMidi(measureList, folderPath, $"base_{scale.CalculateBase()}_keys_{scale.NumberOfKeys()}_number_{i}", true);
+        }
+    }
+    void WriteAllScaleClassesToMidi(string folderPath)
+    {
+        ScaleCalculator scaleCalculator = new ScaleCalculator();
+        Console.WriteLine($"Number of scales: {scaleCalculator.ScaleClassForScale.Keys.Count}");
+        Console.WriteLine($"Number of scale classes: {scaleCalculator.ScaleClasses.Count}");
+        foreach (var length in scaleCalculator.ScaleClassesOfLength.Keys)
+            Console.WriteLine($"Scale classes of length {length}: {scaleCalculator.ScaleClassesOfLength[length].Count}");
+        foreach (var length in scaleCalculator.ScaleClassesOfLength.Keys)
+        {
+            int scaleClassIndex = 0;
+            foreach (var scaleClass in scaleCalculator.ScaleClassesOfLength[length])
+            {
+                int scaleIndex = 0;
+                Console.WriteLine($"Scales in scale class {length}:{scaleClassIndex}");
+                Log.Information($"Scales in scale class {length}:{scaleClassIndex}");
+                foreach (var scale in scaleClass)
+                {
+                    Console.WriteLine($"{scale} : {length}_{scaleClassIndex}_{scaleIndex}");
+                    Log.Information($"{scale} : {length}_{scaleClassIndex}_{scaleIndex}");
+
+                    NoteValue?[] noteValues = ScaleCalculator.ScaleToNoteValues(scale);
+                    Measure measure = new(noteValues);
+                    List<Measure> measureList = [measure];
+                    WriteMeasuresToMidi(measureList, folderPath, $"{length}_{scaleClassIndex}_{scaleIndex}", true);
+                    scaleIndex++;
+                }
+                scaleClassIndex++;
+            }
+        }
+    }
+
+    static void PrintScalesWithUpperLimitOnBase()
+    {
+        ScaleCalculator scaleCalculator = new ScaleCalculator();
+        List<List<Scale>> scaleClassesWithDesiredBases = new();
+        int maxBaseValue = 24;
+        foreach (var length in scaleCalculator.ScaleClassesOfLength.Keys)
+        {
+            int scaleClassIndex = 0;
+            foreach (var scaleClass in scaleCalculator.ScaleClassesOfLength[length])
+            {
+                int scaleIndex = 0;
+                bool scaleClassGood = true;
+                foreach (var scale in scaleClass)
+                {
+                    int baseValue = scale.CalculateBase();
+                    Console.WriteLine($"{length}_{scaleClassIndex}_{scaleIndex}: {baseValue}");
+                    if (baseValue > maxBaseValue)
+                        scaleClassGood = false;
+                    scaleIndex++;
+                }
+                if (scaleClassGood)
+                    scaleClassesWithDesiredBases.Add(scaleClass);
+                Console.WriteLine();
+                scaleClassIndex++;
+            }
+        }
+        Console.WriteLine($"Scale classes with bases less than {maxBaseValue}: {scaleClassesWithDesiredBases.Count}");
+        scaleClassesWithDesiredBases.Sort((scaleClass1, scaleClass2) => scaleClass1[0].NumberOfKeys().CompareTo(scaleClass2[0].NumberOfKeys()));
+        foreach (var scaleClass in scaleClassesWithDesiredBases)
+        {
             foreach (var scale in scaleClass)
             {
-                Console.WriteLine($"{scale} : {length}_{scaleClassIndex}_{scaleIndex}");
-                Log.Information($"{scale} : {length}_{scaleClassIndex}_{scaleIndex}");
-
-                NoteValue?[] noteValues = ScaleCalculator.ScaleToNoteValues(scale);
-                Measure measure = new(noteValues);
-                List<Measure> measureList = [measure];
-                WriteMeasuresToMidi(measureList, folderPath, $"{length}_{scaleClassIndex}_{scaleIndex}", true);
-                scaleIndex++;
+                Console.WriteLine($"{scale}:{scale.CalculateBase()}");
             }
-            scaleClassIndex++;
-        }
-    }
-}
-
-static void PrintScalesWithUpperLimitOnBase()
-{
-    ScaleCalculator scaleCalculator = new ScaleCalculator();
-    List<List<Scale>> scaleClassesWithDesiredBases = new();
-    int maxBaseValue = 24;
-    foreach (var length in scaleCalculator.ScaleClassesOfLength.Keys)
-    {
-        int scaleClassIndex = 0;
-        foreach (var scaleClass in scaleCalculator.ScaleClassesOfLength[length])
-        {
-            int scaleIndex = 0;
-            bool scaleClassGood = true;
-            foreach (var scale in scaleClass)
-            {
-                int baseValue = scale.CalculateBase();
-                Console.WriteLine($"{length}_{scaleClassIndex}_{scaleIndex}: {baseValue}");
-                if (baseValue > maxBaseValue)
-                    scaleClassGood = false;
-                scaleIndex++;
-            }
-            if (scaleClassGood)
-                scaleClassesWithDesiredBases.Add(scaleClass);
             Console.WriteLine();
-            scaleClassIndex++;
         }
     }
-    Console.WriteLine($"Scale classes with bases less than {maxBaseValue}: {scaleClassesWithDesiredBases.Count}");
-    scaleClassesWithDesiredBases.Sort((scaleClass1, scaleClass2) => scaleClass1[0].NumberOfKeys().CompareTo(scaleClass2[0].NumberOfKeys()));
-    foreach (var scaleClass in scaleClassesWithDesiredBases)
-    {
-        foreach (var scale in scaleClass)
-        {
-            Console.WriteLine($"{scale}:{scale.CalculateBase()}");
-        }
-        Console.WriteLine();
-    }
-}
 
-void PrintAllSuperClassHierarchies(ScaleCalculator scaleCalculator)
-{
-    int scaleClassIndex = 0;
-    int oldScaleLength = 0;
-    List<List<Scale>> scaleClasses = scaleCalculator.ScaleClasses.OrderBy(scaleClass => scaleClass[0].NumberOfKeys()).Reverse().ToList();
-    foreach (List<Scale> scaleClass in scaleClasses)
+    void PrintAllSuperClassHierarchies(ScaleCalculator scaleCalculator)
     {
-        if (scaleClass[0].NumberOfKeys() != oldScaleLength)
+        int scaleClassIndex = 0;
+        int oldScaleLength = 0;
+        List<List<Scale>> scaleClasses = scaleCalculator.ScaleClasses.OrderBy(scaleClass => scaleClass[0].NumberOfKeys()).Reverse().ToList();
+        foreach (List<Scale> scaleClass in scaleClasses)
         {
-            Console.WriteLine($"-- Scale lengths: {scaleClass[0].NumberOfKeys()} --");
-            oldScaleLength = scaleClass[0].NumberOfKeys();
-        }
-
-        int? superClassIndex = null;
-        for (int previousIndex = 0; previousIndex < scaleClassIndex; previousIndex++)
-        {
-            if (scaleClasses[previousIndex].Any(scale => scaleClass[0].IsSubClassTo(scale) && scale.CalculateBase() <= 24))
+            if (scaleClass[0].NumberOfKeys() != oldScaleLength)
             {
-                superClassIndex = previousIndex;
-                break;
+                Console.WriteLine($"-- Scale lengths: {scaleClass[0].NumberOfKeys()} --");
+                oldScaleLength = scaleClass[0].NumberOfKeys();
             }
+
+            int? superClassIndex = null;
+            for (int previousIndex = 0; previousIndex < scaleClassIndex; previousIndex++)
+            {
+                if (scaleClasses[previousIndex].Any(scale => scaleClass[0].IsSubClassTo(scale) && scale.CalculateBase() <= 24))
+                {
+                    superClassIndex = previousIndex;
+                    break;
+                }
+            }
+
+            if (superClassIndex != null)
+                Console.WriteLine($"-Scale index: {scaleClassIndex} <- {superClassIndex}");
+            else
+                Console.WriteLine($"-Scale index: {scaleClassIndex}");
+
+            if (scaleClass.Any(scale => scale.CalculateBase() <= 24
+                    //&& superClassIndex == null
+                    //&& scale.GetBase() != 24
+                    //&& scale.GetBase() != 20
+                    //&& scale.GetBase() != 15
+                    //&& scale.GetBase() != 12
+                    //&& scale.GetBase() != 10
+                    //&& scale.GetBase() != 8
+                    //&& scale.GetBase() != 6
+                    //&& scale.GetBase() != 5
+                    )
+                )
+            {
+                foreach (Scale scale in scaleClass)
+                {
+                    Console.WriteLine($"{scale} - {scale.CalculateBase()}");
+                }
+            }
+
+            scaleClassIndex++;
+
         }
+    }
 
-        if (superClassIndex != null)
-            Console.WriteLine($"-Scale index: {scaleClassIndex} <- {superClassIndex}");
-        else
-            Console.WriteLine($"-Scale index: {scaleClassIndex}");
+    void PrintChordSuperClasses(ScaleCalculator scaleCalculator, Scale chord, int maxBase = 24, int minBase = 0)
+    {
+        List<int> availableBases = new();
+        Dictionary<int, int> baseClassIndexLongest = new();
+        Dictionary<int, int> baseLengthLongest = new();
+        Dictionary<int, int> baseClassIndexShortest = new();
+        Dictionary<int, int> baseLengthShortest = new();
+        int scaleClassIndex = 0;
+        int oldScaleLength = 0;
+        foreach (List<Scale> scaleClass in scaleCalculator.CalculateScaleSuperClasses(chord).OrderBy(scaleClass => scaleClass[0].NumberOfKeys()).Reverse())
+        {
+            if (scaleClass[0].NumberOfKeys() != oldScaleLength)
+            {
+                Console.WriteLine($"-- Scale lengths: {scaleClass[0].NumberOfKeys()} --");
+                oldScaleLength = scaleClass[0].NumberOfKeys();
+            }
+            Console.WriteLine($"Scale class index: {scaleClassIndex}");
 
-        if (scaleClass.Any(scale => scale.CalculateBase() <= 24
+            if (scaleClass.Any(scale => scale.CalculateBase() <= maxBase && scale.CalculateBase() >= minBase
                 //&& superClassIndex == null
                 //&& scale.GetBase() != 24
                 //&& scale.GetBase() != 20
@@ -1976,460 +2037,419 @@ void PrintAllSuperClassHierarchies(ScaleCalculator scaleCalculator)
                 //&& scale.GetBase() != 5
                 )
             )
-        {
-            foreach (Scale scale in scaleClass)
             {
-                Console.WriteLine($"{scale} - {scale.CalculateBase()}");
+                foreach (Scale scale in scaleClass)
+                {
+                    int baseValue = scale.CalculateBase();
+                    if (!availableBases.Contains(baseValue))
+                    {
+                        availableBases.Add(baseValue);
+                        baseClassIndexLongest[baseValue] = scaleClassIndex;
+                        baseLengthLongest[baseValue] = oldScaleLength;
+                    }
+                    else if (availableBases.Contains(baseValue))
+                    {
+                        baseClassIndexShortest[baseValue] = scaleClassIndex;
+                        baseLengthShortest[baseValue] = oldScaleLength;
+                    }
+
+                    if ((scale.KeySet.BinaryRepresentation & chord.KeySet.BinaryRepresentation) == chord.KeySet.BinaryRepresentation)
+                        Console.WriteLine($"{scale.KeySet.ToIntervalString()} - {baseValue} <--");
+                    else
+                        Console.WriteLine($"{scale.KeySet.ToIntervalString()} - {baseValue}");
+                }
             }
+            scaleClassIndex++;
         }
 
-        scaleClassIndex++;
-
+        Console.WriteLine($"Available bases (index for first found largest key set containing the base):");
+        foreach (var baseValue in availableBases.OrderBy(value => value))
+        {
+            Console.WriteLine($"{baseValue} at {baseClassIndexLongest[baseValue]} length {baseLengthLongest[baseValue]} and " +
+                $"at {baseClassIndexShortest.ElementAtOrDefault(baseValue)} length {baseLengthShortest.ElementAtOrDefault(baseValue)}");
+        }
     }
-}
 
-void PrintChordSuperClasses(ScaleCalculator scaleCalculator, Scale chord, int maxBase = 24, int minBase = 0)
-{
-    List<int> availableBases = new();
-    Dictionary<int, int> baseClassIndexLongest = new();
-    Dictionary<int, int> baseLengthLongest = new();
-    Dictionary<int, int> baseClassIndexShortest = new();
-    Dictionary<int, int> baseLengthShortest = new();
-    int scaleClassIndex = 0;
-    int oldScaleLength = 0;
-    foreach (List<Scale> scaleClass in scaleCalculator.CalculateScaleSuperClasses(chord).OrderBy(scaleClass => scaleClass[0].NumberOfKeys()).Reverse())
+    //Calculate all minimal dissonant sets, i.e. sets of tones which lack a superclass containing a legal base.
+    void PrintDissonantSets(ScaleCalculator scaleCalculator)
     {
-        if (scaleClass[0].NumberOfKeys() != oldScaleLength)
+        List<int> illegalBases = new() { 24, 20, 15, 12, 10, 8, 5, 4, 3, 2, 1 };
+        foreach (int length in scaleCalculator.ScaleClassesOfLength.Keys.OrderBy(key => key).Reverse())
         {
-            Console.WriteLine($"-- Scale lengths: {scaleClass[0].NumberOfKeys()} --");
-            oldScaleLength = scaleClass[0].NumberOfKeys();
-        }
-        Console.WriteLine($"Scale class index: {scaleClassIndex}");
-
-        if (scaleClass.Any(scale => scale.CalculateBase() <= maxBase && scale.CalculateBase() >= minBase
-            //&& superClassIndex == null
-            //&& scale.GetBase() != 24
-            //&& scale.GetBase() != 20
-            //&& scale.GetBase() != 15
-            //&& scale.GetBase() != 12
-            //&& scale.GetBase() != 10
-            //&& scale.GetBase() != 8
-            //&& scale.GetBase() != 6
-            //&& scale.GetBase() != 5
-            )
-        )
-        {
-            foreach (Scale scale in scaleClass)
+            List<List<Scale>> currentScaleClasses = scaleCalculator.ScaleClassesOfLength[length];
+            List<List<Scale>> filteredClasses = new();
+            foreach (var scaleClass in currentScaleClasses)
             {
-                int baseValue = scale.CalculateBase();
-                if (!availableBases.Contains(baseValue))
-                {
-                    availableBases.Add(baseValue);
-                    baseClassIndexLongest[baseValue] = scaleClassIndex;
-                    baseLengthLongest[baseValue] = oldScaleLength;
-                }
-                else if (availableBases.Contains(baseValue))
-                {
-                    baseClassIndexShortest[baseValue] = scaleClassIndex;
-                    baseLengthShortest[baseValue] = oldScaleLength;
-                }
-
-                if ((scale.KeySet.BinaryRepresentation & chord.KeySet.BinaryRepresentation) == chord.KeySet.BinaryRepresentation)
-                    Console.WriteLine($"{scale.KeySet.ToIntervalString()} - {baseValue} <--");
-                else
-                    Console.WriteLine($"{scale.KeySet.ToIntervalString()} - {baseValue}");
-            }
-        }
-        scaleClassIndex++;
-    }
-
-    Console.WriteLine($"Available bases (index for first found largest key set containing the base):");
-    foreach (var baseValue in availableBases.OrderBy(value => value))
-    {
-        Console.WriteLine($"{baseValue} at {baseClassIndexLongest[baseValue]} length {baseLengthLongest[baseValue]} and " +
-            $"at {baseClassIndexShortest.ElementAtOrDefault(baseValue)} length {baseLengthShortest.ElementAtOrDefault(baseValue)}");
-    }
-}
-
-//Calculate all minimal dissonant sets, i.e. sets of tones which lack a superclass containing a legal base.
-void PrintDissonantSets(ScaleCalculator scaleCalculator)
-{
-    List<int> illegalBases = new() { 24, 20, 15, 12, 10, 8, 5, 4, 3, 2, 1 };
-    foreach (int length in scaleCalculator.ScaleClassesOfLength.Keys.OrderBy(key => key).Reverse())
-    {
-        List<List<Scale>> currentScaleClasses = scaleCalculator.ScaleClassesOfLength[length];
-        List<List<Scale>> filteredClasses = new();
-        foreach (var scaleClass in currentScaleClasses)
-        {
-            List<List<Scale>> superClasses = scaleCalculator.CalculateScaleSuperClasses(scaleClass[0]);
-            //if (scaleClass.Any(scale => illegalBases.Contains(scale.GetBase())))
-            if (superClasses.Any(
-                    superClass => superClass.Any(
-                        scale => illegalBases.Contains(scale.CalculateBase())
+                List<List<Scale>> superClasses = scaleCalculator.CalculateScaleSuperClasses(scaleClass[0]);
+                //if (scaleClass.Any(scale => illegalBases.Contains(scale.GetBase())))
+                if (superClasses.Any(
+                        superClass => superClass.Any(
+                            scale => illegalBases.Contains(scale.CalculateBase())
+                        )
                     )
                 )
-            )
-            {
-                continue;
-            }
-
-            filteredClasses.Add(scaleClass);
-        }
-
-        Console.WriteLine($"Scale classes of length {length}");
-
-        foreach (var scaleClass in filteredClasses)
-        {
-            foreach (Scale scale in scaleClass)
-            {
-                Console.WriteLine($"{scale} - {scale.CalculateBase()}");
-            }
-            Console.WriteLine("---");
-        }
-    }
-}
-
-static Dictionary<Tet12KeySet, List<(int keySteps, Scale legalBaseScale)>> OrderChordProgressionsByPhysicalKeys(List<List<(int keySteps, Scale legalBaseScale)>> chordProgressionsPerSuperClass)
-{
-    Dictionary<Tet12KeySet, List<(int keySteps, Scale legalBaseScale)>> chordProgressionsAndOrigins = new();
-    foreach (var superClass in chordProgressionsPerSuperClass)
-    {
-        foreach ((int keySteps, Scale legalBaseScale) origin in superClass)
-        {
-            Tet12KeySet keys = origin.legalBaseScale << origin.keySteps; //scale in intervals relative to chord root
-            if (!chordProgressionsAndOrigins.ContainsKey(keys))
-                chordProgressionsAndOrigins[keys] = new();
-
-            chordProgressionsAndOrigins[keys].Add(origin);
-        }
-    }
-
-    return chordProgressionsAndOrigins;
-}
-
-Dictionary<Tet12KeySet, List<(int keySteps, Scale legalBaseScale)>> CollapseChordProgressionsByPhysicalKeys(Dictionary<Tet12KeySet, List<(int keySteps, Scale legalBaseScale)>> chordProgressionsAndOrigins)
-{
-    // Clone original list
-    Dictionary<Tet12KeySet, List<(int keySteps, Scale legalBaseScale)>> collapsedChordProgressions = new();
-    foreach (Tet12KeySet keySet in chordProgressionsAndOrigins.Keys)
-    {
-        collapsedChordProgressions[keySet] = [.. chordProgressionsAndOrigins[keySet]]; //spread element syntx for collection expression cloning
-    }
-    // Remove redundant entries from clone
-    foreach (Tet12KeySet currentKeySet in chordProgressionsAndOrigins.Keys)
-    {
-        foreach (Tet12KeySet referenceKeySet in chordProgressionsAndOrigins.Keys)
-        {
-            if (collapsedChordProgressions.ContainsKey(referenceKeySet))
-            {
-                if (referenceKeySet.IsSubsetTo(currentKeySet) && referenceKeySet != currentKeySet) // Do not remove self
                 {
-                    var currentOrigins = chordProgressionsAndOrigins[currentKeySet];
-                    var referenceOrigins = chordProgressionsAndOrigins[referenceKeySet];
-                    if (currentOrigins.Count != referenceOrigins.Count)
-                        continue; // different origins, do not collapse
-                    bool isBaseAndKeyStepsSame = true;
-                    for (int i = 0; i < currentOrigins.Count; i++)
-                    {
-                        if (currentOrigins[i].keySteps != referenceOrigins[i].keySteps)
-                        {
-                            isBaseAndKeyStepsSame = false;
-                            break;
-                        }
-                        if (currentOrigins[i].legalBaseScale.CalculateBase() != referenceOrigins[i].legalBaseScale.CalculateBase())
-                        {
-                            isBaseAndKeyStepsSame = false;
-                            break;
-                        }
-                    }
-                    if (isBaseAndKeyStepsSame)
-                    {
-                        collapsedChordProgressions.Remove(referenceKeySet); // Collapse into current key set
-                    }
+                    continue;
                 }
+
+                filteredClasses.Add(scaleClass);
+            }
+
+            Console.WriteLine($"Scale classes of length {length}");
+
+            foreach (var scaleClass in filteredClasses)
+            {
+                foreach (Scale scale in scaleClass)
+                {
+                    Console.WriteLine($"{scale} - {scale.CalculateBase()}");
+                }
+                Console.WriteLine("---");
             }
         }
     }
-    return collapsedChordProgressions;
-}
 
-static void PrintChordProgressionsAndOrigins(Scale chord, Dictionary<Tet12KeySet, List<(int keySteps, Scale legalBaseScale)>> chordProgressionsAndOrigins)
-{
-    Console.WriteLine($"Original chord: {chord}");
-    Console.WriteLine($"Number of progressions: {chordProgressionsAndOrigins.Keys.Count}");
-    //foreach (Tet12KeySet chordProgression in chordProgressionsAndOrigins.Keys.OrderByDescending(cp => cp.ToIntervalString()).ThenByDescending(cp => cp.NumberOfKeys()))
-    foreach (Tet12KeySet chordProgression in chordProgressionsAndOrigins.Keys.
-        OrderByDescending(cp => chordProgressionsAndOrigins[cp].OrderBy(origin => origin.legalBaseScale.CalculateBase()).First().legalBaseScale.CalculateBase()).
-        ThenByDescending(cp => cp.NumberOfKeys()))
+    static Dictionary<Tet12KeySet, List<(int keySteps, Scale legalBaseScale)>> OrderChordProgressionsByPhysicalKeys(List<List<(int keySteps, Scale legalBaseScale)>> chordProgressionsPerSuperClass)
     {
-        Console.Write($"{$"{chordProgression.ToIntervalString()}",-20} : ");
-        foreach ((int keySteps, Scale legalBaseScale) origin in chordProgressionsAndOrigins[chordProgression].OrderBy(origin => origin.legalBaseScale.CalculateBase()))
+        Dictionary<Tet12KeySet, List<(int keySteps, Scale legalBaseScale)>> chordProgressionsAndOrigins = new();
+        foreach (var superClass in chordProgressionsPerSuperClass)
         {
-            Console.Write($"{$"({origin.legalBaseScale.CalculateBase()}, {origin.keySteps}, {origin.legalBaseScale})",-25} - ");
-        }
-        Console.WriteLine();
-    }
-}
-
-static Dictionary<Scale, List<Scale>> CalculateAllLEQScalesPerScale(ScaleCalculator scaleCalculator)
-{
-    Dictionary<Scale, List<Scale>> leqScalesPerScale = new();
-    foreach (int length in scaleCalculator.ScaleClassesOfLength.Keys.OrderByDescending(key => key))
-    {
-        foreach (var scaleClass in scaleCalculator.ScaleClassesOfLength[length])
-        {
-            //Console.WriteLine($"- Scale Class #{scaleClassIndex}");        
-            foreach (var scale in scaleClass)
+            foreach ((int keySteps, Scale legalBaseScale) origin in superClass)
             {
-                int scaleBase = scale.CalculateBase();
-                //start out with scaleclass legal bases less or equal to current base
-                List<Scale> leqBaseScales = scaleClass.Where(otherScale =>
-                    ScaleCalculator.LEGAL_BASES.Contains(otherScale.CalculateBase()) &&
-                    otherScale.CalculateBase() <= scaleBase &&
-                    otherScale != scale).ToList();
-                //find all superclasses' legal bases less or equal to current base
-                foreach (var superClass in scaleCalculator.CalculateScaleSuperClasses(scale))
+                Tet12KeySet keys = origin.legalBaseScale << origin.keySteps; //scale in intervals relative to chord root
+                if (!chordProgressionsAndOrigins.ContainsKey(keys))
+                    chordProgressionsAndOrigins[keys] = new();
+
+                chordProgressionsAndOrigins[keys].Add(origin);
+            }
+        }
+
+        return chordProgressionsAndOrigins;
+    }
+
+    Dictionary<Tet12KeySet, List<(int keySteps, Scale legalBaseScale)>> CollapseChordProgressionsByPhysicalKeys(Dictionary<Tet12KeySet, List<(int keySteps, Scale legalBaseScale)>> chordProgressionsAndOrigins)
+    {
+        // Clone original list
+        Dictionary<Tet12KeySet, List<(int keySteps, Scale legalBaseScale)>> collapsedChordProgressions = new();
+        foreach (Tet12KeySet keySet in chordProgressionsAndOrigins.Keys)
+        {
+            collapsedChordProgressions[keySet] = [.. chordProgressionsAndOrigins[keySet]]; //spread element syntx for collection expression cloning
+        }
+        // Remove redundant entries from clone
+        foreach (Tet12KeySet currentKeySet in chordProgressionsAndOrigins.Keys)
+        {
+            foreach (Tet12KeySet referenceKeySet in chordProgressionsAndOrigins.Keys)
+            {
+                if (collapsedChordProgressions.ContainsKey(referenceKeySet))
                 {
-                    foreach (var superScale in superClass)
+                    if (referenceKeySet.IsSubsetTo(currentKeySet) && referenceKeySet != currentKeySet) // Do not remove self
                     {
-                        if (ScaleCalculator.LEGAL_BASES.Contains(superScale.CalculateBase()) && superScale.CalculateBase() <= scaleBase)
-                            leqBaseScales.Add(superScale);
-                    }
-                }
-                //If we got something, filter it
-                if (leqBaseScales.Count > 0)
-                {
-                    //only save the largest superscale per base
-                    List<Scale> noSubscales = new();
-                    Dictionary<int, List<Scale>> baseAndScales = new();
-                    foreach (var leqScale in leqBaseScales)
-                    {
-                        var leqBase = leqScale.CalculateBase();
-                        if (!baseAndScales.ContainsKey(leqBase))
-                            baseAndScales[leqBase] = new();
-                        baseAndScales[leqBase].Add(leqScale);
-                    }
-                    foreach (var baseValue in baseAndScales.Keys)
-                    {
-                        foreach (var leqScale in baseAndScales[baseValue])
+                        var currentOrigins = chordProgressionsAndOrigins[currentKeySet];
+                        var referenceOrigins = chordProgressionsAndOrigins[referenceKeySet];
+                        if (currentOrigins.Count != referenceOrigins.Count)
+                            continue; // different origins, do not collapse
+                        bool isBaseAndKeyStepsSame = true;
+                        for (int i = 0; i < currentOrigins.Count; i++)
                         {
-                            if (!baseAndScales[baseValue].Any(otherScale => otherScale != leqScale && leqScale.IsSubScaleTo(otherScale)))
-                                noSubscales.Add(leqScale);
+                            if (currentOrigins[i].keySteps != referenceOrigins[i].keySteps)
+                            {
+                                isBaseAndKeyStepsSame = false;
+                                break;
+                            }
+                            if (currentOrigins[i].legalBaseScale.CalculateBase() != referenceOrigins[i].legalBaseScale.CalculateBase())
+                            {
+                                isBaseAndKeyStepsSame = false;
+                                break;
+                            }
+                        }
+                        if (isBaseAndKeyStepsSame)
+                        {
+                            collapsedChordProgressions.Remove(referenceKeySet); // Collapse into current key set
                         }
                     }
-                    //Store superscales                
-                    leqScalesPerScale[scale] = noSubscales;
                 }
             }
         }
+        return collapsedChordProgressions;
     }
 
-    return leqScalesPerScale;
-}
-
-static void PrintFractionApproximations(int maxDenominator = 15)
-{
-    int columnSpacing = 6;
-    var fractionApproximations = ScaleCalculator.CalculateFractionsForApproximations(maxDenominator)
-        .ToDictionary(old => old.Key, old => old.Value.OrderBy(item => item).ToList());
-
-    foreach (var key in fractionApproximations.Keys)
-        Console.Write($"{key}".PadRight(columnSpacing));
-    Console.WriteLine();
-
-    for (int row = 0; row < fractionApproximations.Values.Max(column => column.Count); row++)
+    static void PrintChordProgressionsAndOrigins(Scale chord, Dictionary<Tet12KeySet, List<(int keySteps, Scale legalBaseScale)>> chordProgressionsAndOrigins)
     {
-        foreach (var column in fractionApproximations.Keys)
+        Console.WriteLine($"Original chord: {chord}");
+        Console.WriteLine($"Number of progressions: {chordProgressionsAndOrigins.Keys.Count}");
+        //foreach (Tet12KeySet chordProgression in chordProgressionsAndOrigins.Keys.OrderByDescending(cp => cp.ToIntervalString()).ThenByDescending(cp => cp.NumberOfKeys()))
+        foreach (Tet12KeySet chordProgression in chordProgressionsAndOrigins.Keys.
+            OrderByDescending(cp => chordProgressionsAndOrigins[cp].OrderBy(origin => origin.legalBaseScale.CalculateBase()).First().legalBaseScale.CalculateBase()).
+            ThenByDescending(cp => cp.NumberOfKeys()))
         {
-            if (row < fractionApproximations[column].Count)
+            Console.Write($"{$"{chordProgression.ToIntervalString()}",-20} : ");
+            foreach ((int keySteps, Scale legalBaseScale) origin in chordProgressionsAndOrigins[chordProgression].OrderBy(origin => origin.legalBaseScale.CalculateBase()))
             {
-                Console.Write($"{fractionApproximations[column][row]}".PadRight(columnSpacing));
+                Console.Write($"{$"({origin.legalBaseScale.CalculateBase()}, {origin.keySteps}, {origin.legalBaseScale})",-25} - ");
             }
-            else
-                Console.Write("".PadRight(columnSpacing));
-        }
-        Console.WriteLine();
-    }
-}
-static void PrintCumulativeFractionApproximations(int minDenominator = 1, int maxDenominator = 15, bool legalNumeratorsOnly = false)
-{
-    int columnSpacing = 10;
-    var fractionApproximations = ScaleCalculator.CalculateFractionsForApproximations(maxDenominator);
-
-    for (int denominator = minDenominator; denominator <= maxDenominator; denominator++)
-        Console.Write($"{denominator}".PadRight(columnSpacing));
-    Console.WriteLine();
-
-    //Create cumulative approximations
-    Dictionary<int, List<Fraction>> cumulativeApproximations = new();
-    foreach (var key in fractionApproximations.Keys.OrderBy(key => key))
-    {
-        cumulativeApproximations[key] = [.. fractionApproximations[key]];
-        for (int denominator = 2; denominator < key; denominator++)
-        {
-            if (key % denominator == 0)
-                cumulativeApproximations[key].AddRange([.. fractionApproximations[denominator]]);
-        }
-    }
-
-    if (legalNumeratorsOnly)
-    {
-        //if key in dict then legal, value at key is max number of occurences
-        Dictionary<int, int> legalPrimes = new() { { 2, 4 }, { 3, 2 }, { 5, 1 } };
-        foreach (var key in cumulativeApproximations.Keys)
-        {
-            cumulativeApproximations[key] = cumulativeApproximations[key].Where(fraction =>
-                {
-                    if (fraction == new Fraction(7, 5)) //sqrt 2 special case
-                        return true;
-                    var factors = Factorize((int)fraction.Numerator);
-                    foreach (var factor in factors)
-                    {
-                        //numerator must be small enough
-                        if (fraction.Numerator > 30)
-                            return false;
-                        //factor must be legal
-                        if (!legalPrimes.ContainsKey(factor))
-                            return false;
-                        //factor duplicates cannot exceed max allowed occurences
-                        if (factors.Where(otherFactor => otherFactor == factor).Count() > legalPrimes[factor])
-                            return false;
-                    }
-                    return true;
-                }
-            ).ToList();
-        }
-    }
-
-    cumulativeApproximations = cumulativeApproximations
-        .Where(kv => kv.Key >= minDenominator)
-        .ToDictionary(old => old.Key, old => old.Value.OrderBy(item => item).ToList());
-
-    for (int row = 0; row < cumulativeApproximations.Values.Max(column => column.Count); row++)
-    {
-        foreach (var column in cumulativeApproximations.Keys)
-        {
-            if (row < cumulativeApproximations[column].Count)
-            {
-                Console.Write(($"{cumulativeApproximations[column][row]}".PadRight(5) + $"({cumulativeApproximations[column][row].ToDouble().ClosestKey()})").PadRight(columnSpacing));
-            }
-            else
-                Console.Write("".PadRight(columnSpacing));
-        }
-        Console.WriteLine();
-    }
-}
-static void PrintRelativeDeviations(Dictionary<int, HashSet<Fraction>> fractionApproximations, int keysInTonalSystem)
-{
-    int columnSpacing = 14;
-    Dictionary<int, List<(Fraction approximation, double relativeDeviation)>> relativeDeviationsPerKeyAndApproximation
-        = ScaleCalculator.CalculateRelativeDeviationsForEqualToneSystem(fractionApproximations, keysInTonalSystem);
-
-    //Sort approximations by relative deviations
-    foreach (var key in relativeDeviationsPerKeyAndApproximation.Keys)
-        relativeDeviationsPerKeyAndApproximation[key] = [.. relativeDeviationsPerKeyAndApproximation[key].OrderBy(item => Math.Abs(item.relativeDeviation))];
-
-    foreach (var key in relativeDeviationsPerKeyAndApproximation.Keys.OrderBy(key => key))
-        Console.Write($"{key}".PadRight(columnSpacing));
-    Console.WriteLine();
-
-    for (int row = 0; row < relativeDeviationsPerKeyAndApproximation.Values.Max(column => column.Count); row++)
-    {
-        foreach (var column in relativeDeviationsPerKeyAndApproximation.Keys.OrderBy(key => key))
-        {
-            if (row < relativeDeviationsPerKeyAndApproximation[column].Count)
-            {
-                Console.Write(
-                    (
-                    $"{relativeDeviationsPerKeyAndApproximation[column][row].approximation}" +
-                    $"({relativeDeviationsPerKeyAndApproximation[column][row].relativeDeviation:0.00})"
-                    ).PadRight(columnSpacing));
-            }
-            else
-                Console.Write(" ".PadRight(columnSpacing));
-        }
-        Console.WriteLine();
-    }
-}
-
-static void PrintFractionClasses(int maxDenominator = 15)
-{
-    int columnSpacing = 6;
-    var fractionApproximations = ScaleCalculator.CalculateFractionsForApproximations(maxDenominator)
-        .ToDictionary(old => old.Key, old => old.Value.OrderBy(item => item).ToList());
-
-    foreach (var denominator in fractionApproximations.Keys)
-    {
-        Console.WriteLine($"{denominator}:");
-        HashSet<Fraction> fractionsWithDenominator = fractionApproximations[denominator].ToHashSet();
-        fractionsWithDenominator.Add(1);
-        List<HashSet<Fraction>> fractionClasses = ScaleCalculator.CalculateFractionClasses(fractionsWithDenominator);
-        foreach (var fractionClass in fractionClasses)
-        {
-            foreach (var fraction in fractionClass)
-                Console.Write($"{fraction}".PadRight(columnSpacing));
             Console.WriteLine();
         }
     }
-}
 
-static void PrintVirtualFundamentals(int maxPacketLength = 15)
-{
-    var virtualFundamentals = ScaleCalculator.CalculateVirtualFundamentals(maxPacketLength);
-
-    foreach (var fundamental in virtualFundamentals.OrderBy(fraction => fraction))
+    static Dictionary<Scale, List<Scale>> CalculateAllLEQScalesPerScale(ScaleCalculator scaleCalculator)
     {
-        Console.WriteLine(fundamental);
-    }
-}
-
-static void QueryFractionFundamentalClass(int maxPacketLength = 15, bool toOctave = true)
-{
-    while (true)
-    {
-        Console.WriteLine($"Input space separated fractions for fraction fundamental class up to {maxPacketLength} denominator. (empty input to exit)");
-        string input = Console.ReadLine();
-
-        if (input.Length == 0) return;
-        Fraction[] inputKeys = Array.ConvertAll(input.Split(' '), split =>
+        Dictionary<Scale, List<Scale>> leqScalesPerScale = new();
+        foreach (int length in scaleCalculator.ScaleClassesOfLength.Keys.OrderByDescending(key => key))
         {
-            if (split.Contains('/'))
+            foreach (var scaleClass in scaleCalculator.ScaleClassesOfLength[length])
             {
-                string[] inputSplit = split.Split('/');
-                return new(int.Parse(inputSplit[0]), int.Parse(inputSplit[1]));
-            }
-            else
-                return new Fraction(1);
-        });
-        Dictionary<Fraction, HashSet<Fraction>> fractionFundamentalClass = ScaleCalculator.CalculateFractionFundamentalClass(inputKeys.ToHashSet(), maxPacketLength);
-        if (toOctave == true)
-        {
-            //remove doubles from octave transposition
-            fractionFundamentalClass = fractionFundamentalClass.GroupBy(
-                kv => kv.Key.ToOctave(),
-                kv => kv.Value,
-                (key, values) => new { fraction = key, fractionClass = values.First() }
-                ).ToDictionary(kv => kv.fraction, kv => kv.fractionClass);
-            foreach (var fundamental in fractionFundamentalClass.Keys
-                .OrderBy(key => LCM(fractionFundamentalClass[key].Select(fraction => (long)fraction.ToOctave().Denominator).ToArray()))
-                .ThenBy(key => key.ToOctave()))
-            {
-                var lcmForFundamental = LCM(fractionFundamentalClass[fundamental].Select(fraction => (long)fraction.ToOctave().Denominator).ToArray());
-                Console.WriteLine($"{fundamental.ToOctave(),-5}: " +
-                    $"{lcmForFundamental} - " +
-                    $"{string.Join(" ", fractionFundamentalClass[fundamental].Select(fraction => fraction.ToOctave()))}");
+                //Console.WriteLine($"- Scale Class #{scaleClassIndex}");        
+                foreach (var scale in scaleClass)
+                {
+                    int scaleBase = scale.CalculateBase();
+                    //start out with scaleclass legal bases less or equal to current base
+                    List<Scale> leqBaseScales = scaleClass.Where(otherScale =>
+                        ScaleCalculator.LEGAL_BASES.Contains(otherScale.CalculateBase()) &&
+                        otherScale.CalculateBase() <= scaleBase &&
+                        otherScale != scale).ToList();
+                    //find all superclasses' legal bases less or equal to current base
+                    foreach (var superClass in scaleCalculator.CalculateScaleSuperClasses(scale))
+                    {
+                        foreach (var superScale in superClass)
+                        {
+                            if (ScaleCalculator.LEGAL_BASES.Contains(superScale.CalculateBase()) && superScale.CalculateBase() <= scaleBase)
+                                leqBaseScales.Add(superScale);
+                        }
+                    }
+                    //If we got something, filter it
+                    if (leqBaseScales.Count > 0)
+                    {
+                        //only save the largest superscale per base
+                        List<Scale> noSubscales = new();
+                        Dictionary<int, List<Scale>> baseAndScales = new();
+                        foreach (var leqScale in leqBaseScales)
+                        {
+                            var leqBase = leqScale.CalculateBase();
+                            if (!baseAndScales.ContainsKey(leqBase))
+                                baseAndScales[leqBase] = new();
+                            baseAndScales[leqBase].Add(leqScale);
+                        }
+                        foreach (var baseValue in baseAndScales.Keys)
+                        {
+                            foreach (var leqScale in baseAndScales[baseValue])
+                            {
+                                if (!baseAndScales[baseValue].Any(otherScale => otherScale != leqScale && leqScale.IsSubScaleTo(otherScale)))
+                                    noSubscales.Add(leqScale);
+                            }
+                        }
+                        //Store superscales                
+                        leqScalesPerScale[scale] = noSubscales;
+                    }
+                }
             }
         }
-        else
+
+        return leqScalesPerScale;
+    }
+
+    static void PrintFractionApproximations(int maxDenominator = 15)
+    {
+        int columnSpacing = 6;
+        var fractionApproximations = ScaleCalculator.CalculateFractionsForApproximations(maxDenominator)
+            .ToDictionary(old => old.Key, old => old.Value.OrderBy(item => item).ToList());
+
+        foreach (var key in fractionApproximations.Keys)
+            Console.Write($"{key}".PadRight(columnSpacing));
+        Console.WriteLine();
+
+        for (int row = 0; row < fractionApproximations.Values.Max(column => column.Count); row++)
         {
-            foreach (var fundamental in fractionFundamentalClass.Keys
-                .OrderBy(key => LCM(fractionFundamentalClass[key].Select(fraction => (long)fraction.Denominator).ToArray()))
-                .ThenBy(key => key))
+            foreach (var column in fractionApproximations.Keys)
             {
-                var lcmForFundamental = LCM(fractionFundamentalClass[fundamental].Select(fraction => (long)fraction.Denominator).ToArray());
-                Console.WriteLine($"{fundamental,-5}: " +
-                    $"{lcmForFundamental} - " +
-                    $"{string.Join(" ", fractionFundamentalClass[fundamental])}");
+                if (row < fractionApproximations[column].Count)
+                {
+                    Console.Write($"{fractionApproximations[column][row]}".PadRight(columnSpacing));
+                }
+                else
+                    Console.Write("".PadRight(columnSpacing));
+            }
+            Console.WriteLine();
+        }
+    }
+    static void PrintCumulativeFractionApproximations(int minDenominator = 1, int maxDenominator = 15, bool legalNumeratorsOnly = false)
+    {
+        int columnSpacing = 10;
+        var fractionApproximations = ScaleCalculator.CalculateFractionsForApproximations(maxDenominator);
+
+        for (int denominator = minDenominator; denominator <= maxDenominator; denominator++)
+            Console.Write($"{denominator}".PadRight(columnSpacing));
+        Console.WriteLine();
+
+        //Create cumulative approximations
+        Dictionary<int, List<Fraction>> cumulativeApproximations = new();
+        foreach (var key in fractionApproximations.Keys.OrderBy(key => key))
+        {
+            cumulativeApproximations[key] = [.. fractionApproximations[key]];
+            for (int denominator = 2; denominator < key; denominator++)
+            {
+                if (key % denominator == 0)
+                    cumulativeApproximations[key].AddRange([.. fractionApproximations[denominator]]);
+            }
+        }
+
+        if (legalNumeratorsOnly)
+        {
+            //if key in dict then legal, value at key is max number of occurences
+            Dictionary<int, int> legalPrimes = new() { { 2, 4 }, { 3, 2 }, { 5, 1 } };
+            foreach (var key in cumulativeApproximations.Keys)
+            {
+                cumulativeApproximations[key] = cumulativeApproximations[key].Where(fraction =>
+                    {
+                        if (fraction == new Fraction(7, 5)) //sqrt 2 special case
+                            return true;
+                        var factors = Factorize((int)fraction.Numerator);
+                        foreach (var factor in factors)
+                        {
+                            //numerator must be small enough
+                            if (fraction.Numerator > 30)
+                                return false;
+                            //factor must be legal
+                            if (!legalPrimes.ContainsKey(factor))
+                                return false;
+                            //factor duplicates cannot exceed max allowed occurences
+                            if (factors.Where(otherFactor => otherFactor == factor).Count() > legalPrimes[factor])
+                                return false;
+                        }
+                        return true;
+                    }
+                ).ToList();
+            }
+        }
+
+        cumulativeApproximations = cumulativeApproximations
+            .Where(kv => kv.Key >= minDenominator)
+            .ToDictionary(old => old.Key, old => old.Value.OrderBy(item => item).ToList());
+
+        for (int row = 0; row < cumulativeApproximations.Values.Max(column => column.Count); row++)
+        {
+            foreach (var column in cumulativeApproximations.Keys)
+            {
+                if (row < cumulativeApproximations[column].Count)
+                {
+                    Console.Write(($"{cumulativeApproximations[column][row]}".PadRight(5) + $"({cumulativeApproximations[column][row].ToDouble().ClosestKey()})").PadRight(columnSpacing));
+                }
+                else
+                    Console.Write("".PadRight(columnSpacing));
+            }
+            Console.WriteLine();
+        }
+    }
+    static void PrintRelativeDeviations(Dictionary<int, HashSet<Fraction>> fractionApproximations, int keysInTonalSystem)
+    {
+        int columnSpacing = 14;
+        Dictionary<int, List<(Fraction approximation, double relativeDeviation)>> relativeDeviationsPerKeyAndApproximation
+            = ScaleCalculator.CalculateRelativeDeviationsForEqualToneSystem(fractionApproximations, keysInTonalSystem);
+
+        //Sort approximations by relative deviations
+        foreach (var key in relativeDeviationsPerKeyAndApproximation.Keys)
+            relativeDeviationsPerKeyAndApproximation[key] = [.. relativeDeviationsPerKeyAndApproximation[key].OrderBy(item => Math.Abs(item.relativeDeviation))];
+
+        foreach (var key in relativeDeviationsPerKeyAndApproximation.Keys.OrderBy(key => key))
+            Console.Write($"{key}".PadRight(columnSpacing));
+        Console.WriteLine();
+
+        for (int row = 0; row < relativeDeviationsPerKeyAndApproximation.Values.Max(column => column.Count); row++)
+        {
+            foreach (var column in relativeDeviationsPerKeyAndApproximation.Keys.OrderBy(key => key))
+            {
+                if (row < relativeDeviationsPerKeyAndApproximation[column].Count)
+                {
+                    Console.Write(
+                        (
+                        $"{relativeDeviationsPerKeyAndApproximation[column][row].approximation}" +
+                        $"({relativeDeviationsPerKeyAndApproximation[column][row].relativeDeviation:0.00})"
+                        ).PadRight(columnSpacing));
+                }
+                else
+                    Console.Write(" ".PadRight(columnSpacing));
+            }
+            Console.WriteLine();
+        }
+    }
+
+    static void PrintFractionClasses(int maxDenominator = 15)
+    {
+        int columnSpacing = 6;
+        var fractionApproximations = ScaleCalculator.CalculateFractionsForApproximations(maxDenominator)
+            .ToDictionary(old => old.Key, old => old.Value.OrderBy(item => item).ToList());
+
+        foreach (var denominator in fractionApproximations.Keys)
+        {
+            Console.WriteLine($"{denominator}:");
+            HashSet<Fraction> fractionsWithDenominator = fractionApproximations[denominator].ToHashSet();
+            fractionsWithDenominator.Add(1);
+            List<HashSet<Fraction>> fractionClasses = ScaleCalculator.CalculateFractionClasses(fractionsWithDenominator);
+            foreach (var fractionClass in fractionClasses)
+            {
+                foreach (var fraction in fractionClass)
+                    Console.Write($"{fraction}".PadRight(columnSpacing));
+                Console.WriteLine();
+            }
+        }
+    }
+
+    static void PrintVirtualFundamentals(int maxPacketLength = 15)
+    {
+        var virtualFundamentals = ScaleCalculator.CalculateVirtualFundamentals(maxPacketLength);
+
+        foreach (var fundamental in virtualFundamentals.OrderBy(fraction => fraction))
+        {
+            Console.WriteLine(fundamental);
+        }
+    }
+
+    static void QueryFractionFundamentalClass(int maxPacketLength = 15, bool toOctave = true)
+    {
+        while (true)
+        {
+            Console.WriteLine($"Input space separated fractions for fraction fundamental class up to {maxPacketLength} denominator. (empty input to exit)");
+            string input = Console.ReadLine();
+
+            if (input.Length == 0) return;
+            Fraction[] inputKeys = Array.ConvertAll(input.Split(' '), split =>
+            {
+                if (split.Contains('/'))
+                {
+                    string[] inputSplit = split.Split('/');
+                    return new(int.Parse(inputSplit[0]), int.Parse(inputSplit[1]));
+                }
+                else
+                    return new Fraction(1);
+            });
+            Dictionary<Fraction, HashSet<Fraction>> fractionFundamentalClass = ScaleCalculator.CalculateFractionFundamentalClass(inputKeys.ToHashSet(), maxPacketLength);
+            if (toOctave == true)
+            {
+                //remove doubles from octave transposition
+                fractionFundamentalClass = fractionFundamentalClass.GroupBy(
+                    kv => kv.Key.ToOctave(),
+                    kv => kv.Value,
+                    (key, values) => new { fraction = key, fractionClass = values.First() }
+                    ).ToDictionary(kv => kv.fraction, kv => kv.fractionClass);
+                foreach (var fundamental in fractionFundamentalClass.Keys
+                    .OrderBy(key => LCM(fractionFundamentalClass[key].Select(fraction => (long)fraction.ToOctave().Denominator).ToArray()))
+                    .ThenBy(key => key.ToOctave()))
+                {
+                    var lcmForFundamental = LCM(fractionFundamentalClass[fundamental].Select(fraction => (long)fraction.ToOctave().Denominator).ToArray());
+                    Console.WriteLine($"{fundamental.ToOctave(),-5}: " +
+                        $"{lcmForFundamental} - " +
+                        $"{string.Join(" ", fractionFundamentalClass[fundamental].Select(fraction => fraction.ToOctave()))}");
+                }
+            }
+            else
+            {
+                foreach (var fundamental in fractionFundamentalClass.Keys
+                    .OrderBy(key => LCM(fractionFundamentalClass[key].Select(fraction => (long)fraction.Denominator).ToArray()))
+                    .ThenBy(key => key))
+                {
+                    var lcmForFundamental = LCM(fractionFundamentalClass[fundamental].Select(fraction => (long)fraction.Denominator).ToArray());
+                    Console.WriteLine($"{fundamental,-5}: " +
+                        $"{lcmForFundamental} - " +
+                        $"{string.Join(" ", fractionFundamentalClass[fundamental])}");
+                }
             }
         }
     }
