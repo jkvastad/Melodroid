@@ -806,9 +806,15 @@ static void QueryChordPowerSetLCMs()
                 foreach (List<int> set in renormalizedSets)
                 {
                     if (set.Any(interval => interval == 6))
-                        LcmPerSet.Add(0); //0 to indicate invalid interval, not using 7/5
+                        LcmPerSet.Add(0); //0 to indicate invalid interval, not using 7/5                    
                     else
-                        LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
+                    {
+                        long lcm = LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray());
+                        if (24 % lcm == 0 || 15 % lcm == 0) //only use good lcm
+                            LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
+                        else
+                            LcmPerSet.Add(0);
+                    }
                 }
 
                 lcmPerFundamentalPerSubset[fundamental] = LcmPerSet;
@@ -822,9 +828,9 @@ static void QueryChordPowerSetLCMs()
             Dictionary<int, List<long>> lcmPerFundamentalPerSubset = lcmPerFundamentalPerSubsetPerCardinality[cardinality];
             Console.Write($" ".PadRight(4)); //chars to write e.g. "10:"
             foreach (var set in cardinalSets[cardinality])
-            {                
+            {
                 foreach (var key in set)
-                    Console.Write($"{key,-2} ");                
+                    Console.Write($"{key,-2} ");
             }
             Console.WriteLine("all");
             for (int fundamental = 0; fundamental < 12; fundamental++)
