@@ -820,12 +820,11 @@ static void QueryChordPowerSetLCMs()
         {
             Console.WriteLine($"{nameof(cardinality)}:{cardinality}");
             Dictionary<int, List<long>> lcmPerFundamentalPerSubset = lcmPerFundamentalPerSubsetPerCardinality[cardinality];
-            Console.Write($" ".PadRight(4)); //chars to write e.g. "10: "
+            Console.Write($" ".PadRight(4)); //chars to write e.g. "10:"
             foreach (var set in cardinalSets[cardinality])
-            {
+            {                
                 foreach (var key in set)
-                    Console.Write($"{key,-2} ");
-                Console.Write("  ");
+                    Console.Write($"{key,-2} ");                
             }
             Console.WriteLine("all");
             for (int fundamental = 0; fundamental < 12; fundamental++)
@@ -834,9 +833,9 @@ static void QueryChordPowerSetLCMs()
                 foreach (var lcm in lcmPerFundamentalPerSubset[fundamental])
                 {
                     if (lcm == 0)
-                        Console.Write($" ".PadRight(8));
+                        Console.Write($" ".PadRight(cardinality * 3));
                     else
-                        Console.Write($"{lcm,-7} ");
+                        Console.Write($"{lcm}".PadRight(cardinality * 3));
                 }
                 var goodLcms = lcmPerFundamentalPerSubset[fundamental].Where(lcm => lcm != 0).ToArray(); //lcm 0 placeholder for no lcm
                 if (goodLcms.Count() > 0)
@@ -850,26 +849,6 @@ static void QueryChordPowerSetLCMs()
                     Console.Write("!");
                 Console.WriteLine();
             }
-        }
-        Console.WriteLine($"LCM across fundamentals");
-        for (int fundamental = 0; fundamental < 12; fundamental++)
-        {
-            Console.Write($"{fundamental,-2}: ");
-            long lcmTotal = 1;
-            foreach (var cardinality in lcmPerFundamentalPerSubsetPerCardinality.Keys)
-            {
-                Dictionary<int, List<long>> lcmPerFundamentalPerSubset = lcmPerFundamentalPerSubsetPerCardinality[cardinality];
-                if (lcmPerFundamentalPerSubset[fundamental].Any(lcm => lcm == 0)) //no full match across power set
-                {
-                    lcmTotal = 1;
-                    break;
-                }
-                lcmTotal = LCM([.. lcmPerFundamentalPerSubset[fundamental], lcmTotal]);
-            }
-            if (lcmTotal == 1)
-                Console.WriteLine();
-            else
-                Console.WriteLine(lcmTotal);
         }
     }
 
