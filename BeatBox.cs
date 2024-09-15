@@ -54,16 +54,17 @@ public class BeatBox(IRhythmMeasureMaker rhythmMeasureMaker, IMeasureHarmonizer 
 //Decorates rhythms (lists with time division number of nullable velocities) with scientific pitch according to the rules of consonance 
 public interface IMeasureHarmonizer
 {
-    //Wants some sort of rhtyhmic proto measure - NoteValues without name or octave -> Velocity values only?
-    //Velocity 0 is note off
-    //Else note on
-    //Cannot represent crescendo - how to differ between change of velocity for old note and new note with new velocity value?
-    // - Midi has no explicit support for crescendo - must use expression/volume messages, so perhaps the problem is elsewhere any way.
+    //See Measure MIDIKeys
+    // - array position is time division steps in measure, key is MIDI note, value is velocity
     public List<Measure> MeasuresFromVelocities(List<int?[]> velocityMeasures);
 }
 
 //Creates rhythms (lists with time division number of nullable velocities) according to some heuristic (e.g. simply isochrony or triplet swing time)
 public interface IRhythmMeasureMaker
 {
+    //Velocity 0 is note off
+    //Else note on
+    //Cannot represent crescendo - how to differ between change of velocity for old note and new note with new velocity value?
+    // - Midi has no explicit support for crescendo - must use expression/volume messages, so perhaps the problem is elsewhere any way.
     public List<int?[]> MakeVelocities();
 }

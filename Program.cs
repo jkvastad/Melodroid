@@ -80,9 +80,9 @@ ScaleCalculator scaleCalculator = new();
 
 //TODO add logger for scales used (and other random outcomes during generation)
 ////Select Rhythm Maker
-//int timeDivision = 16;
-//int numberOfMeasures = 32;
-//int beatsPerMeasure = 8;
+int timeDivision = 16;
+int numberOfMeasures = 32;
+int beatsPerMeasure = 8;
 //int deviationsPerMeasure = 2;
 //SimpleIsochronicRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, beatsPerMeasure);
 //SimpleGrooveRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, beatsPerMeasure, deviationsPerMeasure);
@@ -101,7 +101,7 @@ ScaleCalculator scaleCalculator = new();
 //List<Scale> chordProgression = [majorChord, minorChord];
 
 ////Select harmonizer
-//MelodicSupersetHarmonizer harmonizer = new(new Scale(new int[] { 0, 4, 7 }));
+//MelodicSupersetHarmonizer harmonizer = new([0, 4, 7]);
 //ScaleClassRotationHarmonizer harmonizer = new(initialScale);
 //ChordMeasureProgressionHarmonizer harmonizer = new(chordProgression);
 //ScaleClassRotationTransposeHarmonizer harmonizer = new(initialScale);
@@ -491,7 +491,7 @@ while (true)
     QueryChordPowerSetLCMs();
     //QuerySubsetIntervalsLCMs();
     //QueryMelodicSubsetLCMs();
-    //QueryMelodicSupersetLCMs();
+    QueryMelodicSupersetLCMs();
 }
 
 

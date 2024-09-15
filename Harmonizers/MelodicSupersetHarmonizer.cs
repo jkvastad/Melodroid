@@ -1,12 +1,13 @@
 ﻿using Fractions;
 using MusicTheory;
+using System.Linq;
 using static MusicTheory.MusicTheoryUtils;
 
 namespace Melodroid.Harmonizers
 {
-    public class MelodicSupersetHarmonizer(Scale chord) : IMeasureHarmonizer
+    public class MelodicSupersetHarmonizer(int[] chord) : IMeasureHarmonizer
     {
-        private Scale _currentChord = chord;
+        private int[] _currentChord = chord;
         public int CurrentFundamental = 0;
         public int CurrentOctave = 4;
         private Random random = new();
@@ -23,10 +24,6 @@ namespace Melodroid.Harmonizers
             {
                 Dictionary<int, int>?[] measureNoteValues = new Dictionary<int, int>?[velocityMeasure.Length];
 
-                List<List<long>> melodicSuperset = GetMelodicSuperset(_currentChord.ToIntervals().Select(integer => (long)integer).ToArray());
-
-                HashSet<int> currentIntervals = _currentChord.ToIntervals().ToHashSet();
-
                 //Close notes from previous measure
                 measureNoteValues[0] = new();
                 if (measureIndex > 0)
@@ -37,17 +34,31 @@ namespace Melodroid.Harmonizers
                     }
                 }
 
-                //Play random notes from current allowed intervals                
+                List<List<long>> melodicSuperset = GetMelodicSuperset(_currentChord);
+                List<List<long>> properMelodicSuperset = GetProperMelodicSuperset(melodicSuperset, _currentChord);
+
+                List<int> properKeys = new();
+                for (int fundamental = 0; fundamental < 12; fundamental++)
+                {
+                    for (int key = 0; key < 12; key++)
+                    {
+                        if (properMelodicSuperset[fundamental][key] != 0)
+                            properKeys.Add(key);
+                    }
+                }
+                properKeys = properKeys.Distinct().ToList(); //no need for duplicates
+
+                //Play random notes from proper melodic superset
                 for (int i = 0; i < velocityMeasure.Length; i++)
                 {
                     if (velocityMeasure[i] == null)
                         continue;
 
-                    if (measureNoteValues[i] == null) //might be created earlier for i = 0 when closing old notes
+                    if (measureNoteValues[i] == null) //might have been created earlier for i = 0 when closing old notes
                         measureNoteValues[i] = new();
 
-                    //play random interval from current intervals and fundamental 
-                    int noteNameNumber = (CurrentFundamental + currentIntervals.TakeRandom()) % 12; //C is 0
+                    //Play random note from proper melodic superset
+                    int noteNameNumber = properKeys.TakeRandom(); //C is 0
                     int noteNumber = ((CurrentOctave + 1) * 12) + noteNameNumber;
                     int velocity = (int)velocityMeasure[i]!; //checked for null on the lines above                
                     measureNoteValues[i]![noteNumber] = velocity; //created the dictionary on the lines above                    
@@ -56,16 +67,25 @@ namespace Melodroid.Harmonizers
                 measures.Add(measure);
                 measureIndex++;
 
-                ChordPerMeasure.Add((CurrentFundamental, _currentChord)); //used by chord harmonizers
+                //Save chord for chord harmonizers
+                int chordFundamental = _currentChord.Min(); //arbitrary fundamental - chord inversions to match
+                Scale chord = new Scale(_currentChord.Select(key => key - chordFundamental).ToArray());
+                ChordPerMeasure.Add((chordFundamental, chord));
 
-                CurrentFundamental = random.Next(12);
+                //Select new chord and fundamental
+                //TODO: how to select chord? any key combination with lcm dividing a proper key lcm? (see 9 0 4 vs 0 4 7)
+                List<(int fundamental, long lcm)> transitionOptions = new();
+                for (int fundamental = 0; fundamental < 12; fundamental++)
+                {
+                    for (int key = 0; key < 12; key++)
+                        CurrentFundamental = random.Next(12);
+                }
             }
             return measures;
         }
-
-        //Melodic Superset consists of all complete LCM values for each possible added tone for each possible fundamental position
+        //Melodic Superset consists of all complete LCM values for each possible tone added to the current chord for each possible fundamental position
         //LCM 0 is returned for keys and fundamentals with no valid LCM (i.e. using key 6 relative to fundamental)
-        public static List<List<long>> GetMelodicSuperset(long[] tet12Keys)
+        public static List<List<long>> GetMelodicSuperset(int[] tet12Keys)
         {
             Fraction[] standardFractions = [new(1), new(16, 15), new(9, 8), new(6, 5), new(5, 4), new(4, 3), new(0), new(3, 2), new(8, 5), new(5, 3), new(9, 5), new(15, 8)];
             List<List<long>> lcmsPerMelodyPerFundamental = new();
@@ -75,8 +95,8 @@ namespace Melodroid.Harmonizers
                 lcmsPerMelodyPerFundamental.Add([]);
                 for (int melodyKey = 0; melodyKey < 12; melodyKey++)
                 {
-                    List<long> renormalizedKeys = tet12Keys.Select(key => (key - fundamental + 12) % 12).ToList();
-                    long renormalizedMelodyKey = (melodyKey - fundamental + 12) % 12;
+                    List<int> renormalizedKeys = tet12Keys.Select(key => (key - fundamental + 12) % 12).ToList();
+                    int renormalizedMelodyKey = (melodyKey - fundamental + 12) % 12;
                     renormalizedKeys.Add(renormalizedMelodyKey);
 
                     if (renormalizedKeys.Any(key => standardFractions[key] == 0))
@@ -91,27 +111,39 @@ namespace Melodroid.Harmonizers
             }
             return lcmsPerMelodyPerFundamental;
         }
-        //A pruned melodic superset has all LCMs not dividing 15 or 24 set to 0, as well as base 15 
-        //public static List<List<long>> GetPrunedMelodicSuperset(List<List<long>> melodicSuperset, long[] chord)
-        //{
-        //    List<List<long>> prunedMelodicSuperset = new();
-        //    for (int fundamental = 0; fundamental < melodicSuperset.Count; fundamental++)
-        //    {                
-        //        prunedMelodicSuperset.Add([]);
-        //        List<long> lcmsPerKey = melodicSuperset[fundamental];
-        //        for (int key = 0; key < lcmsPerKey.Count; key++)
-        //        {
-        //            long lcm = 0;
-        //            if (24 % lcmsPerKey[key] == 0)
-        //                lcm = lcmsPerKey[key];
-        //            else if (15 % lcmsPerKey[key] == 0)
-        //            {
-        //                if (!) //check for collapsing base 15
-        //                    lcm = lcmsPerKey[key];
-        //            }
-        //            prunedMelodicSuperset[fundamental].Add(lcm);
-        //        }
-        //    }
-        //}
+        //A proper melodic superset has additional requirements to a melodic superset:
+        // - all LCMs not dividing 15 or 24 set to 0 (invalid)
+        // - only real bases
+        // - no base 15 collapse (the fundamental for base 15 does not contain the interval 8/5)        
+        public static List<List<long>> GetProperMelodicSuperset(List<List<long>> melodicSuperset, int[] chord)
+        {
+            List<List<long>> properMelodicSuperset = new();
+            for (int fundamental = 0; fundamental < melodicSuperset.Count; fundamental++)
+            {
+                properMelodicSuperset.Add([]);
+                List<long> lcmsPerKey = melodicSuperset[fundamental];
+                for (int key = 0; key < lcmsPerKey.Count; key++)
+                {
+                    long lcm = 0;
+                    List<int> chordAndKey = [.. chord, key];
+                    if (!chordAndKey.Contains(fundamental))//only real bases 
+                    {
+                        properMelodicSuperset[fundamental].Add(lcm);
+                        continue;
+                    }
+
+                    if (24 % lcmsPerKey[key] == 0)
+                        lcm = lcmsPerKey[key];
+                    else if (15 % lcmsPerKey[key] == 0)
+                    {
+                        lcm = lcmsPerKey[key];
+                        if (chordAndKey.Any(note => (note - fundamental + 12) % 12 == 4)) //check for collapsing base 15
+                            lcm = 0;
+                    }
+                    properMelodicSuperset[fundamental].Add(lcm);
+                }
+            }
+            return properMelodicSuperset;
+        }
     }
 }
