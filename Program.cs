@@ -84,7 +84,7 @@ int timeDivision = 16;
 int numberOfMeasures = 32;
 int beatsPerMeasure = 8;
 //int deviationsPerMeasure = 2;
-//SimpleIsochronicRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, beatsPerMeasure);
+SimpleIsochronicRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, beatsPerMeasure);
 //SimpleGrooveRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, beatsPerMeasure, deviationsPerMeasure);
 //List<List<PatternBlock>> measurePatternBlocks = [
 //    [new("A", 8), new("B", 4), new("B", 4)],
@@ -101,7 +101,7 @@ int beatsPerMeasure = 8;
 //List<Scale> chordProgression = [majorChord, minorChord];
 
 ////Select harmonizer
-//MelodicSupersetHarmonizer harmonizer = new([0, 4, 7]);
+MelodicSupersetHarmonizer harmonizer = new([0, 4, 7]);
 //ScaleClassRotationHarmonizer harmonizer = new(initialScale);
 //ChordMeasureProgressionHarmonizer harmonizer = new(chordProgression);
 //ScaleClassRotationTransposeHarmonizer harmonizer = new(initialScale);
@@ -117,15 +117,15 @@ int beatsPerMeasure = 8;
 //PathWalkMeasureHarmonizer measureHarmonizer = new(initialScale, initialScale, 4);
 //BeatBox beatBox = new BeatBox(rhythmMaker, measureHarmonizer);
 
-////Write MIDI files
-//BeatBox beatBox = new BeatBox(rhythmMaker, harmonizer);
+//////Write MIDI files
+BeatBox beatBox = new BeatBox(rhythmMaker, harmonizer);
 
-//List<Measure> melodyMeasures = beatBox.MakeMeasures();
-//beatBox.WriteMeasuresToMidi(melodyMeasures, folderPath, "key_multiplicity_test", true);
+List<Measure> melodyMeasures = beatBox.MakeMeasures();
+beatBox.WriteMeasuresToMidi(melodyMeasures, folderPath, "melodic_superset_test", true);
 
-//ChordMeasureHarmonizer chordHarmonizer = new(harmonizer.ChordPerMeasure, 4);
-//List<Measure> chordMeasures = chordHarmonizer.MeasuresFromVelocities(rhythmMaker.VelocityMeasures);
-//beatBox.WriteMeasuresToMidi(chordMeasures, folderPath, "key_multiplicity_chord_test", true);
+ChordMeasureHarmonizer chordHarmonizer = new(harmonizer.ChordPerMeasure, 4);
+List<Measure> chordMeasures = chordHarmonizer.MeasuresFromVelocities(rhythmMaker.VelocityMeasures);
+beatBox.WriteMeasuresToMidi(chordMeasures, folderPath, "melodic_superset_chord_test", true);
 
 
 //TODO: Check for patterns in complex chords, e.g. in 3/2, 5/4 the 3/2 interval loops twice, cutting 5/4 in "half" and creating a mirrored version -
@@ -478,21 +478,23 @@ double[] ConstructTet12FractionFamily(int familyNumerator, int maxNumerator = 25
 //Console.WriteLine("---");
 //PrintRatioFundamentalOctaveSweep(myRatios4);
 
+
+
 //TODO: Are chord progressions based on finding intervals 3/2 and 5/4 (major chord)? Implies other intervals are renormalized and must fit in with the prioritized intervals
 //TODO: Print LCM to simplify comparing interval matches, perhaps filter on max LCM.
-while (true)
-{
-    //QueryRatioFundamentalOctaveSweep(maxDeviation: 0.033d);
-    //QueryChordKeyMultiplicity(scaleCalculator);
-    //QueryChordKeyMultiplicityPowerSets(scaleCalculator);
-    //QueryFundamentalClassPerScale(scaleCalculator);
-    //QueryChordProgressionFromMultiplicity(scaleCalculator);
-    //QueryChordInKeySetTranslations();
-    QueryChordPowerSetLCMs();
-    //QuerySubsetIntervalsLCMs();
-    //QueryMelodicSubsetLCMs();
-    QueryMelodicSupersetLCMs();
-}
+//while (true)
+//{
+//    //QueryRatioFundamentalOctaveSweep(maxDeviation: 0.033d);
+//    //QueryChordKeyMultiplicity(scaleCalculator);
+//    //QueryChordKeyMultiplicityPowerSets(scaleCalculator);
+//    //QueryFundamentalClassPerScale(scaleCalculator);
+//    //QueryChordProgressionFromMultiplicity(scaleCalculator);
+//    //QueryChordInKeySetTranslations();
+//    //QueryChordPowerSetLCMs();
+//    //QuerySubsetIntervalsLCMs();
+//    //QueryMelodicSubsetLCMs();
+//    QueryMelodicSupersetLCMs();
+//}
 
 
 
