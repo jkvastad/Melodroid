@@ -40,6 +40,10 @@ namespace MusicTheory
             1.7817974362806785,
             1.887748625363387];
 
+        //Used for calculating chord LCM in 12TET
+        public static readonly Fraction[] StandardFractions = [
+            new(1), new(16, 15), new(9, 8), new(6, 5), new(5, 4), new(4, 3), new(0), new(3, 2), new(8, 5), new(5, 3), new(9, 5), new(15, 8)];
+
         public static void PrintTet12FractionApproximations(List<int> primes, int maxFactors = 4, int maxPatternLength = 50)
         {
             //primes chosen so that a power of the prime e.g. 2^4 does not exceed ~50, allowing 7^2 only yields a bad approximation of 2 via 49/25 so is excluded

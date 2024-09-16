@@ -87,7 +87,6 @@ namespace Melodroid.Harmonizers
         //LCM 0 is returned for keys and fundamentals with no valid LCM (i.e. using key 6 relative to fundamental)
         public static List<List<long>> GetMelodicSuperset(int[] tet12Keys)
         {
-            Fraction[] standardFractions = [new(1), new(16, 15), new(9, 8), new(6, 5), new(5, 4), new(4, 3), new(0), new(3, 2), new(8, 5), new(5, 3), new(9, 5), new(15, 8)];
             List<List<long>> lcmsPerMelodyPerFundamental = new();
 
             for (int fundamental = 0; fundamental < 12; fundamental++)
@@ -99,13 +98,13 @@ namespace Melodroid.Harmonizers
                     int renormalizedMelodyKey = (melodyKey - fundamental + 12) % 12;
                     renormalizedKeys.Add(renormalizedMelodyKey);
 
-                    if (renormalizedKeys.Any(key => standardFractions[key] == 0))
+                    if (renormalizedKeys.Any(key => StandardFractions[key] == 0))
                         lcmsPerMelodyPerFundamental[fundamental].Add(0); //0 for invalid key, no 7/5
                     else
                     {
                         lcmsPerMelodyPerFundamental[fundamental].Add(
                             LCM(renormalizedKeys.Select(
-                                key => (long)standardFractions[key].Denominator).ToArray()));
+                                key => (long)StandardFractions[key].Denominator).ToArray()));
                     }
                 }
             }
@@ -144,6 +143,27 @@ namespace Melodroid.Harmonizers
                 }
             }
             return properMelodicSuperset;
+        }
+
+        //Gets all LCMs per fundamental in 12 tet for a chord
+        public static List<long> GetChordLCMs(int[] chord)
+        {
+            List<long> chordLcms = new();
+            for (int fundamental = 0; fundamental < 12; fundamental++)
+            {
+                List<int> renormalizedChord = chord.Select(key => (key - fundamental + 12) % 12).ToList();
+                List<Fraction> chordFractions = renormalizedChord.Select(key => StandardFractions[key]).ToList();
+
+                long chordLcm = 0;
+
+                if (chordFractions.Any(fraction => fraction == 0))
+                    ; //invalid fraction - no lcm possible
+                else
+                    chordLcm = LCM(chordFractions.Select(fraction => (long)fraction.Denominator).ToArray());
+
+                chordLcms.Add(chordLcm);
+            }
+            return chordLcms;
         }
     }
 }
