@@ -101,7 +101,8 @@ SimpleIsochronicRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, be
 //List<Scale> chordProgression = [majorChord, minorChord];
 
 ////Select harmonizer
-MelodicSupersetHarmonizerOneFundamentalPerMeasure harmonizer = new([0, 4, 7]);
+//MelodicSupersetHarmonizerOneFundamentalPerMeasure harmonizer = new([0, 4, 7]);
+MelodicSupersetHarmonizerOddOrEvenBasePerMeasure harmonizer = new([0, 4, 7]);
 //ScaleClassRotationHarmonizer harmonizer = new(initialScale);
 //ChordMeasureProgressionHarmonizer harmonizer = new(chordProgression);
 //ScaleClassRotationTransposeHarmonizer harmonizer = new(initialScale);
