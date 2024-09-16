@@ -48,7 +48,7 @@ namespace Melodroid.Harmonizers
                 }
                 properKeys = properKeys.Distinct().ToList(); //no need for duplicates
 
-                //Play random notes from proper melodic superset
+                //Play random notes from proper melodic superset                
                 int previousNoteNumber = 0;
                 for (int i = 0; i < velocityMeasure.Length; i++)
                 {
@@ -81,7 +81,7 @@ namespace Melodroid.Harmonizers
 
                 //Select new chord
                 _currentChord = GetChordProgression(_currentChord);
-                Console.WriteLine(string.Join(" ", _currentChord));
+                //Console.WriteLine(string.Join(" ", _currentChord));
             }
             return measures;
         }
@@ -140,7 +140,7 @@ namespace Melodroid.Harmonizers
                     else if (15 % lcmPerKey[key] == 0)
                     {
                         lcm = lcmPerKey[key];
-                        if (chordAndKey.Any(note => (note - fundamental + 12) % 12 == 4)) //check for collapsing base 15
+                        if (chordAndKey.Any(note => (note - fundamental + 12) % 12 == 8)) //check for collapsing base 15 - no 8/5 interval
                             lcm = 0;
                     }
                     properMelodicSuperset[fundamental].Add(lcm);
