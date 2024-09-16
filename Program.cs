@@ -101,7 +101,7 @@ SimpleIsochronicRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, be
 //List<Scale> chordProgression = [majorChord, minorChord];
 
 ////Select harmonizer
-MelodicSupersetHarmonizer harmonizer = new([0, 4, 7]);
+MelodicSupersetHarmonizerOneFundamentalPerMeasure harmonizer = new([0, 4, 7]);
 //ScaleClassRotationHarmonizer harmonizer = new(initialScale);
 //ChordMeasureProgressionHarmonizer harmonizer = new(chordProgression);
 //ScaleClassRotationTransposeHarmonizer harmonizer = new(initialScale);
@@ -118,30 +118,30 @@ MelodicSupersetHarmonizer harmonizer = new([0, 4, 7]);
 //BeatBox beatBox = new BeatBox(rhythmMaker, measureHarmonizer);
 
 //////Write MIDI files
-//BeatBox beatBox = new BeatBox(rhythmMaker, harmonizer);
+BeatBox beatBox = new BeatBox(rhythmMaker, harmonizer);
 
-//List<Measure> melodyMeasures = beatBox.MakeMeasures();
-//beatBox.WriteMeasuresToMidi(melodyMeasures, folderPath, "melodic_superset_test", true);
+List<Measure> melodyMeasures = beatBox.MakeMeasures();
+beatBox.WriteMeasuresToMidi(melodyMeasures, folderPath, "melodic_superset_test", true);
 
-//ChordMeasureHarmonizer chordHarmonizer = new(harmonizer.ChordPerMeasure, 4);
-//List<Measure> chordMeasures = chordHarmonizer.MeasuresFromVelocities(rhythmMaker.VelocityMeasures);
-//beatBox.WriteMeasuresToMidi(chordMeasures, folderPath, "melodic_superset_chord_test", true);
+ChordMeasureHarmonizer chordHarmonizer = new(harmonizer.ChordPerMeasure, 4);
+List<Measure> chordMeasures = chordHarmonizer.MeasuresFromVelocities(rhythmMaker.VelocityMeasures);
+beatBox.WriteMeasuresToMidi(chordMeasures, folderPath, "melodic_superset_chord_test", true);
 
 //TODO: Are chord progressions based on finding intervals 3/2 and 5/4 (major chord)? Implies other intervals are renormalized and must fit in with the prioritized intervals
 //TODO: Print LCM to simplify comparing interval matches, perhaps filter on max LCM.
-while (true)
-{
-    //QueryRatioFundamentalOctaveSweep(maxDeviation: 0.033d);
-    //QueryChordKeyMultiplicity(scaleCalculator);
-    //QueryChordKeyMultiplicityPowerSets(scaleCalculator);
-    //QueryFundamentalClassPerScale(scaleCalculator);
-    //QueryChordProgressionFromMultiplicity(scaleCalculator);
-    //QueryChordInKeySetTranslations();
-    //QueryChordPowerSetLCMs();
-    //QuerySubsetIntervalsLCMs();
-    //QueryMelodicSubsetLCMs();
-    QueryMelodicSupersetLCMs();
-}
+//while (true)
+//{
+//    //QueryRatioFundamentalOctaveSweep(maxDeviation: 0.033d);
+//    //QueryChordKeyMultiplicity(scaleCalculator);
+//    //QueryChordKeyMultiplicityPowerSets(scaleCalculator);
+//    //QueryFundamentalClassPerScale(scaleCalculator);
+//    //QueryChordProgressionFromMultiplicity(scaleCalculator);
+//    //QueryChordInKeySetTranslations();
+//    //QueryChordPowerSetLCMs();
+//    //QuerySubsetIntervalsLCMs();
+//    //QueryMelodicSubsetLCMs();
+//    QueryMelodicSupersetLCMs();
+//}
 
 
 //TODO: Check for patterns in complex chords, e.g. in 3/2, 5/4 the 3/2 interval loops twice, cutting 5/4 in "half" and creating a mirrored version -

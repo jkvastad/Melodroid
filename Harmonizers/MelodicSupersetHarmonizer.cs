@@ -37,6 +37,7 @@ namespace Melodroid.Harmonizers
                 List<List<long>> melodicSuperset = GetMelodicSuperset(_currentChord);
                 List<List<long>> properMelodicSuperset = GetProperMelodicSuperset(melodicSuperset, _currentChord);
 
+                //Any proper keys - make rhytmic chunks seem chaotic
                 List<int> properKeys = new();
                 for (int fundamental = 0; fundamental < 12; fundamental++)
                 {
@@ -46,10 +47,12 @@ namespace Melodroid.Harmonizers
                             properKeys.Add(key);
                     }
                 }
-                properKeys = properKeys.Distinct().ToList(); //no need for duplicates
+                properKeys = properKeys.Distinct().ToList(); //no need for duplicates                
 
-                //Play random notes from proper melodic superset                
-                int previousNoteNumber = 0;
+
+                //Play random notes from proper melodic superset
+                //TODO: Needs to respect rhythmic chunking, to many changes within a chunk sounds chaotic. See other variants of melodicSupersetHarmonizer.
+                int previousNoteNumber = 0;                
                 for (int i = 0; i < velocityMeasure.Length; i++)
                 {
                     if (velocityMeasure[i] == null)
@@ -59,7 +62,7 @@ namespace Melodroid.Harmonizers
                         measureNoteValues[i] = new();
 
                     //Play random note from proper melodic superset
-                    int noteNameNumber = properKeys.TakeRandom(); //C is 0
+                    int noteNameNumber = properKeys.TakeRandom(); //C is 0                                        
                     int noteNumber = ((CurrentOctave + 1) * 12) + noteNameNumber;
                     if (previousNoteNumber != noteNumber) //close old note - melodic superset is only made for one extra note at a time
                     {
