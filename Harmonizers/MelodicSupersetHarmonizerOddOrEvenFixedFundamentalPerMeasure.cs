@@ -38,7 +38,7 @@ namespace Melodroid.Harmonizers
                 List<List<long>> properMelodicSuperset = MelodicSupersetHarmonizer.GetProperMelodicSuperset(melodicSuperset, _currentChord);
 
                 //Sort keys by odd or even (15 vs 24) only
-                //TODO seems mostly superflous, but e.g. 0 4 7 with fundamental 7 has mixed even/odd.                
+                //Useuful for e.g. 0 4 7 where fundamental 7 has mixed even/odd.                 
                 Dictionary<int, List<List<int>>> properKeysPerFundamental = new();
 
                 for (int fundamental = 0; fundamental < 12; fundamental++)
