@@ -38,6 +38,7 @@ namespace Melodroid.Harmonizers
                 List<List<long>> properMelodicSuperset = MelodicSupersetHarmonizer.GetProperMelodicSuperset(melodicSuperset, _currentChord);
 
                 //Sort keys by odd or even (15 vs 24) only
+                //TODO seems mostly superflous, but e.g. 0 4 7 with fundamental 7 has mixed even/odd.                
                 Dictionary<int, List<List<int>>> properKeysPerFundamental = new();
 
                 for (int fundamental = 0; fundamental < 12; fundamental++)
@@ -50,7 +51,7 @@ namespace Melodroid.Harmonizers
                         {
                             if (24 % lcm == 0)
                                 properKeysPerFundamental[fundamental][0].Add(key);
-                            else
+                            if (15 % lcm == 0)
                                 properKeysPerFundamental[fundamental][1].Add(key);
                         }
                     }
@@ -59,14 +60,14 @@ namespace Melodroid.Harmonizers
                 }
 
 
-                //Play random notes from proper melodic superset
-                //TODO: Needs to respect rhythmic chunking, to many changes within a chunk sounds chaotic.
+                //Play random notes from proper melodic superset                
                 int previousNoteNumber = 0;
                 //select a fundamental having proper keys and stick with it through the measure
+                //TODO crashes on e.g. 0 4 8 as no real bases are present - how to play melody to chords without real bases?
                 int melodyRoot = properKeysPerFundamental.Keys
                     .Where(fundamental => properKeysPerFundamental[fundamental]
                     .Any(oddOrEven => oddOrEven.Count > 0)).TakeRandom();
-                int isEven = properKeysPerFundamental[melodyRoot].Select((keys, index) => //only use polarity with actualy corresponding keys
+                int isEven = properKeysPerFundamental[melodyRoot].Select((keys, index) => //only use polarity with actual corresponding keys
                 {
                     if (keys.Count > 0)
                         return index;
@@ -104,7 +105,7 @@ namespace Melodroid.Harmonizers
                 ChordPerMeasure.Add((chordFundamental, chord));
 
                 //Select new chord
-                _currentChord = MelodicSupersetHarmonizer.GetChordProgression(_currentChord);
+                _currentChord = MelodicSupersetHarmonizer.GetProperChordProgression(_currentChord);
                 //Console.WriteLine(string.Join(" ", _currentChord));
             }
             return measures;

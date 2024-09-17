@@ -117,7 +117,7 @@ namespace Melodroid.Harmonizers
         }
         //A proper melodic superset has additional requirements to a melodic superset:
         // - all LCMs not dividing 15 or 24 set to 0 (invalid)
-        // - only real bases
+        // - only real bases with respect to the chord
         // - no base 15 collapse (the fundamental for base 15 does not contain the interval 8/5)        
         public static List<List<long>> GetProperMelodicSuperset(List<List<long>> melodicSuperset, int[] chord)
         {
@@ -129,8 +129,7 @@ namespace Melodroid.Harmonizers
                 for (int key = 0; key < lcmPerKey.Count; key++)
                 {
                     long lcm = 0;
-                    List<int> chordAndKey = [.. chord, key];
-                    if (!chordAndKey.Contains(fundamental))//only real bases 
+                    if (!chord.Contains(fundamental))//only real bases 
                     {
                         properMelodicSuperset[fundamental].Add(lcm);
                         continue;
@@ -143,6 +142,7 @@ namespace Melodroid.Harmonizers
                     else if (15 % lcmPerKey[key] == 0)
                     {
                         lcm = lcmPerKey[key];
+                        List<int> chordAndKey = [.. chord, key];
                         if (chordAndKey.Any(note => (note - fundamental + 12) % 12 == 8)) //check for collapsing base 15 - no 8/5 interval
                             lcm = 0;
                     }
@@ -190,6 +190,36 @@ namespace Melodroid.Harmonizers
                     continue;
                 //Check for at least one lcm match at any fundamental
                 for (int fundamental = 0; fundamental < 12; fundamental++)
+                {
+                    if (originalLcms[fundamental] == 0 || candidateLcms[fundamental] == 0) //avoid modulo 0
+                        continue;
+                    if ((24 % originalLcms[fundamental] == 0) && (24 % candidateLcms[fundamental] == 0))
+                        return candidateChord;
+                    if ((15 % originalLcms[fundamental] == 0) && (15 % candidateLcms[fundamental] == 0))
+                        return candidateChord;
+                }
+            }
+            return progression;
+        }
+
+        //A proper chord progression has a real base
+        public static int[] GetProperChordProgression(int[] originalChord)
+        {
+            int[] progression = [];
+            bool progressionFound = false;
+            List<long> originalLcms = GetChordLCMs(originalChord);
+            List<int> tet12 = new List<int>();
+            for (int i = 0; i < 12; i++)
+                tet12.Add(i);
+
+            while (!progressionFound)
+            {
+                var candidateChord = tet12.TakeRandom(3).Order().ToArray();
+                var candidateLcms = GetChordLCMs(candidateChord);
+                if (HasSemitoneOrTritone(candidateChord))
+                    continue;
+                //Check for at least one lcm match at any fundamental
+                foreach (int fundamental in candidateChord)
                 {
                     if (originalLcms[fundamental] == 0 || candidateLcms[fundamental] == 0) //avoid modulo 0
                         continue;

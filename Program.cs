@@ -83,15 +83,15 @@ ScaleCalculator scaleCalculator = new();
 int timeDivision = 16;
 int numberOfMeasures = 32;
 int beatsPerMeasure = 8;
-//int deviationsPerMeasure = 2;
-SimpleIsochronicRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, beatsPerMeasure);
-//SimpleGrooveRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, beatsPerMeasure, deviationsPerMeasure);
-//List<List<PatternBlock>> measurePatternBlocks = [
-//    [new("A", 8), new("B", 4), new("B", 4)],
-//    [new("A", 8), new("B", 4), new("C", 4)],
-//    [new("A", 8), new("B", 4), new("B", 4)],
-//    [new("D", 8), new("B", 4), new("E", 4)]
-//];
+int deviationsPerMeasure = 3;
+//SimpleIsochronicRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, beatsPerMeasure);
+SimpleGrooveRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, beatsPerMeasure, deviationsPerMeasure);
+List<List<PatternBlock>> measurePatternBlocks = [
+    [new("A", 8), new("B", 4), new("B", 4)],
+    [new("A", 8), new("B", 4), new("C", 4)],
+    [new("A", 8), new("B", 4), new("B", 4)],
+    [new("D", 8), new("B", 4), new("E", 4)]
+];
 //SimpleMeasurePatternRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, beatsPerMeasure, deviationsPerMeasure, measurePatternBlocks);
 
 
@@ -103,7 +103,8 @@ SimpleIsochronicRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, be
 ////Select harmonizer
 //MelodicSupersetHarmonizerOneFundamentalPerMeasure harmonizer = new([0, 4, 7]);
 //MelodicSupersetHarmonizerOddOrEvenBasePerMeasure harmonizer = new([0, 4, 7]);
-MelodicSupersetHarmonizerOddOrEvenFixedFundamentalPerMeasure harmonizer = new([0, 4, 7]);
+//MelodicSupersetHarmonizerOddOrEvenFixedFundamentalPerMeasure harmonizer = new([0, 4, 7]);
+MelodicSupersetHarmonizerOddOrEvenFixedFundamentalPerMeasure harmonizer = new([11, 6, 8]);
 //ScaleClassRotationHarmonizer harmonizer = new(initialScale);
 //ChordMeasureProgressionHarmonizer harmonizer = new(chordProgression);
 //ScaleClassRotationTransposeHarmonizer harmonizer = new(initialScale);
@@ -139,7 +140,7 @@ beatBox.WriteMeasuresToMidi(chordMeasures, folderPath, "melodic_superset_chord_t
 //    //QueryFundamentalClassPerScale(scaleCalculator);
 //    //QueryChordProgressionFromMultiplicity(scaleCalculator);
 //    //QueryChordInKeySetTranslations();
-//    //QueryChordPowerSetLCMs();
+//    QueryChordPowerSetLCMs();
 //    //QuerySubsetIntervalsLCMs();
 //    //QueryMelodicSubsetLCMs();
 //    QueryMelodicSupersetLCMs();
