@@ -120,30 +120,30 @@ MelodicSupersetHarmonizerOddOrEvenFixedFundamentalPerMeasure harmonizer = new([0
 //BeatBox beatBox = new BeatBox(rhythmMaker, measureHarmonizer);
 
 //////Write MIDI files
-BeatBox beatBox = new BeatBox(rhythmMaker, harmonizer);
+//BeatBox beatBox = new BeatBox(rhythmMaker, harmonizer);
 
-List<Measure> melodyMeasures = beatBox.MakeMeasures();
-beatBox.WriteMeasuresToMidi(melodyMeasures, folderPath, "melodic_superset_test", true);
+//List<Measure> melodyMeasures = beatBox.MakeMeasures();
+//beatBox.WriteMeasuresToMidi(melodyMeasures, folderPath, "melodic_superset_test", true);
 
-ChordMeasureHarmonizer chordHarmonizer = new(harmonizer.ChordPerMeasure, 4);
-List<Measure> chordMeasures = chordHarmonizer.MeasuresFromVelocities(rhythmMaker.VelocityMeasures);
-beatBox.WriteMeasuresToMidi(chordMeasures, folderPath, "melodic_superset_chord_test", true);
+//ChordMeasureHarmonizer chordHarmonizer = new(harmonizer.ChordPerMeasure, 4);
+//List<Measure> chordMeasures = chordHarmonizer.MeasuresFromVelocities(rhythmMaker.VelocityMeasures);
+//beatBox.WriteMeasuresToMidi(chordMeasures, folderPath, "melodic_superset_chord_test", true);
 
 //TODO: Are chord progressions based on finding intervals 3/2 and 5/4 (major chord)? Implies other intervals are renormalized and must fit in with the prioritized intervals
 //TODO: Print LCM to simplify comparing interval matches, perhaps filter on max LCM.
-//while (true)
-//{
-//    //QueryRatioFundamentalOctaveSweep(maxDeviation: 0.033d);
-//    //QueryChordKeyMultiplicity(scaleCalculator);
-//    //QueryChordKeyMultiplicityPowerSets(scaleCalculator);
-//    //QueryFundamentalClassPerScale(scaleCalculator);
-//    //QueryChordProgressionFromMultiplicity(scaleCalculator);
-//    //QueryChordInKeySetTranslations();
-//    QueryChordPowerSetLCMs();
-//    //QuerySubsetIntervalsLCMs();
-//    //QueryMelodicSubsetLCMs();
-//    QueryMelodicSupersetLCMs();
-//}
+while (true)
+{
+    //QueryRatioFundamentalOctaveSweep(maxDeviation: 0.033d);
+    QueryChordKeyMultiplicity(scaleCalculator);
+    //QueryChordKeyMultiplicityPowerSets(scaleCalculator);
+    //QueryFundamentalClassPerScale(scaleCalculator);
+    //QueryChordProgressionFromMultiplicity(scaleCalculator);
+    //QueryChordInKeySetTranslations();
+    QueryChordPowerSetLCMs();
+    //QuerySubsetIntervalsLCMs();
+    //QueryMelodicSubsetLCMs();
+    //QueryMelodicSupersetLCMs();
+}
 
 
 //TODO: Check for patterns in complex chords, e.g. in 3/2, 5/4 the 3/2 interval loops twice, cutting 5/4 in "half" and creating a mirrored version -
@@ -567,6 +567,80 @@ double[] ConstructTet12FractionFamily(int familyNumerator, int maxNumerator = 25
 //BeatBox beatBox = new BeatBox();
 //WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, "melodroid testing");
 
+
+//A chord can belong to many scales.
+//e.g. for chord 0 4 7 and scale 0 2 4 5 7 9 11 the chord matches at positions 0, 5 and 7.
+//e.g. for chord 0 4 7 and scale 0 1 3 5 6 8 9 the chord matches at positions 1, 5 and 8.
+// - Given chord 0 4 7, it could belong to either of the above scales, and the scales' fundamentals could be at key 0, 7, 5 or key 11, 7, 4, respectively.
+//This is called chord multiplicity: a chord can belong to different scales, but also belong to different positions in a scale.
+// - Which different scales the chord belong to is called "chord scale multiplicity":
+// -- given a chord, there is a set (a multiplicity) of different scales containing that chord.
+// - Which positions the chord can hold in a scale is related to the "chord scale fundamental set":
+// -- given a chord and scale, there is a set of fundamentals for that scale so that the scale contains the chord.
+//Given a chord and scale, applying the chord scale fundamental set to the scale produces a key set for each fundamental.
+// - each key thus belongs to a number (possibly 0) of fundamentals, this is called "chord key multiplicity" or simply key multiplicity
+// -- chord key multiplicity tells us which keys imply which scales, possibly the basis for melody
+void QueryChordKeyMultiplicity(ScaleCalculator scaleCalculator)
+{
+    List<Scale> scalesOfInterest = [
+        //new([0, 1, 3, 5, 6, 8, 9, 10]), //full base 15
+        //new([0, 1, 3, 5, 6, 9, 10]), //base 15 - seems like the full base 15 collapses to base 24 due to the 8/5 creating base24 at C or G for base 15 at B
+        new([0, 1, 3, 5, 9, 10]), //natural base 15 - no 8 as it collapses to 24 on 1, no 6 as 7 is bad numerator in 7/5
+                                  //new([0, 3, 4, 6, 7, 8, 10]), //full base 20
+                                  //new([0, 2, 4, 6, 8, 9]), //full base 7
+                                  //new([0, 2, 4, 7, 11]),  //base 8
+        new([0, 2, 4, 5, 7, 9, 11])  //base 24 - 1, 9/8, 5/4, 5/4, 3/2, 5/3, 15/8
+        ];
+
+    Console.WriteLine("Matching input against scales:");
+    foreach (Scale scale in scalesOfInterest)
+    {
+        Console.WriteLine($"{scale.CalculateBase(),-2}: {scale}");
+    }
+
+    while (true)
+    {
+        Console.WriteLine($"Input space separated tet12 keys for chord to calculate chord key multiplicity (see method comment for theory - empty input to exit)");
+        string chordInput = Console.ReadLine();
+
+        if (chordInput.Length == 0)
+            return;
+        if (chordInput == "clear")
+        {
+            Console.Clear();
+            continue;
+        }
+
+        Tet12KeySet chord = new(Array.ConvertAll(chordInput.Split(' '), int.Parse));
+        //Find all matches for chord per scale of interest
+        foreach (Scale scale in scalesOfInterest)
+        {
+            List<int>[] chordKeyMultiplicity = scale.CalculateKeyMultiplicity(chord);
+            //Print results
+            for (int i = 0; i < 12; i++)
+            {
+                Console.Write($"{i}".PadRight(3));
+            }
+            Console.WriteLine();
+            Console.WriteLine();
+            for (int row = 0; row < chordKeyMultiplicity.Max(columnValues => columnValues.Count); row++)
+            {
+                for (int column = 0; column < 12; column++)
+                {
+                    //print scale root
+                    if (row < chordKeyMultiplicity[column].Count)
+                        Console.Write($"{chordKeyMultiplicity[column][row]}".PadRight(3));
+                    else
+                        Console.Write("   ");
+                }
+                Console.WriteLine();
+            }
+            Console.WriteLine();
+        }
+    }
+}
+
+
 //Ad an extra tone to the original set, e.g. the melody being played, display LCM for all fundamentals for all possible keys
 static void QueryMelodicSupersetLCMs()
 {
@@ -810,7 +884,7 @@ static void QueryChordPowerSetLCMs()
                     else
                     {
                         long lcm = LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray());
-                        if (24 % lcm == 0 || 15 % lcm == 0) //only use good lcm
+                        if (24 % lcm == 0 || 15 % lcm == 0) //only use base 15 or 24
                             LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
                         else
                             LcmPerSet.Add(0);
@@ -1209,73 +1283,6 @@ static void QueryChordPowerSetLCMs()
                 Tet12KeySet translatedKeySet = inputKeys >> i;
                 if ((translatedKeySet.BinaryRepresentation & chord.KeySet.BinaryRepresentation) == chord.KeySet.BinaryRepresentation)
                     Console.WriteLine($"{i,-2}: {translatedKeySet.ToIntervalString()}");
-            }
-        }
-    }
-
-    //A chord can belong to many scales.
-    //e.g. for chord 0 4 7 and scale 0 2 4 5 7 9 11 the chord matches at positions 0, 5 and 7.
-    //e.g. for chord 0 4 7 and scale 0 1 3 5 6 8 9 the chord matches at positions 1, 5 and 8.
-    // - Given chord 0 4 7, it could belong to either of the above scales, and the scales' fundamentals could be at key 0, 7, 5 or key 11, 7, 4, respectively.
-    //This is called chord multiplicity: a chord can belong to different scales, but also belong to different positions in a scale.
-    // - Which different scales the chord belong to is called "chord scale multiplicity":
-    // -- given a chord, there is a set (a multiplicity) of different scales containing that chord.
-    // - Which positions the chord can hold in a scale is related to the "chord scale fundamental set":
-    // -- given a chord and scale, there is a set of fundamentals for that scale so that the scale contains the chord.
-    //Given a chord and scale, applying the chord scale fundamental set to the scale produces a key set for each fundamental.
-    // - each key thus belongs to a number (possibly 0) of fundamentals, this is called "chord key multiplicity" or simply key multiplicity
-    // -- chord key multiplicity tells us which keys imply which scales, possibly the basis for melody
-    void QueryChordKeyMultiplicity(ScaleCalculator scaleCalculator)
-    {
-        List<Scale> scalesOfInterest = [
-            //new([0, 1, 3, 5, 6, 8, 9, 10]), //full base 15
-            //new([0, 1, 3, 5, 6, 9, 10]), //base 15 - seems like the full base 15 collapses to base 24 due to the 8/5 creating base24 at C or G for base 15 at B
-            new([0, 1, 3, 5, 9, 10]), //natural base 15 - no 8 as it collapses to 24 on 1, no 6 as 7 is bad numerator in 7/5
-                                      //new([0, 3, 4, 6, 7, 8, 10]), //full base 20
-                                      //new([0, 2, 4, 6, 8, 9]), //full base 7
-                                      //new([0, 2, 4, 7, 11]),  //base 8
-            new([0, 2, 4, 5, 7, 9, 11])  //base 24 - 1, 9/8, 5/4, 5/4, 3/2, 5/3, 15/8
-            ];
-
-        Console.WriteLine("Matching input against scales:");
-        foreach (Scale scale in scalesOfInterest)
-        {
-            Console.WriteLine($"{scale.CalculateBase(),-2}: {scale}");
-        }
-
-        while (true)
-        {
-            Console.WriteLine($"Input space separated tet12 keys for chord to calculate chord key multiplicity (see method comment for theory - empty input to exit)");
-            string chordInput = Console.ReadLine();
-
-            if (chordInput.Length == 0)
-                return;
-
-            Tet12KeySet chord = new(Array.ConvertAll(chordInput.Split(' '), int.Parse));
-            //Find all matches for chord per scale of interest
-            foreach (Scale scale in scalesOfInterest)
-            {
-                List<int>[] chordKeyMultiplicity = scale.CalculateKeyMultiplicity(chord);
-                //Print results
-                for (int i = 0; i < 12; i++)
-                {
-                    Console.Write($"{i}".PadRight(3));
-                }
-                Console.WriteLine();
-                Console.WriteLine();
-                for (int row = 0; row < chordKeyMultiplicity.Max(columnValues => columnValues.Count); row++)
-                {
-                    for (int column = 0; column < 12; column++)
-                    {
-                        //print scale root
-                        if (row < chordKeyMultiplicity[column].Count)
-                            Console.Write($"{chordKeyMultiplicity[column][row]}".PadRight(3));
-                        else
-                            Console.Write("   ");
-                    }
-                    Console.WriteLine();
-                }
-                Console.WriteLine();
             }
         }
     }
