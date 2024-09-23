@@ -861,12 +861,16 @@ static void QueryChordPowerSetLCMs()
         string[] splitInput = input.Split(' ');
         List<string> options = splitInput.Where(chars => !int.TryParse(chars, out _)).ToList();
         bool realBaseOnly = false;
+        bool noCollapse = false;
         foreach (string option in options)
         {
             switch (option)
             {
                 case "r": //realBaseOnly
                     realBaseOnly = true;
+                    break;
+                case "c": //noBase15Collapse (base 15 on fundamental excludes fundamental - 4)
+                    noCollapse = true;
                     break;
                 default:
                     break;
@@ -900,12 +904,19 @@ static void QueryChordPowerSetLCMs()
                     if (set.Any(interval => interval == 6))
                         LcmPerSet.Add(0); //0 to indicate invalid interval, not using 7/5                    
                     else if (realBaseOnly && !cardinalSet[i].Contains(fundamental))
-                        LcmPerSet.Add(0); //0 to indicate invalid base
+                        LcmPerSet.Add(0); //0 to indicate non real base                    
                     else
                     {
                         long lcm = LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray());
-                        if (24 % lcm == 0 || 15 % lcm == 0) //only use base 15 or 24
+                        if (24 % lcm == 0) //only use base 15 or 24
                             LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
+                        else if (15 % lcm == 0)
+                        {
+                            if (noCollapse && cardinalSet[i].Contains((fundamental + 8) % 12))
+                                LcmPerSet.Add(0); //0 to indicate collapsing base 15
+                            else
+                                LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
+                        }
                         else
                             LcmPerSet.Add(0);
                     }
