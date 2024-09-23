@@ -142,7 +142,7 @@ while (true)
     QueryChordPowerSetLCMs();
     //QuerySubsetIntervalsLCMs();
     //QueryMelodicSubsetLCMs();
-    //QueryMelodicSupersetLCMs();
+    QueryMelodicSupersetLCMs();
 }
 
 
@@ -857,7 +857,24 @@ static void QueryChordPowerSetLCMs()
             Console.Clear();
             continue;
         }
-        int[] tet12Keys = Array.ConvertAll(input.Split(" "), int.Parse);
+
+        string[] splitInput = input.Split(' ');
+        List<string> options = splitInput.Where(chars => !int.TryParse(chars, out _)).ToList();
+        bool realBaseOnly = false;
+        foreach (string option in options)
+        {
+            switch (option)
+            {
+                case "r": //realBaseOnly
+                    realBaseOnly = true;
+                    break;
+                default:
+                    break;
+            };
+        }
+
+        string[] keys = splitInput.Where(chars => int.TryParse(chars, out _)).ToArray();
+        int[] tet12Keys = Array.ConvertAll(keys, int.Parse);
 
         Dictionary<int, List<List<int>>> cardinalSets = GetPowerSet(tet12Keys).GroupBy(set => set.Count).ToDictionary(
             group => group.Key,
@@ -877,10 +894,13 @@ static void QueryChordPowerSetLCMs()
                     .ToList();
 
                 List<long> LcmPerSet = new();
-                foreach (List<int> set in renormalizedSets)
+                for (int i = 0; i < renormalizedSets.Count; i++)
                 {
+                    List<int> set = renormalizedSets[i];
                     if (set.Any(interval => interval == 6))
                         LcmPerSet.Add(0); //0 to indicate invalid interval, not using 7/5                    
+                    else if (realBaseOnly && !cardinalSet[i].Contains(fundamental))
+                        LcmPerSet.Add(0); //0 to indicate invalid base
                     else
                     {
                         long lcm = LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray());
