@@ -861,6 +861,7 @@ static void QueryChordPowerSetLCMs()
         string[] splitInput = input.Split(' ');
         List<string> options = splitInput.Where(chars => !int.TryParse(chars, out _)).ToList();
         bool realBaseOnly = false;
+        bool virtualBaseOnly = false;
         bool noCollapse = false;
         foreach (string option in options)
         {
@@ -868,6 +869,9 @@ static void QueryChordPowerSetLCMs()
             {
                 case "r": //realBaseOnly
                     realBaseOnly = true;
+                    break;
+                case "v": //virtualBaseOnly
+                    virtualBaseOnly = true;
                     break;
                 case "c": //noBase15Collapse (base 15 on fundamental excludes fundamental - 4)
                     noCollapse = true;
@@ -905,6 +909,8 @@ static void QueryChordPowerSetLCMs()
                         LcmPerSet.Add(0); //0 to indicate invalid interval, not using 7/5                    
                     else if (realBaseOnly && !cardinalSet[i].Contains(fundamental))
                         LcmPerSet.Add(0); //0 to indicate non real base                    
+                    else if (virtualBaseOnly && cardinalSet[i].Contains(fundamental))
+                        LcmPerSet.Add(0); //0 to indicate real base                    
                     else
                     {
                         long lcm = LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray());
