@@ -584,10 +584,11 @@ void QueryChordKeyMultiplicity(ScaleCalculator scaleCalculator)
 {
     List<Scale> scalesOfInterest = [
         new([0, 1, 3, 5, 8, 9, 10]), //full base 15        
-        //new([0, 1, 3, 5, 9, 10]), //natural base 15 - no 8 as it collapses to 24 on 1, no 6 as 7 is bad numerator in 7/5
-                                  //new([0, 3, 4, 7, 8, 10]), //full base 20
-                                  //new([0, 2, 4, 8, 9]), //full base 7
-                                  //new([0, 2, 4, 7, 11]),  //base 8
+                                     //new([0, 3, 4, 7, 8, 10]), //full base 20        
+                                     //new([0, 1, 3, 5, 9, 10]), //natural base 15 - no 8 as it collapses to 24 on 1, no 6 as 7 is bad numerator in 7/5
+                                     //new([0, 3, 4, 7, 8, 10]), //full base 20
+                                     //new([0, 2, 4, 8, 9]), //full base 7
+                                     //new([0, 2, 4, 7, 11]),  //base 8
         new([0, 2, 4, 5, 7, 9, 11])  //base 24 - 1, 9/8, 5/4, 5/4, 3/2, 5/3, 15/8
         ];
 
@@ -622,13 +623,14 @@ void QueryChordKeyMultiplicity(ScaleCalculator scaleCalculator)
             }
             Console.WriteLine();
             Console.WriteLine();
-            for (int row = 0; row < chordKeyMultiplicity.Max(columnValues => columnValues.Count); row++)
+            List<int> fundamentals = chordKeyMultiplicity.Aggregate((sum, next) => [.. sum, .. next]).Distinct().Order().ToList();           
+            for (int row = 0; row < fundamentals.Count(); row++)
             {
                 for (int column = 0; column < 12; column++)
                 {
-                    //print scale root
-                    if (row < chordKeyMultiplicity[column].Count)
-                        Console.Write($"{chordKeyMultiplicity[column][row]}".PadRight(3));
+                    //print scale root                    
+                    if (chordKeyMultiplicity[column].Contains(fundamentals[row]))
+                        Console.Write($"{fundamentals[row]}".PadRight(3));
                     else
                         Console.Write("   ");
                 }
@@ -913,12 +915,14 @@ static void QueryChordPowerSetLCMs()
                     else
                     {
                         long lcm = LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray());
-                        if (24 % lcm == 0) //only use base 15 or 24
+                        if (24 % lcm == 0) //use base 24
                             LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
-                        else if (15 % lcm == 0)
+                        //else if (20 % lcm == 0) //use base 20
+                        //    LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
+                        else if (15 % lcm == 0)//use base 15
                         {
                             if (noCollapse && cardinalSet[i].Contains((fundamental + 8) % 12))
-                                LcmPerSet.Add(0); //0 to indicate collapsing base 15
+                                LcmPerSet.Add(0); //0 to indicate collapsing base 15 - note that collapse might not exist in this way, related to 0 4 7 1 sounding bad unless used as 15@7
                             else
                                 LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
                         }
