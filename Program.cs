@@ -583,11 +583,10 @@ double[] ConstructTet12FractionFamily(int familyNumerator, int maxNumerator = 25
 void QueryChordKeyMultiplicity(ScaleCalculator scaleCalculator)
 {
     List<Scale> scalesOfInterest = [
-        //new([0, 1, 3, 5, 6, 8, 9, 10]), //full base 15
-        //new([0, 1, 3, 5, 6, 9, 10]), //base 15 - seems like the full base 15 collapses to base 24 due to the 8/5 creating base24 at C or G for base 15 at B
-        new([0, 1, 3, 5, 9, 10]), //natural base 15 - no 8 as it collapses to 24 on 1, no 6 as 7 is bad numerator in 7/5
-                                  //new([0, 3, 4, 6, 7, 8, 10]), //full base 20
-                                  //new([0, 2, 4, 6, 8, 9]), //full base 7
+        new([0, 1, 3, 5, 8, 9, 10]), //full base 15        
+        //new([0, 1, 3, 5, 9, 10]), //natural base 15 - no 8 as it collapses to 24 on 1, no 6 as 7 is bad numerator in 7/5
+                                  //new([0, 3, 4, 7, 8, 10]), //full base 20
+                                  //new([0, 2, 4, 8, 9]), //full base 7
                                   //new([0, 2, 4, 7, 11]),  //base 8
         new([0, 2, 4, 5, 7, 9, 11])  //base 24 - 1, 9/8, 5/4, 5/4, 3/2, 5/3, 15/8
         ];
