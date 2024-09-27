@@ -584,11 +584,11 @@ void QueryChordKeyMultiplicity(ScaleCalculator scaleCalculator)
 {
     List<Scale> scalesOfInterest = [
         new([0, 1, 3, 5, 8, 9, 10]), //full base 15        
-                                     //new([0, 3, 4, 7, 8, 10]), //full base 20        
-                                     //new([0, 1, 3, 5, 9, 10]), //natural base 15 - no 8 as it collapses to 24 on 1, no 6 as 7 is bad numerator in 7/5
-                                     //new([0, 3, 4, 7, 8, 10]), //full base 20
-                                     //new([0, 2, 4, 8, 9]), //full base 7
-                                     //new([0, 2, 4, 7, 11]),  //base 8
+        new([0, 3, 4, 7, 8, 10]), //full base 20        
+                                  //new([0, 1, 3, 5, 9, 10]), //natural base 15 - no 8 as it collapses to 24 on 1, no 6 as 7 is bad numerator in 7/5
+                                  //new([0, 3, 4, 7, 8, 10]), //full base 20
+                                  //new([0, 2, 4, 8, 9]), //full base 7
+                                  //new([0, 2, 4, 7, 11]),  //base 8
         new([0, 2, 4, 5, 7, 9, 11])  //base 24 - 1, 9/8, 5/4, 5/4, 3/2, 5/3, 15/8
         ];
 
@@ -623,7 +623,7 @@ void QueryChordKeyMultiplicity(ScaleCalculator scaleCalculator)
             }
             Console.WriteLine();
             Console.WriteLine();
-            List<int> fundamentals = chordKeyMultiplicity.Aggregate((sum, next) => [.. sum, .. next]).Distinct().Order().ToList();           
+            List<int> fundamentals = chordKeyMultiplicity.Aggregate((sum, next) => [.. sum, .. next]).Distinct().Order().ToList();
             for (int row = 0; row < fundamentals.Count(); row++)
             {
                 for (int column = 0; column < 12; column++)
@@ -692,7 +692,7 @@ static void QueryMelodicSupersetLCMs()
             Console.Write($"{fundamental}:".PadRight(4));
             foreach (var lcm in lcmsPerMelodyPerFundamental[fundamental])
             {
-                if (lcm != 0 && (24 % lcm == 0 || 15 % lcm == 0)) //only base 24 or 15 lcm, else invalid
+                if (lcm != 0 && (24 % lcm == 0 || 15 % lcm == 0 || 20 % lcm == 0)) //only base 24, 20 or 15 lcm, else invalid
                     Console.Write($"{lcm}".PadRight(4));
                 else
                     Console.Write($"".PadRight(4));
@@ -780,69 +780,6 @@ static void QueryMelodicSubsetLCMs()
     }
 }
 
-//Query LCMs of all subsets of size 2
-static void QuerySubsetIntervalsLCMs()
-{
-    Fraction[] standardFractions = [new(1), new(16, 15), new(9, 8), new(6, 5), new(5, 4), new(4, 3), new(0), new(3, 2), new(8, 5), new(5, 3), new(9, 5), new(15, 8)];
-    while (true)
-    {
-        Console.WriteLine($"Input space separated tet12 keys for subset LCMs, empty input to exit");
-        string input = Console.ReadLine();
-
-        if (input.Length == 0) return;
-        if (input == "clear")
-        {
-            Console.Clear();
-            continue;
-        }
-        int[] tet12Keys = Array.ConvertAll(input.Split(" "), int.Parse);
-
-        List<List<int>> inputPairs = GetPowerSet(tet12Keys).Where(set => set.Count == 2).ToList();
-        Dictionary<int, List<long>> LcmPairsPerFundamental = new();
-        for (int fundamental = 0; fundamental < 12; fundamental++)
-        {
-            List<List<int>> renormalizedPairs = inputPairs.Select(
-                pairs => pairs.Select(key => (key - fundamental + 12) % 12).ToList())
-                .ToList();
-
-            List<long> LcmPerPair = new();
-            foreach (List<int> pair in renormalizedPairs)
-            {
-                if (pair.Any(interval => interval == 6))
-                    LcmPerPair.Add(0); //0 to indicate invalid interval, not using 7/5
-                else
-                    LcmPerPair.Add(LCM(pair.Select(key => (long)standardFractions[key].Denominator).ToArray()));
-            }
-
-            LcmPairsPerFundamental[fundamental] = LcmPerPair;
-        }
-        Console.Write($" ".PadRight(4));
-        foreach (var pair in inputPairs)
-        {
-            foreach (var key in pair)
-                Console.Write($"{key,-2} ");
-            Console.Write("  ");
-        }
-        Console.WriteLine("all");
-        for (int fundamental = 0; fundamental < 12; fundamental++)
-        {
-            Console.Write($"{fundamental,-2}: ");
-            foreach (var lcm in LcmPairsPerFundamental[fundamental])
-            {
-                if (lcm == 0)
-                    Console.Write($" ".PadRight(8));
-                else
-                    Console.Write($"{lcm,-7} ");
-            }
-            long totalLcm = LCM(LcmPairsPerFundamental[fundamental].Where(lcm => lcm != 0).ToArray());
-            Console.Write($"{totalLcm,-3} ");
-            if (!LcmPairsPerFundamental[fundamental].Any(lcm => lcm == 0))
-                Console.Write("!");
-            Console.WriteLine();
-        }
-    }
-}
-
 //Query the lcms of a chords power set. Useful for finding lcms of subsets.
 static void QueryChordPowerSetLCMs()
 {
@@ -917,8 +854,8 @@ static void QueryChordPowerSetLCMs()
                         long lcm = LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray());
                         if (24 % lcm == 0) //use base 24
                             LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
-                        //else if (20 % lcm == 0) //use base 20
-                        //    LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
+                        else if (20 % lcm == 0) //use base 20
+                            LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
                         else if (15 % lcm == 0)//use base 15
                         {
                             if (noCollapse && cardinalSet[i].Contains((fundamental + 8) % 12))
@@ -971,6 +908,71 @@ static void QueryChordPowerSetLCMs()
             }
         }
     }
+
+    //Query LCMs of all subsets of size 2
+    static void QuerySubsetIntervalsLCMs()
+{
+    Fraction[] standardFractions = [new(1), new(16, 15), new(9, 8), new(6, 5), new(5, 4), new(4, 3), new(0), new(3, 2), new(8, 5), new(5, 3), new(9, 5), new(15, 8)];
+    while (true)
+    {
+        Console.WriteLine($"Input space separated tet12 keys for subset LCMs, empty input to exit");
+        string input = Console.ReadLine();
+
+        if (input.Length == 0) return;
+        if (input == "clear")
+        {
+            Console.Clear();
+            continue;
+        }
+        int[] tet12Keys = Array.ConvertAll(input.Split(" "), int.Parse);
+
+        List<List<int>> inputPairs = GetPowerSet(tet12Keys).Where(set => set.Count == 2).ToList();
+        Dictionary<int, List<long>> LcmPairsPerFundamental = new();
+        for (int fundamental = 0; fundamental < 12; fundamental++)
+        {
+            List<List<int>> renormalizedPairs = inputPairs.Select(
+                pairs => pairs.Select(key => (key - fundamental + 12) % 12).ToList())
+                .ToList();
+
+            List<long> LcmPerPair = new();
+            foreach (List<int> pair in renormalizedPairs)
+            {
+                if (pair.Any(interval => interval == 6))
+                    LcmPerPair.Add(0); //0 to indicate invalid interval, not using 7/5
+                else
+                    LcmPerPair.Add(LCM(pair.Select(key => (long)standardFractions[key].Denominator).ToArray()));
+            }
+
+            LcmPairsPerFundamental[fundamental] = LcmPerPair;
+        }
+        Console.Write($" ".PadRight(4));
+        foreach (var pair in inputPairs)
+        {
+            foreach (var key in pair)
+                Console.Write($"{key,-2} ");
+            Console.Write("  ");
+        }
+        Console.WriteLine("all");
+        for (int fundamental = 0; fundamental < 12; fundamental++)
+        {
+            Console.Write($"{fundamental,-2}: ");
+            foreach (var lcm in LcmPairsPerFundamental[fundamental])
+            {
+                if (lcm == 0)
+                    Console.Write($" ".PadRight(8));
+                else
+                    Console.Write($"{lcm,-7} ");
+            }
+            long totalLcm = LCM(LcmPairsPerFundamental[fundamental].Where(lcm => lcm != 0).ToArray());
+            Console.Write($"{totalLcm,-3} ");
+            if (!LcmPairsPerFundamental[fundamental].Any(lcm => lcm == 0))
+                Console.Write("!");
+            Console.WriteLine();
+        }
+    }
+}
+
+
 
     static void QueryRatioFundamentalOctaveSweep(double maxDeviation = 0.010d)
     {
