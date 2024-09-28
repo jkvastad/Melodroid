@@ -574,9 +574,14 @@ double[] ConstructTet12FractionFamily(int familyNumerator, int maxNumerator = 25
 void QueryIntervalScaleOverlap()
 {
     Fraction[] standardFractions = [new(1), new(16, 15), new(9, 8), new(6, 5), new(5, 4), new(4, 3), new(0), new(3, 2), new(8, 5), new(5, 3), new(9, 5), new(15, 8)];
-    int[] base15Scale = [0, 1, 3, 5, 8, 9, 10];
-    int[] base20Scale = [0, 3, 4, 7, 8, 10];
-    int[] base24Scale = [0, 2, 4, 5, 7, 9, 11]; //too big scales? actually only smaller ones like 2, 3, 5, 8?
+    Dictionary<int, int[]> scalesPerBase = new();
+    scalesPerBase[3] = [0, 5, 9];
+    //scalesPerBase[4] = [0, 4, 7];
+    scalesPerBase[5] = [0, 3, 8, 10];
+    scalesPerBase[8] = [0, 2, 4, 7, 11];
+    //scalesPerBase[15] = [0, 1, 3, 5, 8, 9, 10];//too big scales? actually only smaller ones like 2, 3, 5, 8?   
+    //scalesPerBase[20] = [0, 3, 4, 7, 8, 10];
+    //scalesPerBase[24] = [0, 2, 4, 5, 7, 9, 11];
 
     while (true)
     {
@@ -592,22 +597,14 @@ void QueryIntervalScaleOverlap()
 
         string[] splitInput = input.Split(' ');
         List<string> options = splitInput.Where(chars => !int.TryParse(chars, out _)).ToList();
-        //bool realBaseOnly = false;
-        //bool virtualBaseOnly = false;
-        //bool noCollapse = false;
+        bool summary = false;
         foreach (string option in options)
         {
             switch (option)
             {
-                //case "r": //realBaseOnly
-                //    realBaseOnly = true;
-                //    break;
-                //case "v": //virtualBaseOnly
-                //    virtualBaseOnly = true;
-                //    break;
-                //case "c": //noBase15Collapse (base 15 on fundamental excludes fundamental - 4)
-                //    noCollapse = true;
-                //    break;
+                case "s":
+                    summary = true;
+                    break;
                 default:
                     break;
             };
@@ -650,12 +647,10 @@ void QueryIntervalScaleOverlap()
             {
                 List<int[]> currentScales = [];
                 if (lcmPerPair == 0) continue;
-                if (15 % lcmPerPair == 0)
-                    currentScales.Add(base15Scale);
-                if (20 % lcmPerPair == 0)
-                    currentScales.Add(base20Scale);
-                if (24 % lcmPerPair == 0)
-                    currentScales.Add(base24Scale);
+                foreach (var baseSize in scalesPerBase.Keys)
+                    if (baseSize % lcmPerPair == 0)
+                        currentScales.Add(scalesPerBase[baseSize]);
+
                 if (currentScales.Count > 0)
                 {
                     foreach (var currentScale in currentScales)
@@ -663,13 +658,29 @@ void QueryIntervalScaleOverlap()
                         Console.Write($"{fundamental}:".PadRight(4));
                         for (int key = 0; key < 12; key++)
                         {
-                            if (currentScale.Contains((key - fundamental + 12) % 12))
+                            if (currentScale.Contains((key - fundamental + 12) % 12)) //check if key in renomarlized scale
                                 Console.Write($"{lcmPerPair}".PadRight(3));
                             else
                                 Console.Write($" ".PadRight(3));
                         }
                         Console.WriteLine();
                     }
+                    //if (summary) //TODO: include summary?
+                    //{                        
+                    //    //summary
+                    //    // - which bases match chord                        
+                    //    foreach (var currentScale in currentScales)
+                    //    {
+                    //        for (int key = 0; key < 12; key++)
+                    //        {
+                    //            if (currentScale.Contains((key - fundamental + 12) % 12))
+                    //                Console.Write($"{lcmPerPair}".PadRight(3));
+                    //            else
+                    //                Console.Write($" ".PadRight(3));
+                    //        }
+                    //        Console.WriteLine();
+                    //    }
+                    //}
                 }
             }
         }
