@@ -134,15 +134,18 @@ MelodicSupersetHarmonizerOddOrEvenFixedFundamentalPerMeasure harmonizer = new([0
 while (true)
 {
     //QueryRatioFundamentalOctaveSweep(maxDeviation: 0.033d);
-    QueryChordKeyMultiplicity(scaleCalculator);
     //QueryChordKeyMultiplicityPowerSets(scaleCalculator);
     //QueryFundamentalClassPerScale(scaleCalculator);
     //QueryChordProgressionFromMultiplicity(scaleCalculator);
     //QueryChordInKeySetTranslations();
-    QueryChordPowerSetLCMs();
     //QuerySubsetIntervalsLCMs();
     //QueryMelodicSubsetLCMs();
-    QueryMelodicSupersetLCMs();
+
+    //QueryChordKeyMultiplicity(scaleCalculator);
+    QueryChordPowerSetLCMs();
+    //QueryMelodicSupersetLCMs();
+
+    QueryIntervalScaleOverlap();
 }
 
 
@@ -567,6 +570,112 @@ double[] ConstructTet12FractionFamily(int familyNumerator, int maxNumerator = 25
 //BeatBox beatBox = new BeatBox();
 //WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, "melodroid testing");
 
+//Each interval in a chord has an lcm mapping to a scale, superimposing all these scales shows which keys best fit the chord for melody
+void QueryIntervalScaleOverlap()
+{
+    Fraction[] standardFractions = [new(1), new(16, 15), new(9, 8), new(6, 5), new(5, 4), new(4, 3), new(0), new(3, 2), new(8, 5), new(5, 3), new(9, 5), new(15, 8)];
+    int[] base15Scale = [0, 1, 3, 5, 8, 9, 10];
+    int[] base20Scale = [0, 3, 4, 7, 8, 10];
+    int[] base24Scale = [0, 2, 4, 5, 7, 9, 11]; //too big scales? actually only smaller ones like 2, 3, 5, 8?
+
+    while (true)
+    {
+        Console.WriteLine($"Input space separated tet12 keys for interval scale superpositons, empty input to exit");
+        string input = Console.ReadLine();
+
+        if (input.Length == 0) return;
+        if (input == "clear")
+        {
+            Console.Clear();
+            continue;
+        }
+
+        string[] splitInput = input.Split(' ');
+        List<string> options = splitInput.Where(chars => !int.TryParse(chars, out _)).ToList();
+        //bool realBaseOnly = false;
+        //bool virtualBaseOnly = false;
+        //bool noCollapse = false;
+        foreach (string option in options)
+        {
+            switch (option)
+            {
+                //case "r": //realBaseOnly
+                //    realBaseOnly = true;
+                //    break;
+                //case "v": //virtualBaseOnly
+                //    virtualBaseOnly = true;
+                //    break;
+                //case "c": //noBase15Collapse (base 15 on fundamental excludes fundamental - 4)
+                //    noCollapse = true;
+                //    break;
+                default:
+                    break;
+            };
+        }
+
+        string[] keys = splitInput.Where(chars => int.TryParse(chars, out _)).ToArray();
+        int[] tet12Keys = Array.ConvertAll(keys, int.Parse);
+
+        //calculate data
+        List<List<int>> inputPairs = GetPowerSet(tet12Keys).Where(set => set.Count == 2).ToList();
+        Dictionary<int, List<long>> LcmPairsPerFundamental = new();
+        for (int fundamental = 0; fundamental < 12; fundamental++)
+        {
+            List<List<int>> renormalizedPairs = inputPairs.Select(
+                pairs => pairs.Select(key => (key - fundamental + 12) % 12).ToList())
+                .ToList();
+
+            List<long> LcmPerPair = new();
+            foreach (List<int> pair in renormalizedPairs)
+            {
+                if (pair.Any(interval => interval == 6))
+                    LcmPerPair.Add(0); //0 to indicate invalid interval, not using 7/5
+                else
+                    LcmPerPair.Add(LCM(pair.Select(key => (long)standardFractions[key].Denominator).ToArray()));
+            }
+
+            LcmPairsPerFundamental[fundamental] = LcmPerPair;
+        }
+
+        //print data
+        Console.Write($" ".PadRight(4));
+        for (int key = 0; key < 12; key++)
+            Console.Write($"{key}".PadRight(3));
+        Console.WriteLine();
+        foreach (var fundamental in LcmPairsPerFundamental.Keys)
+        {
+            if (!tet12Keys.Contains(fundamental)) //real bases only
+                continue;
+            foreach (var lcmPerPair in LcmPairsPerFundamental[fundamental])
+            {
+                List<int[]> currentScales = [];
+                if (lcmPerPair == 0) continue;
+                if (15 % lcmPerPair == 0)
+                    currentScales.Add(base15Scale);
+                if (20 % lcmPerPair == 0)
+                    currentScales.Add(base20Scale);
+                if (24 % lcmPerPair == 0)
+                    currentScales.Add(base24Scale);
+                if (currentScales.Count > 0)
+                {
+                    foreach (var currentScale in currentScales)
+                    {
+                        Console.Write($"{fundamental}:".PadRight(4));
+                        for (int key = 0; key < 12; key++)
+                        {
+                            if (currentScale.Contains((key - fundamental + 12) % 12))
+                                Console.Write($"{lcmPerPair}".PadRight(3));
+                            else
+                                Console.Write($" ".PadRight(3));
+                        }
+                        Console.WriteLine();
+                    }
+                }
+            }
+        }
+    }
+}
+
 
 //A chord can belong to many scales.
 //e.g. for chord 0 4 7 and scale 0 2 4 5 7 9 11 the chord matches at positions 0, 5 and 7.
@@ -911,66 +1020,66 @@ static void QueryChordPowerSetLCMs()
 
     //Query LCMs of all subsets of size 2
     static void QuerySubsetIntervalsLCMs()
-{
-    Fraction[] standardFractions = [new(1), new(16, 15), new(9, 8), new(6, 5), new(5, 4), new(4, 3), new(0), new(3, 2), new(8, 5), new(5, 3), new(9, 5), new(15, 8)];
-    while (true)
     {
-        Console.WriteLine($"Input space separated tet12 keys for subset LCMs, empty input to exit");
-        string input = Console.ReadLine();
-
-        if (input.Length == 0) return;
-        if (input == "clear")
+        Fraction[] standardFractions = [new(1), new(16, 15), new(9, 8), new(6, 5), new(5, 4), new(4, 3), new(0), new(3, 2), new(8, 5), new(5, 3), new(9, 5), new(15, 8)];
+        while (true)
         {
-            Console.Clear();
-            continue;
-        }
-        int[] tet12Keys = Array.ConvertAll(input.Split(" "), int.Parse);
+            Console.WriteLine($"Input space separated tet12 keys for subset LCMs, empty input to exit");
+            string input = Console.ReadLine();
 
-        List<List<int>> inputPairs = GetPowerSet(tet12Keys).Where(set => set.Count == 2).ToList();
-        Dictionary<int, List<long>> LcmPairsPerFundamental = new();
-        for (int fundamental = 0; fundamental < 12; fundamental++)
-        {
-            List<List<int>> renormalizedPairs = inputPairs.Select(
-                pairs => pairs.Select(key => (key - fundamental + 12) % 12).ToList())
-                .ToList();
-
-            List<long> LcmPerPair = new();
-            foreach (List<int> pair in renormalizedPairs)
+            if (input.Length == 0) return;
+            if (input == "clear")
             {
-                if (pair.Any(interval => interval == 6))
-                    LcmPerPair.Add(0); //0 to indicate invalid interval, not using 7/5
-                else
-                    LcmPerPair.Add(LCM(pair.Select(key => (long)standardFractions[key].Denominator).ToArray()));
+                Console.Clear();
+                continue;
             }
+            int[] tet12Keys = Array.ConvertAll(input.Split(" "), int.Parse);
 
-            LcmPairsPerFundamental[fundamental] = LcmPerPair;
-        }
-        Console.Write($" ".PadRight(4));
-        foreach (var pair in inputPairs)
-        {
-            foreach (var key in pair)
-                Console.Write($"{key,-2} ");
-            Console.Write("  ");
-        }
-        Console.WriteLine("all");
-        for (int fundamental = 0; fundamental < 12; fundamental++)
-        {
-            Console.Write($"{fundamental,-2}: ");
-            foreach (var lcm in LcmPairsPerFundamental[fundamental])
+            List<List<int>> inputPairs = GetPowerSet(tet12Keys).Where(set => set.Count == 2).ToList();
+            Dictionary<int, List<long>> LcmPairsPerFundamental = new();
+            for (int fundamental = 0; fundamental < 12; fundamental++)
             {
-                if (lcm == 0)
-                    Console.Write($" ".PadRight(8));
-                else
-                    Console.Write($"{lcm,-7} ");
+                List<List<int>> renormalizedPairs = inputPairs.Select(
+                    pairs => pairs.Select(key => (key - fundamental + 12) % 12).ToList())
+                    .ToList();
+
+                List<long> LcmPerPair = new();
+                foreach (List<int> pair in renormalizedPairs)
+                {
+                    if (pair.Any(interval => interval == 6))
+                        LcmPerPair.Add(0); //0 to indicate invalid interval, not using 7/5
+                    else
+                        LcmPerPair.Add(LCM(pair.Select(key => (long)standardFractions[key].Denominator).ToArray()));
+                }
+
+                LcmPairsPerFundamental[fundamental] = LcmPerPair;
             }
-            long totalLcm = LCM(LcmPairsPerFundamental[fundamental].Where(lcm => lcm != 0).ToArray());
-            Console.Write($"{totalLcm,-3} ");
-            if (!LcmPairsPerFundamental[fundamental].Any(lcm => lcm == 0))
-                Console.Write("!");
-            Console.WriteLine();
+            Console.Write($" ".PadRight(4));
+            foreach (var pair in inputPairs)
+            {
+                foreach (var key in pair)
+                    Console.Write($"{key,-2} ");
+                Console.Write("  ");
+            }
+            Console.WriteLine("all");
+            for (int fundamental = 0; fundamental < 12; fundamental++)
+            {
+                Console.Write($"{fundamental,-2}: ");
+                foreach (var lcm in LcmPairsPerFundamental[fundamental])
+                {
+                    if (lcm == 0)
+                        Console.Write($" ".PadRight(8));
+                    else
+                        Console.Write($"{lcm,-7} ");
+                }
+                long totalLcm = LCM(LcmPairsPerFundamental[fundamental].Where(lcm => lcm != 0).ToArray());
+                Console.Write($"{totalLcm,-3} ");
+                if (!LcmPairsPerFundamental[fundamental].Any(lcm => lcm == 0))
+                    Console.Write("!");
+                Console.WriteLine();
+            }
         }
     }
-}
 
 
 
