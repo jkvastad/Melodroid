@@ -141,11 +141,10 @@ while (true)
     //QuerySubsetIntervalsLCMs();
     //QueryMelodicSubsetLCMs();
 
-    //QueryChordKeyMultiplicity(scaleCalculator);
+    QueryChordKeyMultiplicity(scaleCalculator);
     QueryChordPowerSetLCMs();
     //QueryMelodicSupersetLCMs();
-
-    QueryIntervalScaleOverlap();
+    //QueryIntervalScaleOverlap();
 }
 
 
@@ -703,14 +702,22 @@ void QueryIntervalScaleOverlap()
 void QueryChordKeyMultiplicity(ScaleCalculator scaleCalculator)
 {
     List<Scale> scalesOfInterest = [
-        new([0, 1, 3, 5, 8, 9, 10]), //full base 15        
-        new([0, 3, 4, 7, 8, 10]), //full base 20        
+        new([0, 7]), //base 2@0
+        new([0, 5, 9]), //base 3@0, 4@5
+        new([0, 4, 7]), //base 4@0, 3@7
+        new([0, 3, 8, 10]), //base 5@0, 6@3                
+        new([0, 5, 7, 9]), //base 6@0                
+        new([0, 2, 4, 7, 11]), //base 8@0, 10@4, 12@7
+        new([0, 3, 7, 8, 10]), //base 10@0
+        new([0, 4, 5, 7, 9]), //base 12@0
+        new([0, 1, 3, 5, 8, 9, 10]), //base 15@0
+        //new([0, 3, 4, 7, 8, 10]), //base 20@0
+                                  //new([0, 3, 4, 7, 8, 10]), //full base 20        
                                   //new([0, 1, 3, 5, 9, 10]), //natural base 15 - no 8 as it collapses to 24 on 1, no 6 as 7 is bad numerator in 7/5
-                                  //new([0, 3, 4, 7, 8, 10]), //full base 20
-                                  //new([0, 2, 4, 8, 9]), //full base 7
-                                  //new([0, 2, 4, 7, 11]),  //base 8
-        new([0, 2, 4, 5, 7, 9, 11])  //base 24 - 1, 9/8, 5/4, 5/4, 3/2, 5/3, 15/8
-        ];
+                                  //new([0, 3, 4, 7, 8, 10]), //full base 20                                                                          
+        new([0, 2, 4, 5, 7, 9, 11]),  //base 24@0 - 1, 9/8, 5/4, 5/4, 3/2, 5/3, 15/8
+        //new([0, 1, 3, 5, 7, 8, 9, 10]), //base 30@0
+    ];
 
     Console.WriteLine("Matching input against scales:");
     foreach (Scale scale in scalesOfInterest)
@@ -732,20 +739,24 @@ void QueryChordKeyMultiplicity(ScaleCalculator scaleCalculator)
         }
 
         Tet12KeySet chord = new(Array.ConvertAll(chordInput.Split(' '), int.Parse));
-        //Find all matches for chord per scale of interest
+        //print 12-TET keys
+        Console.Write($" ".PadRight(4));
+        for (int i = 0; i < 12; i++)
+        {
+            Console.Write($"{i}".PadRight(3));
+        }
+        Console.WriteLine();
         foreach (Scale scale in scalesOfInterest)
         {
+            //Find all matches for chord per scale of interest
             List<int>[] chordKeyMultiplicity = scale.CalculateKeyMultiplicity(chord);
             //Print results
-            for (int i = 0; i < 12; i++)
-            {
-                Console.Write($"{i}".PadRight(3));
-            }
-            Console.WriteLine();
-            Console.WriteLine();
+            Console.Write($"{scale.CalculateBase(),-2}: ");
             List<int> fundamentals = chordKeyMultiplicity.Aggregate((sum, next) => [.. sum, .. next]).Distinct().Order().ToList();
             for (int row = 0; row < fundamentals.Count(); row++)
             {
+                if (row != 0)
+                    Console.Write(" ".PadRight(4));
                 for (int column = 0; column < 12; column++)
                 {
                     //print scale root                    
@@ -756,6 +767,8 @@ void QueryChordKeyMultiplicity(ScaleCalculator scaleCalculator)
                 }
                 Console.WriteLine();
             }
+            if (fundamentals.Count() == 0) //extra line for pretty printing empty fundamentals
+                Console.WriteLine();
             Console.WriteLine();
         }
     }
@@ -921,10 +934,15 @@ static void QueryChordPowerSetLCMs()
         bool realBaseOnly = false;
         bool virtualBaseOnly = false;
         bool noCollapse = false;
+        bool useMaxLCM = false;
+        int maxLCM = 12; //pure base 15 sounds bad, so does 20, 24 sounds okish (11 and 5 sounds bad), size 12 might be largest lcm and rest is superpositions
         foreach (string option in options)
         {
             switch (option)
             {
+                case "m":
+                    useMaxLCM = true;
+                    break;
                 case "r": //realBaseOnly
                     realBaseOnly = true;
                     break;
@@ -964,7 +982,7 @@ static void QueryChordPowerSetLCMs()
                 {
                     List<int> set = renormalizedSets[i];
                     if (set.Any(interval => interval == 6))
-                        LcmPerSet.Add(0); //0 to indicate invalid interval, not using 7/5                    
+                        LcmPerSet.Add(0); //0 to indicate invalid interval, not using 7/5                                        
                     else if (realBaseOnly && !cardinalSet[i].Contains(fundamental))
                         LcmPerSet.Add(0); //0 to indicate non real base                    
                     else if (virtualBaseOnly && cardinalSet[i].Contains(fundamental))
@@ -972,7 +990,9 @@ static void QueryChordPowerSetLCMs()
                     else
                     {
                         long lcm = LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray());
-                        if (24 % lcm == 0) //use base 24
+                        if (useMaxLCM && lcm > maxLCM)
+                            LcmPerSet.Add(0);
+                        else if (24 % lcm == 0) //use base 24
                             LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
                         else if (20 % lcm == 0) //use base 20
                             LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
