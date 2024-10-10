@@ -711,7 +711,7 @@ void QueryChordKeyMultiplicity(ScaleCalculator scaleCalculator)
         new([0, 3, 7, 8, 10]), //base 10@0
         new([0, 4, 5, 7, 9]), //base 12@0
         new([0, 1, 3, 5, 8, 9, 10]), //base 15@0
-        //new([0, 3, 4, 7, 8, 10]), //base 20@0
+        new([0, 3, 4, 7, 8, 10]), //base 20@0
                                   //new([0, 3, 4, 7, 8, 10]), //full base 20        
                                   //new([0, 1, 3, 5, 9, 10]), //natural base 15 - no 8 as it collapses to 24 on 1, no 6 as 7 is bad numerator in 7/5
                                   //new([0, 3, 4, 7, 8, 10]), //full base 20                                                                          
