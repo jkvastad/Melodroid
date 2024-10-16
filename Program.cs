@@ -7,6 +7,7 @@ using Melanchall.DryWetMidi.MusicTheory;
 using Melodroid.Harmonizers;
 using MusicTheory;
 using Serilog;
+using System.Linq;
 using System.Numerics;
 using System.Text;
 using static MusicTheory.MusicTheoryUtils;
@@ -935,21 +936,25 @@ static void QueryChordPowerSetLCMs()
         bool virtualBaseOnly = false;
         bool noCollapse = false;
         bool useMaxLCM = false;
+        bool printCardinalComplement = false;
         int maxLCM = 12; //pure base 15 sounds bad, so does 20, 24 sounds okish (11 and 5 sounds bad), size 12 might be largest lcm and rest is superpositions
         foreach (string option in options)
         {
             switch (option)
             {
+                case "c":
+                    printCardinalComplement = true;
+                    break;
                 case "m":
                     useMaxLCM = true;
                     break;
-                case "r": //realBaseOnly
+                case "r":
                     realBaseOnly = true;
                     break;
-                case "v": //virtualBaseOnly
+                case "v":
                     virtualBaseOnly = true;
                     break;
-                case "c": //noBase15Collapse (base 15 on fundamental excludes fundamental - 4)
+                case "n": //noBase15Collapse (base 15 on fundamental excludes fundamental - 4)
                     noCollapse = true;
                     break;
                 default:
@@ -1018,21 +1023,27 @@ static void QueryChordPowerSetLCMs()
             Console.WriteLine($"{nameof(cardinality)}:{cardinality}");
             Dictionary<int, List<long>> lcmPerFundamentalPerSubset = lcmPerFundamentalPerSubsetPerCardinality[cardinality];
             Console.Write($" ".PadRight(4)); //chars to write e.g. "10:"
-            foreach (var set in cardinalSets[cardinality])
+            foreach (List<int> set in cardinalSets[cardinality])
             {
-                foreach (var key in set)
+                List<int> setToWrite = set;
+                if (printCardinalComplement)
+                    setToWrite = cardinalSets[lcmPerFundamentalPerSubsetPerCardinality.Keys.Max()].First().Except(set).ToList();
+                foreach (var key in setToWrite)
                     Console.Write($"{key,-2} ");
             }
             Console.WriteLine("all");
             for (int fundamental = 0; fundamental < 12; fundamental++)
             {
                 Console.Write($"{fundamental,-2}: ");
+                int lcmPadding = cardinality * 3; //max lcm is double digit + 1 space
+                if (printCardinalComplement)
+                    lcmPadding = Math.Max(lcmPerFundamentalPerSubsetPerCardinality.Keys.Max() - cardinality, 1) * 3;
                 foreach (var lcm in lcmPerFundamentalPerSubset[fundamental])
                 {
                     if (lcm == 0)
-                        Console.Write($" ".PadRight(cardinality * 3));
+                        Console.Write($" ".PadRight(lcmPadding));
                     else
-                        Console.Write($"{lcm}".PadRight(cardinality * 3));
+                        Console.Write($"{lcm}".PadRight(lcmPadding));
                 }
                 var goodLcms = lcmPerFundamentalPerSubset[fundamental].Where(lcm => lcm != 0).ToArray(); //lcm 0 placeholder for no lcm
                 if (goodLcms.Count() > 0)
