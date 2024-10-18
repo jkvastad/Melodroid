@@ -997,10 +997,14 @@ static void QueryChordPowerSetLCMs()
                         long lcm = LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray());
                         if (useMaxLCM && lcm > maxLCM)
                             LcmPerSet.Add(0);
-                        else if (24 % lcm == 0) //use base 24
+                        else if (8 % lcm == 0) //use base 8
                             LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
-                        else if (20 % lcm == 0) //use base 20
+                        else if (10 % lcm == 0) //use base 10
                             LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
+                        //else if (20 % lcm == 0) //use base 20
+                        //    LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
+                        //else if (24 % lcm == 0) //use base 24
+                        //    LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
                         else if (15 % lcm == 0)//use base 15
                         {
                             if (noCollapse && cardinalSet[i].Contains((fundamental + 8) % 12))
@@ -1018,44 +1022,71 @@ static void QueryChordPowerSetLCMs()
             lcmPerFundamentalPerSubsetPerCardinality[cardinality] = lcmPerFundamentalPerSubset; //check cardinalSets[cardinality] for related sets
         }
 
+        int consoleMargin = 20; //arbitrary console margin
         foreach (var cardinality in lcmPerFundamentalPerSubsetPerCardinality.Keys)
         {
-            Console.WriteLine($"{nameof(cardinality)}:{cardinality}");
-            Dictionary<int, List<long>> lcmPerFundamentalPerSubset = lcmPerFundamentalPerSubsetPerCardinality[cardinality];
-            Console.Write($" ".PadRight(4)); //chars to write e.g. "10:"
-            foreach (List<int> set in cardinalSets[cardinality])
+            int currentCardinalSetIndex = 0;
+            int currentPageCardinalSetIndexStart = 0;
+
+            while (currentCardinalSetIndex < cardinalSets[cardinality].Count) //each loop is a page of output
             {
-                List<int> setToWrite = set;
-                if (printCardinalComplement)
-                    setToWrite = cardinalSets[lcmPerFundamentalPerSubsetPerCardinality.Keys.Max()].First().Except(set).ToList();
-                foreach (var key in setToWrite)
-                    Console.Write($"{key,-2} ");
-            }
-            Console.WriteLine("all");
-            for (int fundamental = 0; fundamental < 12; fundamental++)
-            {
-                Console.Write($"{fundamental,-2}: ");
-                int lcmPadding = cardinality * 3; //max lcm is double digit + 1 space
-                if (printCardinalComplement)
-                    lcmPadding = Math.Max(lcmPerFundamentalPerSubsetPerCardinality.Keys.Max() - cardinality, 1) * 3;
-                foreach (var lcm in lcmPerFundamentalPerSubset[fundamental])
+                int currentWidth = 0;
+                currentPageCardinalSetIndexStart = currentCardinalSetIndex;
+
+                Console.WriteLine($"{nameof(cardinality)}:{cardinality}");
+                Dictionary<int, List<long>> lcmPerFundamentalPerSubset = lcmPerFundamentalPerSubsetPerCardinality[cardinality];
+                Console.Write($" ".PadRight(4)); //chars to write e.g. "10:"            
+                for (int i = currentCardinalSetIndex; i < cardinalSets[cardinality].Count; i++)
                 {
-                    if (lcm == 0)
-                        Console.Write($" ".PadRight(lcmPadding));
-                    else
-                        Console.Write($"{lcm}".PadRight(lcmPadding));
+                    List<int> currentSet = cardinalSets[cardinality][i];
+                    List<int> setToWrite = currentSet;
+                    if (printCardinalComplement)
+                        setToWrite = cardinalSets[lcmPerFundamentalPerSubsetPerCardinality.Keys.Max()].First().Except(currentSet).ToList();
+
+                    if (setToWrite.Count * 3 > Console.WindowWidth - consoleMargin) //check if set will overflow console width  
+                    {
+                        Console.WriteLine("Console window width too small to print cardinal set, trying next cardinality");
+                        currentCardinalSetIndex = cardinalSets[cardinality].Count; //breaks the enclosing while loop
+                        break;
+                    }
+                    if (currentWidth + setToWrite.Count * 3 > Console.WindowWidth - consoleMargin) //check if the set to write will overflow console width, try new page
+                        break;
+
+                    foreach (var key in setToWrite)
+                        Console.Write($"{key,-2} ");
+                    currentWidth += setToWrite.Count * 3;
+                    currentCardinalSetIndex++;
                 }
-                var goodLcms = lcmPerFundamentalPerSubset[fundamental].Where(lcm => lcm != 0).ToArray(); //lcm 0 placeholder for no lcm
-                if (goodLcms.Count() > 0)
-                {
-                    long totalLcm = LCM(lcmPerFundamentalPerSubset[fundamental].Where(lcm => lcm != 0).ToArray());
-                    Console.Write($"{totalLcm,-3} ");
-                }
-                else
-                    Console.Write($" ".PadRight(4));
-                if (!lcmPerFundamentalPerSubset[fundamental].Any(lcm => lcm == 0))
-                    Console.Write("!");
+                //Console.WriteLine("all");
                 Console.WriteLine();
+                for (int fundamental = 0; fundamental < 12; fundamental++)
+                {
+                    Console.Write($"{fundamental,-2}: ");
+                    int lcmPadding = cardinality * 3; //max lcm is double digit + 1 space
+                    if (printCardinalComplement)
+                        lcmPadding = Math.Max(lcmPerFundamentalPerSubsetPerCardinality.Keys.Max() - cardinality, 1) * 3;
+
+                    for (int i = currentPageCardinalSetIndexStart; i < currentCardinalSetIndex; i++) //needs to be per subset currently being written
+                    {
+                        long lcm = lcmPerFundamentalPerSubset[fundamental][i];
+                        if (lcm == 0)
+                            Console.Write($" ".PadRight(lcmPadding));
+                        else
+                            Console.Write($"{lcm}".PadRight(lcmPadding));
+                    }
+                    //printing summary per line, not really necessary
+                    //var goodLcms = lcmPerFundamentalPerSubset[fundamental].Where(lcm => lcm != 0).ToArray(); //lcm 0 placeholder for no lcm
+                    //if (goodLcms.Count() > 0)
+                    //{
+                    //    long totalLcm = LCM(lcmPerFundamentalPerSubset[fundamental].Where(lcm => lcm != 0).ToArray());
+                    //    Console.Write($"{totalLcm,-3} ");
+                    //}
+                    //else
+                    //    Console.Write($" ".PadRight(4));
+                    //if (!lcmPerFundamentalPerSubset[fundamental].Any(lcm => lcm == 0))
+                    //    Console.Write("!");
+                    Console.WriteLine();
+                }
             }
         }
     }
