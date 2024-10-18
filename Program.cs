@@ -1056,8 +1056,7 @@ static void QueryChordPowerSetLCMs()
                         Console.Write($"{key,-2} ");
                     currentWidth += setToWrite.Count * 3;
                     currentCardinalSetIndex++;
-                }
-                //Console.WriteLine("all");
+                }                
                 Console.WriteLine();
                 for (int fundamental = 0; fundamental < 12; fundamental++)
                 {
@@ -1074,17 +1073,6 @@ static void QueryChordPowerSetLCMs()
                         else
                             Console.Write($"{lcm}".PadRight(lcmPadding));
                     }
-                    //printing summary per line, not really necessary
-                    //var goodLcms = lcmPerFundamentalPerSubset[fundamental].Where(lcm => lcm != 0).ToArray(); //lcm 0 placeholder for no lcm
-                    //if (goodLcms.Count() > 0)
-                    //{
-                    //    long totalLcm = LCM(lcmPerFundamentalPerSubset[fundamental].Where(lcm => lcm != 0).ToArray());
-                    //    Console.Write($"{totalLcm,-3} ");
-                    //}
-                    //else
-                    //    Console.Write($" ".PadRight(4));
-                    //if (!lcmPerFundamentalPerSubset[fundamental].Any(lcm => lcm == 0))
-                    //    Console.Write("!");
                     Console.WriteLine();
                 }
             }
