@@ -655,8 +655,7 @@ void QueryIntervalChordProgressions()
                             Console.Write("    ");
                         }
                         for (int fundamental = 0; fundamental < 12; fundamental++) //check chord matches versus base at grouped fundamental
-                        {
-                            //TODO find bug, does not match more than one chord per type per scale. E.g. misses 11 3 6 for 15@6 with input 0 4 7 
+                        {                            
                             var renormalizedChord = chord.Select(interval => (interval + fundamental) % 12).ToList();
                             if (currentScale.Intersect(renormalizedChord).Count() == renormalizedChord.Count())
                                 Console.Write($"{string.Join(" ", renormalizedChord)} - ");
