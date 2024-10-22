@@ -7,6 +7,7 @@ using Melanchall.DryWetMidi.MusicTheory;
 using Melodroid.Harmonizers;
 using MusicTheory;
 using Serilog;
+using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Text;
@@ -572,18 +573,66 @@ double[] ConstructTet12FractionFamily(int familyNumerator, int maxNumerator = 25
 //WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, "melodroid testing");
 
 //The intervals of a chord are subsets of scales which contain chords - thus defining chord progressions from intervals
-void QueryIntervalChordProgressions()
+
+Dictionary<(int, int), List<(int fundamental, int @base)>> GetIntervalScaleMatches(int[] tet12Keys)
 {
-    Fraction[] standardFractions = [new(1), new(16, 15), new(9, 8), new(6, 5), new(5, 4), new(4, 3), new(0), new(3, 2), new(8, 5), new(5, 3), new(9, 5), new(15, 8)];
     Dictionary<int, int[]> scalesPerBase = new();
     scalesPerBase[8] = [0, 2, 4, 7, 11];
     scalesPerBase[15] = [0, 1, 3, 5, 8, 9, 10];
 
+    List<(int, int)> inputPairs = GetPowerSet(tet12Keys).Where(set => set.Count == 2).Select(pair => (pair.First(), pair.Last())).ToList();
+    Dictionary<(int, int), List<(int fundamental, int @base)>> scalesMatchingPair = new();
+    foreach (var pair in inputPairs)
+    {
+        scalesMatchingPair[pair] = new();
+        foreach (var @base in scalesPerBase.Keys)
+        {
+            var scale = scalesPerBase[@base];
+            for (int fundamental = 0; fundamental < 12; fundamental++)
+            {
+                var renormalizedScale = scale.Select(key => (key + fundamental) % 12).ToList();
+                if (renormalizedScale.Intersect([pair.Item1, pair.Item2]).Count() == 2)
+                    scalesMatchingPair[pair].Add((fundamental, @base));
+            }
+        }
+    }
+    return scalesMatchingPair;
+}
+
+List<(List<int> chord, (int, int) pair, int fundamental, int @base)> GetIntervalChordProgressions(
+    Dictionary<(int, int), List<(int fundamental, int @base)>> intervalScaleMatches)
+{
     List<List<int>> standardChords = [
         [0, 3, 7],
         [0, 3, 6],
         [0, 4, 7]];
 
+    Dictionary<int, int[]> scalesPerBase = new();
+    scalesPerBase[8] = [0, 2, 4, 7, 11];
+    scalesPerBase[15] = [0, 1, 3, 5, 8, 9, 10];
+
+    List<(List<int> chord, (int, int) pair, int fundamental, int @base)> ChordProgressions = new();
+    foreach (var chord in standardChords)
+    {
+        foreach (var pair in intervalScaleMatches.Keys)
+        {
+            foreach (var fundamentalAndBase in intervalScaleMatches[pair])
+            {
+                var currentScale = scalesPerBase[fundamentalAndBase.@base].Select(key => (key + fundamentalAndBase.fundamental) % 12);
+                for (int fundamental = 0; fundamental < 12; fundamental++)
+                {
+                    var renormalizedChord = chord.Select(interval => (interval + fundamental) % 12).ToList();
+                    if (currentScale.Intersect(renormalizedChord).Count() == renormalizedChord.Count())
+                        ChordProgressions.Add((renormalizedChord, (pair.Item1, pair.Item2), fundamentalAndBase.fundamental, fundamentalAndBase.@base));
+                }
+            }
+        }
+    }
+    return ChordProgressions;
+}
+
+void QueryIntervalChordProgressions()
+{    
     while (true)
     {
         Console.WriteLine($"Input space separated tet12 keys for interval chord progressions, empty input to exit");
@@ -614,57 +663,58 @@ void QueryIntervalChordProgressions()
         string[] keys = splitInput.Where(chars => int.TryParse(chars, out _)).ToArray();
         int[] tet12Keys = Array.ConvertAll(keys, int.Parse);
 
-        //calculate data
-        List<(int, int)> inputPairs = GetPowerSet(tet12Keys).Where(set => set.Count == 2).Select(pair => (pair.First(), pair.Last())).ToList();
-        Dictionary<(int, int), List<(int fundamental, int @base)>> pairToBasesAtFundamentals = new();
-        foreach (var pair in inputPairs)
+        //calculate data                
+        Dictionary<(int, int), List<(int fundamental, int @base)>> intervalScaleMatches = GetIntervalScaleMatches(tet12Keys);
+
+        List<(List<int> chord, (int, int) pair, int fundamental, int @base)> ChordProgressions = GetIntervalChordProgressions(intervalScaleMatches);
+
+        //print data
+        foreach (var chordGroup in ChordProgressions.GroupBy(data => string.Join(" ", data.chord.OrderBy(key => key))).OrderBy(group => group.Key))
         {
-            pairToBasesAtFundamentals[pair] = new();
-            foreach (var @base in scalesPerBase.Keys)
+            Console.WriteLine(chordGroup.Key);
+            foreach (var pairGroup in chordGroup.GroupBy(data => data.pair))
             {
-                var scale = scalesPerBase[@base];
-                for (int fundamental = 0; fundamental < 12; fundamental++)
+                Console.Write($"{pairGroup.Key}: ");
+                foreach (var data in pairGroup.OrderBy(a => a.pair).ThenBy(a => a.@base).ThenBy(a => a.fundamental))
                 {
-                    var renormalizedScale = scale.Select(key => (key + fundamental) % 12).ToList();
-                    if (renormalizedScale.Intersect([pair.Item1, pair.Item2]).Count() == 2)
-                        pairToBasesAtFundamentals[pair].Add((fundamental, @base));
+                    Console.Write($"{$"{data.@base}@{data.fundamental}".PadRight(5)} ");
                 }
+                Console.WriteLine();
             }
         }
 
-        //print data
-        foreach (var pair in inputPairs)
-        {
-            Console.WriteLine($"{pair}:");
-            var bases = pairToBasesAtFundamentals[pair].GroupBy(data => data.@base).OrderBy(group => group.Key);
-            foreach (var baseGroup in bases)
-            {
-                if (!shortVersion)
-                    Console.WriteLine($" Base: {baseGroup.Key}");
-                var fundamentals = baseGroup.GroupBy(data => data.fundamental).OrderBy(group => group.Key);
-                foreach (var fundamentalGroup in fundamentals)
-                {
-                    if (!shortVersion)
-                        Console.WriteLine($"  Fundamental: {fundamentalGroup.Key}");
-                    var currentScale = scalesPerBase[baseGroup.Key].Select(key => (key + fundamentalGroup.Key) % 12);
-                    foreach (var chord in standardChords)
-                    {
-                        if (!shortVersion)
-                        {
-                            Console.WriteLine($"   Chord: {string.Join(" ", chord)}");
-                            Console.Write("    ");
-                        }
-                        for (int fundamental = 0; fundamental < 12; fundamental++) //check chord matches versus base at grouped fundamental
-                        {                            
-                            var renormalizedChord = chord.Select(interval => (interval + fundamental) % 12).ToList();
-                            if (currentScale.Intersect(renormalizedChord).Count() == renormalizedChord.Count())
-                                Console.Write($"{string.Join(" ", renormalizedChord)} - ");
-                        }
-                        Console.WriteLine();
-                    }
-                }
-            }
-        }
+        //foreach (var pair in inputPairs)
+        //{
+        //    Console.WriteLine($"{pair}:");
+        //    var bases = pairToBasesAtFundamentals[pair].GroupBy(data => data.@base).OrderBy(group => group.Key);
+        //    foreach (var baseGroup in bases)
+        //    {
+        //        if (!shortVersion)
+        //            Console.WriteLine($" Base: {baseGroup.Key}");
+        //        var fundamentals = baseGroup.GroupBy(data => data.fundamental).OrderBy(group => group.Key);
+        //        foreach (var fundamentalGroup in fundamentals)
+        //        {
+        //            if (!shortVersion)
+        //                Console.WriteLine($"  Fundamental: {fundamentalGroup.Key}");
+        //            var currentScale = scalesPerBase[baseGroup.Key].Select(key => (key + fundamentalGroup.Key) % 12);
+        //            foreach (var chord in standardChords)
+        //            {
+        //                if (!shortVersion)
+        //                {
+        //                    Console.WriteLine($"   Chord: {string.Join(" ", chord)}");
+        //                    Console.Write("    ");
+        //                }
+        //                for (int fundamental = 0; fundamental < 12; fundamental++) //check chord matches versus base at grouped fundamental
+        //                {
+        //                    var renormalizedChord = chord.Select(interval => (interval + fundamental) % 12).ToList();
+        //                    if (currentScale.Intersect(renormalizedChord).Count() == renormalizedChord.Count())
+        //                        Console.Write($"{string.Join(" ", renormalizedChord)} - ");
+        //                }
+        //                Console.WriteLine();
+        //            }
+        //        }
+        //    }
+        //}
     }
 }
 
