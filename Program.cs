@@ -632,7 +632,7 @@ List<(List<int> chord, (int, int) pair, int fundamental, int @base)> GetInterval
 }
 
 void QueryIntervalChordProgressions()
-{    
+{
     while (true)
     {
         Console.WriteLine($"Input space separated tet12 keys for interval chord progressions, empty input to exit");
@@ -648,10 +648,14 @@ void QueryIntervalChordProgressions()
         string[] splitInput = input.Split(' ');
         List<string> options = splitInput.Where(chars => !int.TryParse(chars, out _)).ToList(); //Might add options later
         bool shortVersion = false;
+        bool reverseLookup = false;
         foreach (string option in options)
         {
             switch (option)
             {
+                case "r":
+                    reverseLookup = true;
+                    break;
                 case "s":
                     shortVersion = true;
                     break;
@@ -664,12 +668,35 @@ void QueryIntervalChordProgressions()
         int[] tet12Keys = Array.ConvertAll(keys, int.Parse);
 
         //calculate data                
-        Dictionary<(int, int), List<(int fundamental, int @base)>> intervalScaleMatches = GetIntervalScaleMatches(tet12Keys);
-
-        List<(List<int> chord, (int, int) pair, int fundamental, int @base)> ChordProgressions = GetIntervalChordProgressions(intervalScaleMatches);
+        Dictionary<(int, int), List<(int fundamental, int @base)>> intervalScaleMatches = new();
+        List<(List<int> chord, (int, int) pair, int fundamental, int @base)> chordProgressions = new();
+        if (reverseLookup)
+        {
+            List<List<int>> standardChords = [
+                [0, 3, 7],
+                [0, 3, 6],
+                [0, 4, 7]];
+            foreach (var chord in standardChords)
+            {
+                for (int fundamental = 0; fundamental < 12; fundamental++)
+                {
+                    var currentChord = chord.Select(interval => (interval + fundamental) % 12).ToList();
+                    var currentProgressions = GetIntervalChordProgressions(GetIntervalScaleMatches(currentChord.ToArray()));
+                    var reverseProgressions = currentProgressions
+                        .Where(progression => progression.chord.Intersect(tet12Keys).Count() == tet12Keys.Count()) //only keep chords pointing to target chord
+                        .Select(progression => (currentChord, progression.pair, progression.fundamental, progression.@base)); //origin is reversed
+                    chordProgressions.AddRange(reverseProgressions);
+                }
+            }
+        }
+        else
+        {
+            intervalScaleMatches = GetIntervalScaleMatches(tet12Keys);
+            chordProgressions = GetIntervalChordProgressions(intervalScaleMatches);
+        }
 
         //print data
-        foreach (var chordGroup in ChordProgressions.GroupBy(data => string.Join(" ", data.chord.OrderBy(key => key))).OrderBy(group => group.Key))
+        foreach (var chordGroup in chordProgressions.GroupBy(data => string.Join(" ", data.chord.OrderBy(key => key))).OrderBy(group => group.Key))
         {
             Console.WriteLine(chordGroup.Key);
             foreach (var pairGroup in chordGroup.GroupBy(data => data.pair))
