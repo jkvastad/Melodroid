@@ -878,21 +878,21 @@ void QueryIntervalScaleOverlap()
 void QueryChordKeyMultiplicity(ScaleCalculator scaleCalculator)
 {
     List<Scale> scalesOfInterest = [
-        new([0, 7]), //base 2@0
-        new([0, 5, 9]), //base 3@0, 4@5
+        //new([0, 7]), //base 2@0
+        //new([0, 5, 9]), //base 3@0, 4@5
         new([0, 4, 7]), //base 4@0, 3@7
-        new([0, 3, 8, 10]), //base 5@0, 6@3                
-        new([0, 5, 7, 9]), //base 6@0                
+        //new([0, 3, 8, 10]), //base 5@0, 6@3                
+        //new([0, 5, 7, 9]), //base 6@0                
         new([0, 2, 4, 7, 11]), //base 8@0, 10@4, 12@7
-        new([0, 3, 7, 8, 10]), //base 10@0
-        new([0, 4, 5, 7, 9]), //base 12@0
+        //new([0, 3, 7, 8, 10]), //base 10@0
+        //new([0, 4, 5, 7, 9]), //base 12@0
         new([0, 1, 3, 5, 8, 9, 10]), //base 15@0
-        new([0, 3, 4, 7, 8, 10]), //base 20@0
-                                  //new([0, 3, 4, 7, 8, 10]), //full base 20        
-                                  //new([0, 1, 3, 5, 9, 10]), //natural base 15 - no 8 as it collapses to 24 on 1, no 6 as 7 is bad numerator in 7/5
-                                  //new([0, 3, 4, 7, 8, 10]), //full base 20                                                                          
-        new([0, 2, 4, 5, 7, 9, 11]),  //base 24@0 - 1, 9/8, 5/4, 5/4, 3/2, 5/3, 15/8
-                                      //new([0, 1, 3, 5, 7, 8, 9, 10]), //base 30@0
+                                     //new([0, 3, 4, 7, 8, 10]), //base 20@0
+                                     //new([0, 3, 4, 7, 8, 10]), //full base 20        
+                                     //new([0, 1, 3, 5, 9, 10]), //natural base 15 - no 8 as it collapses to 24 on 1, no 6 as 7 is bad numerator in 7/5
+                                     //new([0, 3, 4, 7, 8, 10]), //full base 20                                                                          
+                                     //new([0, 2, 4, 5, 7, 9, 11]),  //base 24@0 - 1, 9/8, 5/4, 5/4, 3/2, 5/3, 15/8
+                                     //new([0, 1, 3, 5, 7, 8, 9, 10]), //base 30@0
     ];
 
     Console.WriteLine("Matching input against scales:");
@@ -1173,14 +1173,8 @@ static void QueryChordPowerSetLCMs()
                         if (useMaxLCM && lcm > maxLCM)
                             LcmPerSet.Add(0);
                         else if (8 % lcm == 0) //use base 8
-                            LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
-                        else if (10 % lcm == 0) //use base 10
-                            LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
-                        //else if (20 % lcm == 0) //use base 20
-                        //    LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
-                        //else if (24 % lcm == 0) //use base 24
-                        //    LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
-                        else if (15 % lcm == 0)//use base 15
+                            LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));                        
+                        else if (15 % lcm == 0)// use base 15
                         {
                             if (noCollapse && cardinalSet[i].Contains((fundamental + 8) % 12))
                                 LcmPerSet.Add(0); //0 to indicate collapsing base 15 - note that collapse might not exist in this way, related to 0 4 7 1 sounding bad unless used as 15@7
