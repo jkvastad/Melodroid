@@ -147,6 +147,7 @@ while (true)
     //QueryChordKeyMultiplicity(scaleCalculator);
     QueryChordPowerSetLCMs();
     QueryChordIntervalMultiplicity();
+    //QueryRealChordIntervalMultiplicity();
     //QueryMelodicSupersetLCMs();
     //QueryIntervalScaleOverlap();
 }
@@ -1091,7 +1092,7 @@ static void QueryMelodicSubsetLCMs()
     }
 }
 
-//Show which real base each key matches to for each interval of a chord
+//Show which base each key matches to for each interval of a chord
 void QueryChordIntervalMultiplicity()
 {
     Fraction[] standardFractions = [new(1), new(16, 15), new(9, 8), new(6, 5), new(5, 4), new(4, 3), new(0), new(3, 2), new(8, 5), new(5, 3), new(9, 5), new(15, 8)];
@@ -1100,7 +1101,110 @@ void QueryChordIntervalMultiplicity()
     scalesPerBase[15] = [0, 1, 3, 5, 8, 9, 10];
     while (true)
     {
-        Console.WriteLine($"Input space separated tet12 keys for power set LCMs, empty input to exit");
+        Console.WriteLine($"Input space separated tet12 keys for chord interval multiplicity, empty input to exit");
+        string input = Console.ReadLine();
+
+        if (input.Length == 0) return;
+        if (input == "clear")
+        {
+            Console.Clear();
+            continue;
+        }
+
+        string[] splitInput = input.Split(' ');
+        List<string> options = splitInput.Where(chars => !int.TryParse(chars, out _)).ToList();
+        foreach (string option in options)
+        {
+            switch (option)
+            {
+                default:
+                    break;
+            };
+        }
+
+        string[] inputKeys = splitInput.Where(chars => int.TryParse(chars, out _)).ToArray();
+        int[] tet12Keys = Array.ConvertAll(inputKeys, int.Parse);
+
+        List<List<int>> inputIntervals = GetPowerSet(tet12Keys).Where(set => set.Count == 2).Select(pair => new List<int>([pair.First(), pair.Last()])).ToList();
+
+        //Calculate Data
+        List<List<List<long>>> lcmPerMelodyPerFundamentalPerInterval = new();
+        foreach (var interval in inputIntervals)
+        {
+            lcmPerMelodyPerFundamentalPerInterval.Add(new());
+            for (int fundamental = 0; fundamental < 12; fundamental++)
+            {
+                lcmPerMelodyPerFundamentalPerInterval[^1].Add(new());
+                for (int melody = 0; melody < 12; melody++)
+                {
+                    //calculate lcm for interval relative to current fundamental
+                    long lcm = 0;
+                    var renormalizedInterval = interval.Select(key => (key - fundamental + 12) % 12);
+                    if (!renormalizedInterval.Any(key => key == 6)) //invalid interval
+                        lcm = LCM(renormalizedInterval.Select(key => (long)standardFractions[key].Denominator).ToArray());
+                    //check if melody is in the base
+                    int @base = 0;
+                    if (lcm > 0)
+                    {
+                        if (8 % lcm == 0)
+                            @base = 8;
+                        else if (15 % lcm == 0)
+                            @base = 15;
+
+                        if (@base > 0)
+                        {
+                            var currentScale = scalesPerBase[@base].Select(key => (key + fundamental) % 12);
+                            if (currentScale.Contains(melody))
+                                lcmPerMelodyPerFundamentalPerInterval[^1][^1].Add(lcm);
+                            else
+                                lcmPerMelodyPerFundamentalPerInterval[^1][^1].Add(0); //No melody match
+                        }
+                        else
+                            lcmPerMelodyPerFundamentalPerInterval[^1][^1].Add(0); //lcm too large
+                    }
+                    else
+                        lcmPerMelodyPerFundamentalPerInterval[^1][^1].Add(0); //bad LCM
+                }
+            }
+        }
+
+        //Print Data
+        Console.Write(" ".PadRight(7));
+        for (int key = 0; key < 12; key++)
+        {
+            Console.Write($"{key}".PadRight(3));
+        }
+        Console.WriteLine();
+        for (int interval = 0; interval < lcmPerMelodyPerFundamentalPerInterval.Count; interval++)
+        {
+            Console.WriteLine($"{string.Join(" ", inputIntervals[interval])}:");
+            for (int fundamental = 0; fundamental < 12; fundamental++)
+            {
+                Console.Write($"   {$"{fundamental}".PadRight(2)}: ");
+                for (int melody = 0; melody < 12; melody++)
+                {
+                    var lcm = lcmPerMelodyPerFundamentalPerInterval[interval][fundamental][melody];
+                    if (lcm > 0)
+                        Console.Write($"{lcmPerMelodyPerFundamentalPerInterval[interval][fundamental][melody]} ".PadRight(3));
+                    else
+                        Console.Write(" ".PadRight(3));
+                }
+                Console.WriteLine();
+            }
+            Console.WriteLine("---");
+        }
+    }
+}
+//Show which real base each key matches to for each interval of a chord
+void QueryRealChordIntervalMultiplicity()
+{
+    Fraction[] standardFractions = [new(1), new(16, 15), new(9, 8), new(6, 5), new(5, 4), new(4, 3), new(0), new(3, 2), new(8, 5), new(5, 3), new(9, 5), new(15, 8)];
+    Dictionary<int, int[]> scalesPerBase = new();
+    scalesPerBase[8] = [0, 2, 4, 7, 11];
+    scalesPerBase[15] = [0, 1, 3, 5, 8, 9, 10];
+    while (true)
+    {
+        Console.WriteLine($"Input space separated tet12 keys for real (non virtual) chord interval multiplicity, empty input to exit");
         string input = Console.ReadLine();
 
         if (input.Length == 0) return;
@@ -1154,7 +1258,7 @@ void QueryChordIntervalMultiplicity()
                 int key = interval[i];
                 lcmPerMelodyPerKeyPerInterval[^1].Add(new());
                 for (int melody = 0; melody < 12; melody++)
-                {                    
+                {
                     //check if melody is in lcm base at key as fundamental
                     int @base = 0;
                     if (8 % lcms[i] == 0) //use base 8
