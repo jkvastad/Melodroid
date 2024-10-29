@@ -1140,6 +1140,7 @@ static void QueryChordPowerSetLCMs()
         string[] keys = splitInput.Where(chars => int.TryParse(chars, out _)).ToArray();
         int[] tet12Keys = Array.ConvertAll(keys, int.Parse);
 
+        //Calculate Data
         Dictionary<int, List<List<int>>> cardinalSets = GetPowerSet(tet12Keys).GroupBy(set => set.Count).ToDictionary(
             group => group.Key,
             group => group.ToList());
@@ -1191,6 +1192,7 @@ static void QueryChordPowerSetLCMs()
             lcmPerFundamentalPerSubsetPerCardinality[cardinality] = lcmPerFundamentalPerSubset; //check cardinalSets[cardinality] for related sets
         }
 
+        //Print Data
         int consoleMargin = 20; //arbitrary console margin
         foreach (var cardinality in lcmPerFundamentalPerSubsetPerCardinality.Keys)
         {
