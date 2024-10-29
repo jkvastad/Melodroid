@@ -143,9 +143,10 @@ while (true)
     //QuerySubsetIntervalsLCMs();
     //QueryMelodicSubsetLCMs();
 
-    QueryIntervalChordProgressions();
-    QueryChordKeyMultiplicity(scaleCalculator);
+    //QueryIntervalChordProgressions();
+    //QueryChordKeyMultiplicity(scaleCalculator);
     QueryChordPowerSetLCMs();
+    QueryChordIntervalMultiplicity();
     //QueryMelodicSupersetLCMs();
     //QueryIntervalScaleOverlap();
 }
@@ -572,8 +573,8 @@ double[] ConstructTet12FractionFamily(int familyNumerator, int maxNumerator = 25
 //BeatBox beatBox = new BeatBox();
 //WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, "melodroid testing");
 
-//The intervals of a chord are subsets of scales which contain chords - thus defining chord progressions from intervals
 
+//Returns all scales (as a tuple of fundamental and base) which contains the keys from each interval of the chord
 Dictionary<(int, int), List<(int fundamental, int @base)>> GetIntervalScaleMatches(int[] tet12Keys)
 {
     Dictionary<int, int[]> scalesPerBase = new();
@@ -631,6 +632,7 @@ List<(List<int> chord, (int, int) pair, int fundamental, int @base)> GetInterval
     return ChordProgressions;
 }
 
+//The intervals of a chord are subsets of scales which contain chords - thus defining chord progressions from intervals
 void QueryIntervalChordProgressions()
 {
     while (true)
@@ -951,7 +953,7 @@ void QueryChordKeyMultiplicity(ScaleCalculator scaleCalculator)
 }
 
 
-//Ad an extra tone to the original set, e.g. the melody being played, display LCM for all fundamentals for all possible keys
+//Add an extra tone to the original set, e.g. the melody being played, display LCM for all fundamentals for all possible keys
 static void QueryMelodicSupersetLCMs()
 {
     Fraction[] standardFractions = [new(1), new(16, 15), new(9, 8), new(6, 5), new(5, 4), new(4, 3), new(0), new(3, 2), new(8, 5), new(5, 3), new(9, 5), new(15, 8)];
@@ -1085,6 +1087,121 @@ static void QueryMelodicSubsetLCMs()
                     Console.Write($"".PadRight(4));
             }
             Console.WriteLine();
+        }
+    }
+}
+
+//Show which real base each key matches to for each interval of a chord
+void QueryChordIntervalMultiplicity()
+{
+    Fraction[] standardFractions = [new(1), new(16, 15), new(9, 8), new(6, 5), new(5, 4), new(4, 3), new(0), new(3, 2), new(8, 5), new(5, 3), new(9, 5), new(15, 8)];
+    Dictionary<int, int[]> scalesPerBase = new();
+    scalesPerBase[8] = [0, 2, 4, 7, 11];
+    scalesPerBase[15] = [0, 1, 3, 5, 8, 9, 10];
+    while (true)
+    {
+        Console.WriteLine($"Input space separated tet12 keys for power set LCMs, empty input to exit");
+        string input = Console.ReadLine();
+
+        if (input.Length == 0) return;
+        if (input == "clear")
+        {
+            Console.Clear();
+            continue;
+        }
+
+        string[] splitInput = input.Split(' ');
+        List<string> options = splitInput.Where(chars => !int.TryParse(chars, out _)).ToList();
+        foreach (string option in options)
+        {
+            switch (option)
+            {
+                default:
+                    break;
+            };
+        }
+
+        string[] inputKeys = splitInput.Where(chars => int.TryParse(chars, out _)).ToArray();
+        int[] tet12Keys = Array.ConvertAll(inputKeys, int.Parse);
+
+        //Calculate Data
+        // - Calculate interval lcms
+        List<(int, int)> inputIntervals = GetPowerSet(tet12Keys).Where(set => set.Count == 2).Select(pair => (pair.First(), pair.Last())).ToList();
+        List<((int, int), (long, long))> intervalLcms = new();
+        foreach (var interval in inputIntervals)
+        {
+            (int, int) renormalizedInterval1 = (0, (interval.Item2 - interval.Item1 + 12) % 12);
+            (int, int) renormalizedInterval2 = ((interval.Item1 - interval.Item2 + 12) % 12, 0);
+            //calculate LCM for valid intervals, else set lcm 0
+            long lcm1 = 0;
+            long lcm2 = 0;
+            if (renormalizedInterval1.Item2 != 6)
+                lcm1 = LCM([(long)standardFractions[renormalizedInterval1.Item1].Denominator, (long)standardFractions[renormalizedInterval1.Item2].Denominator]);
+            if (renormalizedInterval1.Item1 != 6)
+                lcm2 = LCM([(long)standardFractions[renormalizedInterval2.Item1].Denominator, (long)standardFractions[renormalizedInterval2.Item2].Denominator]);
+
+            intervalLcms.Add(((interval.Item1, interval.Item2), (lcm1, lcm2)));
+        }
+        // - Calculate if key is in base corresponding to interval lcm
+        List<List<List<long>>> lcmPerMelodyPerKeyPerInterval = new();
+        foreach (var data in intervalLcms)
+        {
+            lcmPerMelodyPerKeyPerInterval.Add(new()); //add interval
+            List<int> interval = [data.Item1.Item1, data.Item1.Item2];
+            List<long> lcms = [data.Item2.Item1, data.Item2.Item2];
+            for (int i = 0; i < interval.Count; i++)
+            {
+                int key = interval[i];
+                lcmPerMelodyPerKeyPerInterval[^1].Add(new());
+                for (int melody = 0; melody < 12; melody++)
+                {                    
+                    //check if melody is in lcm base at key as fundamental
+                    int @base = 0;
+                    if (8 % lcms[i] == 0) //use base 8
+                        @base = 8;
+                    else if (15 % lcms[i] == 0) //use base 15
+                        @base = 15;
+                    if (@base > 0)
+                    {
+                        var renormalizedScale = scalesPerBase[@base].Select(scaleKey => (scaleKey + key) % 12);
+                        if (renormalizedScale.Contains(melody))
+                            lcmPerMelodyPerKeyPerInterval[^1][^1].Add(lcms[i]);
+                        else
+                            lcmPerMelodyPerKeyPerInterval[^1][^1].Add(0);
+                    }
+                    else
+                        lcmPerMelodyPerKeyPerInterval[^1][^1].Add(0);
+                }
+            }
+        }
+
+        //Print Data
+        Console.Write(" ".PadRight(4));
+        for (int key = 0; key < 12; key++)
+        {
+            Console.Write($"{key}".PadRight(3));
+        }
+        Console.WriteLine();
+        for (int j = 0; j < intervalLcms.Count; j++)
+        {
+            var data = intervalLcms[j];
+            List<int> interval = [data.Item1.Item1, data.Item1.Item2];
+            List<long> lcms = [data.Item2.Item1, data.Item2.Item2];
+            for (int i = 0; i < interval.Count; i++)
+            {
+                var intervalKey = interval[i];
+                Console.Write($"{$"{intervalKey}".PadRight(2)}: ");
+                for (int melody = 0; melody < 12; melody++)
+                {
+                    var output = lcmPerMelodyPerKeyPerInterval[j][i][melody];
+                    if (output == 0)
+                        Console.Write($" ".PadRight(3));
+                    else
+                        Console.Write($"{output}".PadRight(3));
+                }
+                Console.WriteLine();
+            }
+            Console.WriteLine("---");
         }
     }
 }
