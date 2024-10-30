@@ -7,6 +7,7 @@ using Melanchall.DryWetMidi.MusicTheory;
 using Melodroid.Harmonizers;
 using MusicTheory;
 using Serilog;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
@@ -1112,14 +1113,12 @@ void QueryChordIntervalMultiplicity()
         }
 
         string[] splitInput = input.Split(' ');
-        List<string> options = splitInput.Where(chars => !int.TryParse(chars, out _)).ToList();
-        foreach (string option in options)
+        bool printOneKeyOnly = false;
+        int melodyToShow = -1;
+        if (splitInput.Last().Contains("m")) //end query with e.g. m=7 to see only output for key 7
         {
-            switch (option)
-            {
-                default:
-                    break;
-            };
+            printOneKeyOnly = true;
+            melodyToShow = int.Parse(splitInput.Last().Split("=").Last());
         }
 
         string[] inputKeys = splitInput.Where(chars => int.TryParse(chars, out _)).ToArray();
@@ -1169,29 +1168,53 @@ void QueryChordIntervalMultiplicity()
         }
 
         //Print Data
-        Console.Write(" ".PadRight(7));
-        for (int key = 0; key < 12; key++)
+        if (printOneKeyOnly)
         {
-            Console.Write($"{key}".PadRight(3));
-        }
-        Console.WriteLine();
-        for (int interval = 0; interval < lcmPerMelodyPerFundamentalPerInterval.Count; interval++)
-        {
-            Console.WriteLine($"{string.Join(" ", inputIntervals[interval])}:");
+            Console.Write(" ".PadRight(4));
+            foreach (var interval in inputIntervals)
+                foreach (var key in interval)
+                    Console.Write($"{key}".PadRight(3));
+            Console.WriteLine();
             for (int fundamental = 0; fundamental < 12; fundamental++)
             {
-                Console.Write($"   {$"{fundamental}".PadRight(2)}: ");
-                for (int melody = 0; melody < 12; melody++)
+                Console.Write($"{$"{fundamental}".PadRight(2)}: ");
+                for (int interval = 0; interval < lcmPerMelodyPerFundamentalPerInterval.Count; interval++)
                 {
-                    var lcm = lcmPerMelodyPerFundamentalPerInterval[interval][fundamental][melody];
+                    var lcm = lcmPerMelodyPerFundamentalPerInterval[interval][fundamental][melodyToShow];
                     if (lcm > 0)
-                        Console.Write($"{lcmPerMelodyPerFundamentalPerInterval[interval][fundamental][melody]} ".PadRight(3));
+                        Console.Write($"{lcmPerMelodyPerFundamentalPerInterval[interval][fundamental][melodyToShow]} ".PadRight(6));
                     else
-                        Console.Write(" ".PadRight(3));
+                        Console.Write(" ".PadRight(6));
                 }
                 Console.WriteLine();
             }
-            Console.WriteLine("---");
+        }
+        else
+        {
+            Console.Write(" ".PadRight(7));
+            for (int key = 0; key < 12; key++)
+            {
+                Console.Write($"{key}".PadRight(3));
+            }
+            Console.WriteLine();
+            for (int interval = 0; interval < lcmPerMelodyPerFundamentalPerInterval.Count; interval++)
+            {
+                Console.WriteLine($"{string.Join(" ", inputIntervals[interval])}:");
+                for (int fundamental = 0; fundamental < 12; fundamental++)
+                {
+                    Console.Write($"   {$"{fundamental}".PadRight(2)}: ");
+                    for (int melody = 0; melody < 12; melody++)
+                    {
+                        var lcm = lcmPerMelodyPerFundamentalPerInterval[interval][fundamental][melody];
+                        if (lcm > 0)
+                            Console.Write($"{lcmPerMelodyPerFundamentalPerInterval[interval][fundamental][melody]} ".PadRight(3));
+                        else
+                            Console.Write(" ".PadRight(3));
+                    }
+                    Console.WriteLine();
+                }
+                Console.WriteLine("---");
+            }
         }
     }
 }
