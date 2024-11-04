@@ -136,7 +136,7 @@ MelodicSupersetHarmonizerOddOrEvenFixedFundamentalPerMeasure harmonizer = new([0
 //TODO: Print LCM to simplify comparing interval matches, perhaps filter on max LCM.
 while (true)
 {
-    //QueryRatioFundamentalOctaveSweep(maxDeviation: 0.033d);
+    //QueryRatioFundamentalOctaveSweep(maxDeviation: 0.02d);
     //QueryChordKeyMultiplicityPowerSets(scaleCalculator);
     //QueryFundamentalClassPerScale(scaleCalculator);
     //QueryChordProgressionFromMultiplicity(scaleCalculator);
@@ -1093,13 +1093,16 @@ static void QueryMelodicSubsetLCMs()
     }
 }
 
-//Show which base each key matches to for each interval of a chord
+//Show which base each key matches with for each interval of a chord e.g. 9 0 4 shows that key 1 matches with base 3 at 0 for interval 9 0
 void QueryChordIntervalMultiplicity()
 {
     Fraction[] standardFractions = [new(1), new(16, 15), new(9, 8), new(6, 5), new(5, 4), new(4, 3), new(0), new(3, 2), new(8, 5), new(5, 3), new(9, 5), new(15, 8)];
+    //Fraction[] standardFractions = [new(1), new(16, 15), new(0), new(6, 5), new(5, 4), new(4, 3), new(0), new(3, 2), new(8, 5), new(5, 3), new(0), new(15, 8)];
     Dictionary<int, int[]> scalesPerBase = new();
-    scalesPerBase[8] = [0, 2, 4, 7, 11];
-    scalesPerBase[15] = [0, 1, 3, 5, 8, 9, 10];
+    //scalesPerBase[8] = [0, 2, 4, 7, 11];
+    //scalesPerBase[15] = [0, 1, 3, 5, 8, 9, 10];
+    scalesPerBase[8] = [0, 4, 7, 11];
+    scalesPerBase[15] = [0, 1, 3, 5, 8, 9];
     while (true)
     {
         Console.WriteLine($"Input space separated tet12 keys for chord interval multiplicity, empty input to exit");
@@ -1139,7 +1142,7 @@ void QueryChordIntervalMultiplicity()
                     //calculate lcm for interval relative to current fundamental
                     long lcm = 0;
                     var renormalizedInterval = interval.Select(key => (key - fundamental + 12) % 12);
-                    if (!renormalizedInterval.Any(key => key == 6)) //invalid interval
+                    if (!renormalizedInterval.Any(key => standardFractions[key] == 0)) //invalid interval
                         lcm = LCM(renormalizedInterval.Select(key => (long)standardFractions[key].Denominator).ToArray());
                     //check if melody is in the base
                     int @base = 0;
@@ -1337,6 +1340,7 @@ void QueryRealChordIntervalMultiplicity()
 static void QueryChordPowerSetLCMs()
 {
     Fraction[] standardFractions = [new(1), new(16, 15), new(9, 8), new(6, 5), new(5, 4), new(4, 3), new(0), new(3, 2), new(8, 5), new(5, 3), new(9, 5), new(15, 8)];
+    //Fraction[] standardFractions = [new(1), new(16, 15), new(0), new(6, 5), new(5, 4), new(4, 3), new(0), new(3, 2), new(8, 5), new(5, 3), new(0), new(15, 8)];
     while (true)
     {
         Console.WriteLine($"Input space separated tet12 keys for power set LCMs, empty input to exit");
@@ -1406,8 +1410,8 @@ static void QueryChordPowerSetLCMs()
                 for (int i = 0; i < renormalizedSets.Count; i++)
                 {
                     List<int> set = renormalizedSets[i];
-                    if (set.Any(interval => interval == 6))
-                        LcmPerSet.Add(0); //0 to indicate invalid interval, not using 7/5                                        
+                    if (set.Any(interval => standardFractions[interval] == 0))
+                        LcmPerSet.Add(0); //0 to indicate invalid interval
                     else if (realBaseOnly && !cardinalSet[i].Contains(fundamental))
                         LcmPerSet.Add(0); //0 to indicate non real base                    
                     else if (virtualBaseOnly && cardinalSet[i].Contains(fundamental))
@@ -1417,7 +1421,7 @@ static void QueryChordPowerSetLCMs()
                         long lcm = LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray());
                         if (useMaxLCM && lcm > maxLCM)
                             LcmPerSet.Add(0);
-                        else if (8 % lcm == 0) //use base 8
+                        else if (24 % lcm == 0) //use base 24
                             LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
                         else if (15 % lcm == 0)// use base 15
                         {
