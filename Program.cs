@@ -1098,11 +1098,9 @@ void QueryChordIntervalMultiplicity()
 {
     Fraction[] standardFractions = [new(1), new(16, 15), new(9, 8), new(6, 5), new(5, 4), new(4, 3), new(0), new(3, 2), new(8, 5), new(5, 3), new(9, 5), new(15, 8)];
     //Fraction[] standardFractions = [new(1), new(16, 15), new(0), new(6, 5), new(5, 4), new(4, 3), new(0), new(3, 2), new(8, 5), new(5, 3), new(0), new(15, 8)];
-    Dictionary<int, int[]> scalesPerBase = new();
-    //scalesPerBase[8] = [0, 2, 4, 7, 11];
-    //scalesPerBase[15] = [0, 1, 3, 5, 8, 9, 10];
-    scalesPerBase[8] = [0, 4, 7, 11];
-    scalesPerBase[15] = [0, 1, 3, 5, 8, 9];
+    Dictionary<int, int[]> scalesPerBase = new();    
+    scalesPerBase[8] = [0, 2, 4, 7, 11];
+    scalesPerBase[15] = [0, 1, 3, 5, 8, 9, 10];
     scalesPerBase[24] = [0, 2, 4, 5, 7, 9, 11];
     while (true)
     {
@@ -1118,11 +1116,16 @@ void QueryChordIntervalMultiplicity()
 
         string[] splitInput = input.Split(' ');
         bool printOneKeyOnly = false;
+        bool printSideways = false;
         int melodyToShow = -1;
         if (splitInput.Last().Contains("m")) //end query with e.g. m=7 to see only output for key 7
         {
             printOneKeyOnly = true;
             melodyToShow = int.Parse(splitInput.Last().Split("=").Last());
+        }
+        if (splitInput.Last().Contains("s")) //end query with s to print columns side by side
+        {
+            printSideways = true;
         }
 
         string[] inputKeys = splitInput.Where(chars => int.TryParse(chars, out _)).ToArray();
@@ -1143,20 +1146,21 @@ void QueryChordIntervalMultiplicity()
                     //calculate lcm for interval relative to current fundamental
                     long lcm = 0;
                     var renormalizedInterval = interval.Select(key => (key - fundamental + 12) % 12);
-                    if (!renormalizedInterval.Any(key => standardFractions[key] == 0)) //invalid interval
+                    if (!renormalizedInterval.Any(key => standardFractions[key] == 0)) //no invalid interval
                         lcm = LCM(renormalizedInterval.Select(key => (long)standardFractions[key].Denominator).ToArray());
-                    //check if melody + interval is in any scale                    
+                    //check if melody + interval is in any scale                                        
                     if (lcm > 0)
                     {
                         bool isMatch = false;
                         List<int> keysToMatch = [melody, .. interval];
                         keysToMatch = keysToMatch.Distinct().ToList();
-                        foreach (var scale in scalesPerBase.Values)
+                        foreach (var @base in scalesPerBase.Keys)
                         {
-                            var currentScale = scale.Select(key => (key + fundamental) % 12);                            
+                            var scale = scalesPerBase[@base];
+                            var currentScale = scale.Select(key => (key + fundamental) % 12);
                             if (currentScale.Intersect(keysToMatch).Count() == keysToMatch.Count())
                             {
-                                lcmPerMelodyPerFundamentalPerInterval[^1][^1].Add(lcm);
+                                lcmPerMelodyPerFundamentalPerInterval[^1][^1].Add(@base);
                                 isMatch = true;
                                 break;
                             }
@@ -1189,6 +1193,37 @@ void QueryChordIntervalMultiplicity()
                         Console.Write($"{lcmPerMelodyPerFundamentalPerInterval[interval][fundamental][melodyToShow]} ".PadRight(6));
                     else
                         Console.Write(" ".PadRight(6));
+                }
+                Console.WriteLine();
+            }
+        }
+        else if (printSideways)
+        {
+            for (int interval = 0; interval < lcmPerMelodyPerFundamentalPerInterval.Count; interval++)
+            {
+                Console.Write(" ".PadRight(7));
+                for (int key = 0; key < 12; key++)
+                    Console.Write($"{key}".PadRight(3));
+            }
+            Console.WriteLine();
+            for (int interval = 0; interval < lcmPerMelodyPerFundamentalPerInterval.Count; interval++)
+            {
+                Console.Write($"{string.Join(" ", inputIntervals[interval])}:".PadRight(12 * 3 + 7));
+            }
+            Console.WriteLine();
+            for (int fundamental = 0; fundamental < 12; fundamental++)
+            {
+                for (int interval = 0; interval < lcmPerMelodyPerFundamentalPerInterval.Count; interval++)
+                {
+                    Console.Write($"   {$"{fundamental}".PadRight(2)}: ");
+                    for (int melody = 0; melody < 12; melody++)
+                    {
+                        var lcm = lcmPerMelodyPerFundamentalPerInterval[interval][fundamental][melody];
+                        if (lcm > 0)
+                            Console.Write($"{lcmPerMelodyPerFundamentalPerInterval[interval][fundamental][melody]} ".PadRight(3));
+                        else
+                            Console.Write(" ".PadRight(3));
+                    }
                 }
                 Console.WriteLine();
             }
