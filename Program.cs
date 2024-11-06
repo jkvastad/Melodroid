@@ -1103,6 +1103,7 @@ void QueryChordIntervalMultiplicity()
     //scalesPerBase[15] = [0, 1, 3, 5, 8, 9, 10];
     scalesPerBase[8] = [0, 4, 7, 11];
     scalesPerBase[15] = [0, 1, 3, 5, 8, 9];
+    scalesPerBase[24] = [0, 2, 4, 5, 7, 9, 11];
     while (true)
     {
         Console.WriteLine($"Input space separated tet12 keys for chord interval multiplicity, empty input to exit");
@@ -1144,25 +1145,25 @@ void QueryChordIntervalMultiplicity()
                     var renormalizedInterval = interval.Select(key => (key - fundamental + 12) % 12);
                     if (!renormalizedInterval.Any(key => standardFractions[key] == 0)) //invalid interval
                         lcm = LCM(renormalizedInterval.Select(key => (long)standardFractions[key].Denominator).ToArray());
-                    //check if melody is in the base
-                    int @base = 0;
+                    //check if melody + interval is in any scale                    
                     if (lcm > 0)
                     {
-                        if (8 % lcm == 0)
-                            @base = 8;
-                        else if (15 % lcm == 0)
-                            @base = 15;
-
-                        if (@base > 0)
+                        bool isMatch = false;
+                        List<int> keysToMatch = [melody, .. interval];
+                        keysToMatch = keysToMatch.Distinct().ToList();
+                        foreach (var scale in scalesPerBase.Values)
                         {
-                            var currentScale = scalesPerBase[@base].Select(key => (key + fundamental) % 12);
-                            if (currentScale.Contains(melody))
+                            var currentScale = scale.Select(key => (key + fundamental) % 12);                            
+                            if (currentScale.Intersect(keysToMatch).Count() == keysToMatch.Count())
+                            {
                                 lcmPerMelodyPerFundamentalPerInterval[^1][^1].Add(lcm);
-                            else
-                                lcmPerMelodyPerFundamentalPerInterval[^1][^1].Add(0); //No melody match
+                                isMatch = true;
+                                break;
+                            }
+
                         }
-                        else
-                            lcmPerMelodyPerFundamentalPerInterval[^1][^1].Add(0); //lcm too large
+                        if (!isMatch)
+                            lcmPerMelodyPerFundamentalPerInterval[^1][^1].Add(0); //no match                        
                     }
                     else
                         lcmPerMelodyPerFundamentalPerInterval[^1][^1].Add(0); //bad LCM
@@ -1421,7 +1422,7 @@ static void QueryChordPowerSetLCMs()
                         long lcm = LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray());
                         if (useMaxLCM && lcm > maxLCM)
                             LcmPerSet.Add(0);
-                        else if (24 % lcm == 0) //use base 24
+                        else if (24 % lcm == 0 && lcm != 12) //use base 24, 12@0 = 8@5
                             LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
                         else if (15 % lcm == 0)// use base 15
                         {
