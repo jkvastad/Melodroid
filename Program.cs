@@ -147,7 +147,8 @@ while (true)
     //QueryIntervalChordProgressions();
     //QueryChordKeyMultiplicity(scaleCalculator);
     QueryChordPowerSetLCMs();
-    QueryChordIntervalMultiplicity();
+    //QueryChordIntervalMultiplicity();
+    QueryLCMTonalSetsForFundamental();
     //QueryRealChordIntervalMultiplicity();
     //QueryMelodicSupersetLCMs();
     //QueryIntervalScaleOverlap();
@@ -574,6 +575,76 @@ double[] ConstructTet12FractionFamily(int familyNumerator, int maxNumerator = 25
 //e.g.:
 //BeatBox beatBox = new BeatBox();
 //WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, "melodroid testing");
+
+static void QueryLCMTonalSetsForFundamental()
+{
+    Fraction[] standardFractions = [new(1), new(16, 15), new(9, 8), new(6, 5), new(5, 4), new(4, 3), new(0), new(3, 2), new(8, 5), new(5, 3), new(9, 5), new(15, 8)];
+
+    while (true)
+    {
+        Console.WriteLine($"Input (optional) desired LCMs then fundamental for respective LCM tonal sets, empty input to exit");
+        string input = Console.ReadLine();
+
+        if (input.Length == 0) return;
+        if (input == "clear")
+        {
+            Console.Clear();
+            continue;
+        }
+
+        string[] splitInput = input.Split(' ');
+
+        int fundamental = int.Parse(splitInput.Last());
+
+        List<int> desiredLCMs = new();
+        if (splitInput.Count() > 1)
+            desiredLCMs = [.. Array.ConvertAll(splitInput.SkipLast(1).ToArray(), int.Parse)];
+
+        //Calculate Data
+        Dictionary<int, Dictionary<int, List<List<int>>>> cardinalityPerLCMsPerTonalSets = new();
+        for (int i = 1; i < Math.Pow(2, 12); i++) //all 12 key permutations
+        {
+            List<int> intervals = new();
+            for (int j = 0; j < 12; j++) //add key j if j is in the tonal set
+                if (((i >> j) & 1) == 1)
+                    intervals.Add(j);
+
+            var renormalizedIntervals = intervals.Select(key => (key - fundamental + 12) % 12);
+            if (renormalizedIntervals.Any(key => standardFractions[key] == 0)) //skip tonal set if it contains illegal keys
+                continue;
+
+            int lcm = (int)LCM(renormalizedIntervals.Select(key => (long)standardFractions[key].Denominator).ToArray());
+
+            if (desiredLCMs.Count > 0 && !desiredLCMs.Contains(lcm)) //possibly skip undesired LCM
+                continue;
+
+            //Possibly init dictionaries
+            if (!cardinalityPerLCMsPerTonalSets.ContainsKey(intervals.Count))
+                cardinalityPerLCMsPerTonalSets[intervals.Count] = new();
+            if (!cardinalityPerLCMsPerTonalSets[intervals.Count].ContainsKey(lcm))
+                cardinalityPerLCMsPerTonalSets[intervals.Count][lcm] = new();
+            cardinalityPerLCMsPerTonalSets[intervals.Count][lcm].Add(intervals);
+        }
+
+        //Print Data
+        for (int cardinality = 0; cardinality < 12; cardinality++)
+        {
+            if (!cardinalityPerLCMsPerTonalSets.ContainsKey(cardinality))
+                continue;
+            Console.WriteLine($"cardinality: {cardinality}");
+            foreach (int lcm in cardinalityPerLCMsPerTonalSets[cardinality].Keys.OrderBy(lcm => lcm))
+            {
+                Console.WriteLine($" lcm: {lcm}");
+                foreach (var tonalSet in cardinalityPerLCMsPerTonalSets[cardinality][lcm]
+                    .OrderBy(tonalSet => string.Join(" ", tonalSet.OrderBy(key => key)))) //sort lexicographically
+                {
+                    //Console.WriteLine($"{$"{lcm}".PadRight(3)} - {string.Join(" ", tonalSet)}");
+                    Console.WriteLine($"  {string.Join(" ", tonalSet)}");
+                }
+            }
+        }
+    }
+}
 
 
 //Returns all scales (as a tuple of fundamental and base) which contains the keys from each interval of the chord
@@ -1098,7 +1169,7 @@ void QueryChordIntervalMultiplicity()
 {
     Fraction[] standardFractions = [new(1), new(16, 15), new(9, 8), new(6, 5), new(5, 4), new(4, 3), new(0), new(3, 2), new(8, 5), new(5, 3), new(9, 5), new(15, 8)];
     //Fraction[] standardFractions = [new(1), new(16, 15), new(0), new(6, 5), new(5, 4), new(4, 3), new(0), new(3, 2), new(8, 5), new(5, 3), new(0), new(15, 8)];
-    Dictionary<int, int[]> scalesPerBase = new();    
+    Dictionary<int, int[]> scalesPerBase = new();
     scalesPerBase[8] = [0, 2, 4, 7, 11];
     scalesPerBase[15] = [0, 1, 3, 5, 8, 9, 10];
     scalesPerBase[24] = [0, 2, 4, 5, 7, 9, 11];
