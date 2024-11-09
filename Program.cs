@@ -1528,7 +1528,7 @@ static void QueryChordPowerSetLCMs()
                         long lcm = LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray());
                         if (useMaxLCM && lcm > maxLCM)
                             LcmPerSet.Add(0);
-                        else if (24 % lcm == 0 && lcm != 12) //use base 24, 12@0 = 8@5
+                        else if (24 % lcm == 0)
                             LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
                         else if (15 % lcm == 0)// use base 15
                         {
