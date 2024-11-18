@@ -147,8 +147,9 @@ while (true)
     //QueryIntervalChordProgressions();
     //QueryChordKeyMultiplicity(scaleCalculator);
     QueryChordPowerSetLCMs();
+    QueryTonalSetsFundamentalOverlap();
     //QueryChordIntervalMultiplicity();
-    QueryLCMTonalSetsForFundamental();
+    //QueryLCMTonalSetsForFundamental();
     //QueryRealChordIntervalMultiplicity();
     //QueryMelodicSupersetLCMs();
     //QueryIntervalScaleOverlap();
@@ -576,6 +577,147 @@ double[] ConstructTet12FractionFamily(int familyNumerator, int maxNumerator = 25
 //BeatBox beatBox = new BeatBox();
 //WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, "melodroid testing");
 
+static void QueryTonalSetsFundamentalOverlap()
+{
+    Fraction[] standardFractions = [new(1), new(16, 15), new(9, 8), new(6, 5), new(5, 4), new(4, 3), new(0), new(3, 2), new(8, 5), new(5, 3), new(9, 5), new(15, 8)];
+
+    while (true)
+    {
+        //Calculate Origin Data
+        Console.WriteLine($"Input origin tonal set, or empty input to exit");
+        string input = Console.ReadLine();
+
+        if (input.Length == 0) return;
+        if (input == "clear")
+        {
+            Console.Clear();
+            continue;
+        }
+
+        string[] splitInput = input.Split(' ');
+        string[] keys = splitInput.Where(chars => int.TryParse(chars, out _)).ToArray();
+        int[] tet12Keys = Array.ConvertAll(keys, int.Parse);
+
+        Dictionary<int, List<List<int>>> originCardinalSets = GetPowerSet(tet12Keys).GroupBy(set => set.Count).ToDictionary(
+        group => group.Key,
+        group => group.ToList());
+
+        Dictionary<int, Dictionary<int, List<long>>> originLCMPerSubsetPerFundamentalPerCardinality = new();
+        foreach (int cardinality in originCardinalSets.Keys)
+        {
+            if (cardinality < 2) continue; // not interested in single notes
+            List<List<int>> cardinalSet = originCardinalSets[cardinality];
+            Dictionary<int, List<long>> lcmPerSubsetPerFundamental = new();
+
+            for (int fundamental = 0; fundamental < 12; fundamental++)
+            {
+                List<List<int>> renormalizedSets = cardinalSet.Select(
+                    set => set.Select(key => (key - fundamental + 12) % 12).ToList())
+                    .ToList();
+
+                List<long> LcmPerSet = new();
+                for (int i = 0; i < renormalizedSets.Count; i++)
+                {
+                    List<int> set = renormalizedSets[i];
+                    if (set.Any(interval => standardFractions[interval] == 0))
+                        LcmPerSet.Add(0); //0 to indicate invalid interval                    
+                    else
+                    {
+                        long lcm = LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray());
+                        if (8 % lcm == 0)
+                            LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
+                        else if (10 % lcm == 0)
+                            LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
+                        else if (24 % lcm == 0)
+                            LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
+                        else if (15 % lcm == 0)// use base 15                                                    
+                            LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
+                        else
+                            LcmPerSet.Add(0);
+                    }
+                }
+                lcmPerSubsetPerFundamental[fundamental] = LcmPerSet;
+            }
+            originLCMPerSubsetPerFundamentalPerCardinality[cardinality] = lcmPerSubsetPerFundamental; //check cardinalSets[cardinality] for related sets
+        }
+
+        //Calculate Target Data
+        Console.WriteLine($"Input target tonal set");
+        input = Console.ReadLine();
+
+        splitInput = input.Split(' ');
+        keys = splitInput.Where(chars => int.TryParse(chars, out _)).ToArray();
+        tet12Keys = Array.ConvertAll(keys, int.Parse);
+
+        Dictionary<int, List<List<int>>> targetCardinalSets = GetPowerSet(tet12Keys).GroupBy(set => set.Count).ToDictionary(
+        group => group.Key,
+        group => group.ToList());
+
+        Dictionary<int, Dictionary<int, List<long>>> targetLCMPerSubsetPerFundamentalPerCardinality = new();
+        foreach (int cardinality in targetCardinalSets.Keys)
+        {
+            if (cardinality < 2) continue; // not interested in single notes
+            List<List<int>> cardinalSet = targetCardinalSets[cardinality];
+            Dictionary<int, List<long>> lcmPerSubsetPerFundamental = new();
+
+            for (int fundamental = 0; fundamental < 12; fundamental++)
+            {
+                List<List<int>> renormalizedSets = cardinalSet.Select(
+                    set => set.Select(key => (key - fundamental + 12) % 12).ToList())
+                    .ToList();
+
+                List<long> LcmPerSet = new();
+                for (int i = 0; i < renormalizedSets.Count; i++)
+                {
+                    List<int> set = renormalizedSets[i];
+                    if (set.Any(interval => standardFractions[interval] == 0))
+                        LcmPerSet.Add(0); //0 to indicate invalid interval                    
+                    else
+                    {
+                        long lcm = LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray());
+                        if (8 % lcm == 0)
+                            LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
+                        else if (10 % lcm == 0)
+                            LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
+                        else if (24 % lcm == 0)
+                            LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
+                        else if (15 % lcm == 0)// use base 15                                                    
+                            LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
+                        else
+                            LcmPerSet.Add(0);
+                    }
+                }
+                lcmPerSubsetPerFundamental[fundamental] = LcmPerSet;
+            }
+            targetLCMPerSubsetPerFundamentalPerCardinality[cardinality] = lcmPerSubsetPerFundamental; //check cardinalSets[cardinality] for related sets
+        }
+
+        //Print data
+        for (int fundamental = 0; fundamental < 12; fundamental++)
+        {
+            Console.WriteLine($"{fundamental}:");
+            foreach (var originCardinality in originLCMPerSubsetPerFundamentalPerCardinality.Keys)
+            {
+                for (int originSubsetIndex = 0; originSubsetIndex < originLCMPerSubsetPerFundamentalPerCardinality[originCardinality][fundamental].Count; originSubsetIndex++)
+                {
+                    foreach (var targetCardinality in targetLCMPerSubsetPerFundamentalPerCardinality.Keys)
+                    {
+                        for (int targetSubsetIndex = 0; targetSubsetIndex < targetLCMPerSubsetPerFundamentalPerCardinality[targetCardinality][fundamental].Count; targetSubsetIndex++)
+                        {
+                            long originBase = originLCMPerSubsetPerFundamentalPerCardinality[originCardinality][fundamental][originSubsetIndex];
+                            long targetBase = targetLCMPerSubsetPerFundamentalPerCardinality[targetCardinality][fundamental][targetSubsetIndex];
+                            List<int> originSubset = originCardinalSets[originCardinality][originSubsetIndex];
+                            List<int> targetSubset = targetCardinalSets[targetCardinality][targetSubsetIndex];
+                            if (originBase > 0 && targetBase > 0)
+                                Console.WriteLine($"{originBase,-2} {targetBase,-2} ({string.Join(" ", originSubset)})({string.Join(" ", targetSubset)})");
+                        }
+                    }
+                }
+            }
+            Console.WriteLine();
+        }
+    }
+}
 static void QueryLCMTonalSetsForFundamental()
 {
     Fraction[] standardFractions = [new(1), new(16, 15), new(9, 8), new(6, 5), new(5, 4), new(4, 3), new(0), new(3, 2), new(8, 5), new(5, 3), new(9, 5), new(15, 8)];
@@ -956,11 +1098,11 @@ void QueryChordKeyMultiplicity(ScaleCalculator scaleCalculator)
         //new([0, 7]), //base 2@0
         //new([0, 5, 9]), //base 3@0, 4@5
         new([0, 4, 7]), //base 4@0, 3@7
-        //new([0, 3, 8, 10]), //base 5@0, 6@3                
-        //new([0, 5, 7, 9]), //base 6@0                
+                        //new([0, 3, 8, 10]), //base 5@0, 6@3                
+                        //new([0, 5, 7, 9]), //base 6@0                
         new([0, 2, 4, 7, 11]), //base 8@0, 10@4, 12@7
-        //new([0, 3, 7, 8, 10]), //base 10@0
-        //new([0, 4, 5, 7, 9]), //base 12@0
+                               //new([0, 3, 7, 8, 10]), //base 10@0
+                               //new([0, 4, 5, 7, 9]), //base 12@0
         new([0, 1, 3, 5, 8, 9, 10]), //base 15@0
                                      //new([0, 3, 4, 7, 8, 10]), //base 20@0
                                      //new([0, 3, 4, 7, 8, 10]), //full base 20        
@@ -1500,12 +1642,12 @@ static void QueryChordPowerSetLCMs()
             group => group.Key,
             group => group.ToList());
 
-        Dictionary<int, Dictionary<int, List<long>>> lcmPerFundamentalPerSubsetPerCardinality = new();
+        Dictionary<int, Dictionary<int, List<long>>> lcmPerSubsetPerFundamentalPerCardinality = new();
         foreach (int cardinality in cardinalSets.Keys)
         {
             if (cardinality < 2) continue; // not interested in single notes
             List<List<int>> cardinalSet = cardinalSets[cardinality];
-            Dictionary<int, List<long>> lcmPerFundamentalPerSubset = new();
+            Dictionary<int, List<long>> lcmPerSubsetPerFundamental = new();
 
             for (int fundamental = 0; fundamental < 12; fundamental++)
             {
@@ -1528,6 +1670,10 @@ static void QueryChordPowerSetLCMs()
                         long lcm = LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray());
                         if (useMaxLCM && lcm > maxLCM)
                             LcmPerSet.Add(0);
+                        else if (8 % lcm == 0)
+                            LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
+                        else if (10 % lcm == 0)
+                            LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
                         else if (24 % lcm == 0)
                             LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
                         else if (15 % lcm == 0)// use base 15
@@ -1542,14 +1688,14 @@ static void QueryChordPowerSetLCMs()
                     }
                 }
 
-                lcmPerFundamentalPerSubset[fundamental] = LcmPerSet;
+                lcmPerSubsetPerFundamental[fundamental] = LcmPerSet;
             }
-            lcmPerFundamentalPerSubsetPerCardinality[cardinality] = lcmPerFundamentalPerSubset; //check cardinalSets[cardinality] for related sets
+            lcmPerSubsetPerFundamentalPerCardinality[cardinality] = lcmPerSubsetPerFundamental; //check cardinalSets[cardinality] for related sets
         }
 
         //Print Data
         int consoleMargin = 20; //arbitrary console margin
-        foreach (var cardinality in lcmPerFundamentalPerSubsetPerCardinality.Keys)
+        foreach (var cardinality in lcmPerSubsetPerFundamentalPerCardinality.Keys)
         {
             int currentCardinalSetIndex = 0;
             int currentPageCardinalSetIndexStart = 0;
@@ -1560,14 +1706,14 @@ static void QueryChordPowerSetLCMs()
                 currentPageCardinalSetIndexStart = currentCardinalSetIndex;
 
                 Console.WriteLine($"{nameof(cardinality)}:{cardinality}");
-                Dictionary<int, List<long>> lcmPerFundamentalPerSubset = lcmPerFundamentalPerSubsetPerCardinality[cardinality];
+                Dictionary<int, List<long>> lcmPerSubsetPerFundamental = lcmPerSubsetPerFundamentalPerCardinality[cardinality];
                 Console.Write($" ".PadRight(4)); //chars to write e.g. "10:"            
                 for (int i = currentCardinalSetIndex; i < cardinalSets[cardinality].Count; i++)
                 {
                     List<int> currentSet = cardinalSets[cardinality][i];
                     List<int> setToWrite = currentSet;
                     if (printCardinalComplement)
-                        setToWrite = cardinalSets[lcmPerFundamentalPerSubsetPerCardinality.Keys.Max()].First().Except(currentSet).ToList();
+                        setToWrite = cardinalSets[lcmPerSubsetPerFundamentalPerCardinality.Keys.Max()].First().Except(currentSet).ToList();
 
                     if (setToWrite.Count * 3 > Console.WindowWidth - consoleMargin) //check if set will overflow console width  
                     {
@@ -1589,11 +1735,11 @@ static void QueryChordPowerSetLCMs()
                     Console.Write($"{fundamental,-2}: ");
                     int lcmPadding = cardinality * 3; //max lcm is double digit + 1 space
                     if (printCardinalComplement)
-                        lcmPadding = Math.Max(lcmPerFundamentalPerSubsetPerCardinality.Keys.Max() - cardinality, 1) * 3;
+                        lcmPadding = Math.Max(lcmPerSubsetPerFundamentalPerCardinality.Keys.Max() - cardinality, 1) * 3;
 
                     for (int i = currentPageCardinalSetIndexStart; i < currentCardinalSetIndex; i++) //needs to be per subset currently being written
                     {
-                        long lcm = lcmPerFundamentalPerSubset[fundamental][i];
+                        long lcm = lcmPerSubsetPerFundamental[fundamental][i];
                         if (lcm == 0)
                             Console.Write($" ".PadRight(lcmPadding));
                         else
