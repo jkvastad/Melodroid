@@ -149,8 +149,8 @@ while (true)
     //QueryChordKeyMultiplicity(scaleCalculator);
     QueryChordPowerSetLCMs();
     QueryTonalSetsFundamentalOverlap();
+    QueryLCMTonalSetsForFundamental();
     //QueryChordIntervalMultiplicity();
-    //QueryLCMTonalSetsForFundamental();
     //QueryRealChordIntervalMultiplicity();
     //QueryMelodicSupersetLCMs();
     //QueryIntervalScaleOverlap();
