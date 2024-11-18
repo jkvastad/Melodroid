@@ -9,6 +9,7 @@ using MusicTheory;
 using Serilog;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
 using System.Linq;
 using System.Numerics;
 using System.Text;
@@ -583,7 +584,6 @@ static void QueryTonalSetsFundamentalOverlap()
 
     while (true)
     {
-        //Calculate Origin Data
         Console.WriteLine($"Input origin tonal set, or empty input to exit");
         string input = Console.ReadLine();
 
@@ -595,9 +595,28 @@ static void QueryTonalSetsFundamentalOverlap()
         }
 
         string[] splitInput = input.Split(' ');
+        List<string> options = splitInput.Where(chars => !int.TryParse(chars, out _)).ToList();
+        bool lcmMatchOnly = false;
+        bool lcmPartialMatch = false;
+        foreach (string option in options)
+        {
+            switch (option)
+            {
+                case "m":
+                    lcmMatchOnly = true;
+                    break;
+                case "p":
+                    lcmPartialMatch = true;
+                    break;
+                default:
+                    break;
+            };
+        }
+
         string[] keys = splitInput.Where(chars => int.TryParse(chars, out _)).ToArray();
         int[] tet12Keys = Array.ConvertAll(keys, int.Parse);
 
+        //Calculate Origin Data
         Dictionary<int, List<List<int>>> originCardinalSets = GetPowerSet(tet12Keys).GroupBy(set => set.Count).ToDictionary(
         group => group.Key,
         group => group.ToList());
@@ -704,12 +723,27 @@ static void QueryTonalSetsFundamentalOverlap()
                     {
                         for (int targetSubsetIndex = 0; targetSubsetIndex < targetLCMPerSubsetPerFundamentalPerCardinality[targetCardinality][fundamental].Count; targetSubsetIndex++)
                         {
-                            long originBase = originLCMPerSubsetPerFundamentalPerCardinality[originCardinality][fundamental][originSubsetIndex];
-                            long targetBase = targetLCMPerSubsetPerFundamentalPerCardinality[targetCardinality][fundamental][targetSubsetIndex];
+                            int originBase = (int)originLCMPerSubsetPerFundamentalPerCardinality[originCardinality][fundamental][originSubsetIndex];
+                            int targetBase = (int)targetLCMPerSubsetPerFundamentalPerCardinality[targetCardinality][fundamental][targetSubsetIndex];
                             List<int> originSubset = originCardinalSets[originCardinality][originSubsetIndex];
                             List<int> targetSubset = targetCardinalSets[targetCardinality][targetSubsetIndex];
+
                             if (originBase > 0 && targetBase > 0)
-                                Console.WriteLine($"{originBase,-2} {targetBase,-2} ({string.Join(" ", originSubset)})({string.Join(" ", targetSubset)})");
+                            {
+                                if (lcmMatchOnly)
+                                {
+                                    if (originBase == targetBase)
+                                        Console.WriteLine($"{originBase,-2} {targetBase,-2} ({string.Join(" ", originSubset)})({string.Join(" ", targetSubset)})");
+                                }
+                                else if (lcmPartialMatch)
+                                {
+                                    List<int> targetFactors = Factorize(targetBase);
+                                    if (Factorize(originBase).Any(originFactor => targetFactors.Contains(originFactor)))
+                                        Console.WriteLine($"{originBase,-2} {targetBase,-2} ({string.Join(" ", originSubset)})({string.Join(" ", targetSubset)})");
+                                }
+                                else
+                                    Console.WriteLine($"{originBase,-2} {targetBase,-2} ({string.Join(" ", originSubset)})({string.Join(" ", targetSubset)})");
+                            }
                         }
                     }
                 }
