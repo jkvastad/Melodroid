@@ -581,6 +581,7 @@ double[] ConstructTet12FractionFamily(int familyNumerator, int maxNumerator = 25
 static void QueryTonalSetsFundamentalOverlap()
 {
     Fraction[] standardFractions = [new(1), new(16, 15), new(9, 8), new(6, 5), new(5, 4), new(4, 3), new(0), new(3, 2), new(8, 5), new(5, 3), new(9, 5), new(15, 8)];
+    long[] allowedLCMs = [8, 10, 12, 15];
 
     while (true)
     {
@@ -595,15 +596,19 @@ static void QueryTonalSetsFundamentalOverlap()
         }
 
         string[] splitInput = input.Split(' ');
-        List<string> options = splitInput.Where(chars => !int.TryParse(chars, out _)).ToList();
+        List<string> originOptions = splitInput.Where(chars => !int.TryParse(chars, out _)).ToList();
         bool lcmMatchOnly = false;
         bool lcmPartialMatch = false;
-        foreach (string option in options)
+        bool originNoCollapse = false;
+        foreach (string option in originOptions)
         {
             switch (option)
             {
                 case "m":
                     lcmMatchOnly = true;
+                    break;
+                case "n":
+                    originNoCollapse = true;
                     break;
                 case "p":
                     lcmPartialMatch = true;
@@ -643,14 +648,14 @@ static void QueryTonalSetsFundamentalOverlap()
                     else
                     {
                         long lcm = LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray());
-                        if (8 % lcm == 0)
-                            LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
-                        else if (10 % lcm == 0)
-                            LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
-                        else if (24 % lcm == 0)
-                            LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
-                        else if (15 % lcm == 0)// use base 15                                                    
-                            LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
+                        if (allowedLCMs.Any(allowedLCM => allowedLCM % lcm == 0))
+                        {
+                            if (originNoCollapse && cardinalSet[i].Contains((fundamental + 8) % 12))
+                                LcmPerSet.Add(0); //0 to indicate collapsing base 15 - note that collapse might not exist in this way, related to 0 4 7 1 sounding bad unless used as 15@7
+                            else
+                                LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
+                        }
+
                         else
                             LcmPerSet.Add(0);
                     }
@@ -665,6 +670,21 @@ static void QueryTonalSetsFundamentalOverlap()
         input = Console.ReadLine();
 
         splitInput = input.Split(' ');
+
+        List<string> targetOptions = splitInput.Where(chars => !int.TryParse(chars, out _)).ToList();
+        bool targetNoCollapse = false;
+        foreach (string option in originOptions)
+        {
+            switch (option)
+            {
+                case "n":
+                    targetNoCollapse = true;
+                    break;
+                default:
+                    break;
+            };
+        }
+
         keys = splitInput.Where(chars => int.TryParse(chars, out _)).ToArray();
         tet12Keys = Array.ConvertAll(keys, int.Parse);
 
@@ -694,14 +714,13 @@ static void QueryTonalSetsFundamentalOverlap()
                     else
                     {
                         long lcm = LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray());
-                        if (8 % lcm == 0)
-                            LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
-                        else if (10 % lcm == 0)
-                            LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
-                        else if (24 % lcm == 0)
-                            LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
-                        else if (15 % lcm == 0)// use base 15                                                    
-                            LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
+                        if (allowedLCMs.Any(allowedLCM => allowedLCM % lcm == 0))
+                        {
+                            if (targetNoCollapse && cardinalSet[i].Contains((fundamental + 8) % 12))
+                                LcmPerSet.Add(0); //0 to indicate collapsing base 15 - note that collapse might not exist in this way, related to 0 4 7 1 sounding bad unless used as 15@7
+                            else
+                                LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
+                        }
                         else
                             LcmPerSet.Add(0);
                     }
@@ -770,11 +789,26 @@ static void QueryLCMTonalSetsForFundamental()
 
         string[] splitInput = input.Split(' ');
 
+        List<string> options = splitInput.Where(chars => !int.TryParse(chars, out _)).ToList();
+        bool noCollapse = false;
+        foreach (string option in options)
+        {
+            switch (option)
+            {
+                case "n":
+                    noCollapse = true;
+                    break;
+                default:
+                    break;
+            };
+        }
+
         int fundamental = int.Parse(splitInput.Last());
 
         List<int> desiredLCMs = new();
+        string[] inputLCMs = splitInput.SkipLast(1).Where(chars => int.TryParse(chars, out _)).ToArray();
         if (splitInput.Count() > 1)
-            desiredLCMs = [.. Array.ConvertAll(splitInput.SkipLast(1).ToArray(), int.Parse)];
+            desiredLCMs = [.. Array.ConvertAll(inputLCMs, int.Parse)];
 
         //Calculate Data
         Dictionary<int, Dictionary<int, List<List<int>>>> cardinalityPerLCMsPerTonalSets = new();
@@ -792,6 +826,9 @@ static void QueryLCMTonalSetsForFundamental()
             int lcm = (int)LCM(renormalizedIntervals.Select(key => (long)standardFractions[key].Denominator).ToArray());
 
             if (desiredLCMs.Count > 0 && !desiredLCMs.Contains(lcm)) //possibly skip undesired LCM
+                continue;
+
+            if (noCollapse && lcm == 15 && renormalizedIntervals.Contains(8)) //skip collapsed base 15 if option is set
                 continue;
 
             //Possibly init dictionaries
@@ -1624,6 +1661,8 @@ static void QueryChordPowerSetLCMs()
 {
     Fraction[] standardFractions = [new(1), new(16, 15), new(9, 8), new(6, 5), new(5, 4), new(4, 3), new(0), new(3, 2), new(8, 5), new(5, 3), new(9, 5), new(15, 8)];
     //Fraction[] standardFractions = [new(1), new(16, 15), new(0), new(6, 5), new(5, 4), new(4, 3), new(0), new(3, 2), new(8, 5), new(5, 3), new(0), new(15, 8)];
+    long[] allowedLCMs = [8, 10, 12, 15];
+
     while (true)
     {
         Console.WriteLine($"Input space separated tet12 keys for power set LCMs, empty input to exit");
@@ -1708,7 +1747,7 @@ static void QueryChordPowerSetLCMs()
                             LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
                         else if (10 % lcm == 0)
                             LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
-                        else if (24 % lcm == 0)
+                        else if (12 % lcm == 0)
                             LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
                         else if (15 % lcm == 0)// use base 15
                         {
