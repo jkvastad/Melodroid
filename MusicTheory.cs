@@ -17,7 +17,7 @@ namespace MusicTheory
 
     public class Measure
     {
-        public int TimeDivision { get; }
+        public int TimeDivision { get => MIDIKeys.Length; } //Time divisions of the measure, converted to midi tics along with tempo elsewhere
         public Dictionary<int, int>?[] MIDIKeys { get; } //array position is time division steps in measure, key is MIDI note, value is velocity
 
         public Measure(NoteValue?[] noteValues) : this(noteValues.Select(noteValue =>
@@ -29,8 +29,7 @@ namespace MusicTheory
         { }
         public Measure(Dictionary<int, int>?[] noteValues)
         {
-            MIDIKeys = noteValues;
-            TimeDivision = noteValues.Length;
+            MIDIKeys = noteValues;            
         }
     }
 

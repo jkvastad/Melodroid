@@ -32,7 +32,7 @@ public class BeatBox(IRhythmMeasureMaker rhythmMeasureMaker, IMeasureHarmonizer 
 
         MidiFile midiFile = new MidiFile();
 
-        //TODO set tempo
+        //TODO set tempo, deciding length of tics, default is 120 bpm
 
         TrackChunk trackChunk = new TrackChunk();
         using (TimedObjectsManager<Melanchall.DryWetMidi.Interaction.Note> notesManager = trackChunk.ManageNotes())
