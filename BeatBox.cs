@@ -16,7 +16,7 @@ public class BeatBox(IRhythmMeasureMaker rhythmMeasureMaker, IMeasureHarmonizer 
         return MeasureHarmonizer.MeasuresFromVelocities(velocities);
     }
 
-    public void WriteMeasuresToMidi(List<Measure> measures, string folderPath, string fileName, bool overWrite = false)
+    public static void WriteMeasuresToMidi(List<Measure> measures, string folderPath, string fileName, bool overWrite = false)
     {
 
         /** Example Usage

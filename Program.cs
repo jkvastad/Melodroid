@@ -84,18 +84,18 @@ ScaleCalculator scaleCalculator = new();
 
 //TODO add logger for scales used (and other random outcomes during generation)
 ////Select Rhythm Maker
-int timeDivision = 16;
-int numberOfMeasures = 32;
-int beatsPerMeasure = 8;
-int deviationsPerMeasure = 3;
-//SimpleIsochronicRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, beatsPerMeasure);
-SimpleGrooveRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, beatsPerMeasure, deviationsPerMeasure);
-List<List<PatternBlock>> measurePatternBlocks = [
-    [new("A", 8), new("B", 4), new("B", 4)],
-    [new("A", 8), new("B", 4), new("C", 4)],
-    [new("A", 8), new("B", 4), new("B", 4)],
-    [new("D", 8), new("B", 4), new("E", 4)]
-];
+//int timeDivision = 16;
+//int numberOfMeasures = 32;
+//int beatsPerMeasure = 8;
+//int deviationsPerMeasure = 3;
+////SimpleIsochronicRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, beatsPerMeasure);
+//SimpleGrooveRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, beatsPerMeasure, deviationsPerMeasure);
+//List<List<PatternBlock>> measurePatternBlocks = [
+//    [new("A", 8), new("B", 4), new("B", 4)],
+//    [new("A", 8), new("B", 4), new("C", 4)],
+//    [new("A", 8), new("B", 4), new("B", 4)],
+//    [new("D", 8), new("B", 4), new("E", 4)]
+//];
 //SimpleMeasurePatternRhythmMaker rhythmMaker = new(timeDivision, numberOfMeasures, beatsPerMeasure, deviationsPerMeasure, measurePatternBlocks);
 
 
@@ -155,6 +155,8 @@ while (true)
     //QueryMelodicSupersetLCMs();
     //QueryIntervalScaleOverlap();
 }
+
+
 
 
 //TODO: Check for patterns in complex chords, e.g. in 3/2, 5/4 the 3/2 interval loops twice, cutting 5/4 in "half" and creating a mirrored version -
