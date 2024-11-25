@@ -135,27 +135,30 @@ ScaleCalculator scaleCalculator = new();
 
 //TODO: Are chord progressions based on finding intervals 3/2 and 5/4 (major chord)? Implies other intervals are renormalized and must fit in with the prioritized intervals
 //TODO: Print LCM to simplify comparing interval matches, perhaps filter on max LCM.
-while (true)
-{
-    //QueryRatioFundamentalOctaveSweep(maxDeviation: 0.02d);
-    //QueryChordKeyMultiplicityPowerSets(scaleCalculator);
-    //QueryFundamentalClassPerScale(scaleCalculator);
-    //QueryChordProgressionFromMultiplicity(scaleCalculator);
-    //QueryChordInKeySetTranslations();
-    //QuerySubsetIntervalsLCMs();
-    //QueryMelodicSubsetLCMs();
+PrincipleBasedMeasureMaker measureMaker = new();
+List<Measure> myMeasures = measureMaker.MakeMeasures();
+BeatBox.WriteMeasuresToMidi(myMeasures, folderPath, "principles_testing", true);
 
-    //QueryIntervalChordProgressions();
-    //QueryChordKeyMultiplicity(scaleCalculator);
-    QueryChordPowerSetLCMs();
-    QueryTonalSetsFundamentalOverlap();
-    QueryLCMTonalSetsForFundamental();
-    //QueryChordIntervalMultiplicity();
-    //QueryRealChordIntervalMultiplicity();
-    //QueryMelodicSupersetLCMs();
-    //QueryIntervalScaleOverlap();
-}
+//while (true)
+//{
+//    //QueryRatioFundamentalOctaveSweep(maxDeviation: 0.02d);
+//    //QueryChordKeyMultiplicityPowerSets(scaleCalculator);
+//    //QueryFundamentalClassPerScale(scaleCalculator);
+//    //QueryChordProgressionFromMultiplicity(scaleCalculator);
+//    //QueryChordInKeySetTranslations();
+//    //QuerySubsetIntervalsLCMs();
+//    //QueryMelodicSubsetLCMs();
 
+//    //QueryIntervalChordProgressions();
+//    //QueryChordKeyMultiplicity(scaleCalculator);
+//    QueryChordPowerSetLCMs();
+//    QueryTonalSetsFundamentalOverlap();
+//    QueryLCMTonalSetsForFundamental();
+//    //QueryChordIntervalMultiplicity();
+//    //QueryRealChordIntervalMultiplicity();
+//    //QueryMelodicSupersetLCMs();
+//    //QueryIntervalScaleOverlap();
+//}
 
 
 
