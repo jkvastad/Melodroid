@@ -135,30 +135,35 @@ ScaleCalculator scaleCalculator = new();
 
 //TODO: Are chord progressions based on finding intervals 3/2 and 5/4 (major chord)? Implies other intervals are renormalized and must fit in with the prioritized intervals
 //TODO: Print LCM to simplify comparing interval matches, perhaps filter on max LCM.
-PrincipleBasedMeasureMaker measureMaker = new();
-List<Measure> myMeasures = measureMaker.MakeMeasures();
-BeatBox.WriteMeasuresToMidi(myMeasures, folderPath, "principles_testing", true);
 
-//while (true)
-//{
-//    //QueryRatioFundamentalOctaveSweep(maxDeviation: 0.02d);
-//    //QueryChordKeyMultiplicityPowerSets(scaleCalculator);
-//    //QueryFundamentalClassPerScale(scaleCalculator);
-//    //QueryChordProgressionFromMultiplicity(scaleCalculator);
-//    //QueryChordInKeySetTranslations();
-//    //QuerySubsetIntervalsLCMs();
-//    //QueryMelodicSubsetLCMs();
+//TODO: autogenerate music from principles
+//PrincipleBasedMeasureMaker measureMaker = new();
+//List<Measure> myMeasures = measureMaker.MakeMeasures();
+//BeatBox.WriteMeasuresToMidi(myMeasures, folderPath, "principles_testing", true);
 
-//    //QueryIntervalChordProgressions();
-//    //QueryChordKeyMultiplicity(scaleCalculator);
-//    QueryChordPowerSetLCMs();
-//    QueryTonalSetsFundamentalOverlap();
-//    QueryLCMTonalSetsForFundamental();
-//    //QueryChordIntervalMultiplicity();
-//    //QueryRealChordIntervalMultiplicity();
-//    //QueryMelodicSupersetLCMs();
-//    //QueryIntervalScaleOverlap();
-//}
+while (true)
+{
+    //QueryRatioFundamentalOctaveSweep(maxDeviation: 0.02d);
+    //QueryChordKeyMultiplicityPowerSets(scaleCalculator);
+    //QueryFundamentalClassPerScale(scaleCalculator);
+    //QueryChordProgressionFromMultiplicity(scaleCalculator);
+    //QueryChordInKeySetTranslations();
+    //QuerySubsetIntervalsLCMs();
+    //QueryMelodicSubsetLCMs();
+
+    //QueryIntervalChordProgressions();
+    //QueryChordKeyMultiplicity(scaleCalculator);
+
+    QueryChordPowerSetLCMs();
+    QueryTonalCoverage();
+    //QueryTonalSetsFundamentalOverlap();
+    //QueryLCMTonalSetsForFundamental();
+
+    //QueryChordIntervalMultiplicity();
+    //QueryRealChordIntervalMultiplicity();
+    //QueryMelodicSupersetLCMs();
+    //QueryIntervalScaleOverlap();
+}
 
 
 
@@ -583,6 +588,111 @@ double[] ConstructTet12FractionFamily(int familyNumerator, int maxNumerator = 25
 //BeatBox beatBox = new BeatBox();
 //WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, "melodroid testing");
 
+static void QueryTonalCoverage()
+{
+
+    Fraction[] standardFractions = [new(1), new(16, 15), new(9, 8), new(6, 5), new(5, 4), new(4, 3), new(0), new(3, 2), new(8, 5), new(5, 3), new(9, 5), new(15, 8)];
+
+    while (true)
+    {
+        Console.WriteLine($"Input tonal set for tonal coverage, empty input to exit");
+        string input = Console.ReadLine();
+
+        if (input.Length == 0) return;
+        if (input == "clear")
+        {
+            Console.Clear();
+            continue;
+        }
+
+        string[] splitInput = input.Split(' ');
+
+        List<string> options = splitInput.Where(chars => !int.TryParse(chars, out _)).ToList();
+
+        foreach (string option in options)
+        {
+            switch (option)
+            {
+                default:
+                    break;
+            };
+        }
+
+        string[] keys = splitInput.Where(chars => int.TryParse(chars, out _)).ToArray();
+        int[] tet12Keys = Array.ConvertAll(keys, int.Parse);
+
+        Dictionary<int, List<List<int>>> originCardinalSets = GetPowerSet(tet12Keys).Where(set => set.Count > 1).GroupBy(set => set.Count).ToDictionary(
+        group => group.Key,
+        group => group.ToList());
+
+
+        //CalculateData
+        Dictionary<int, List<List<(int, List<int>)>>> tonalCoveragePerFundamental = new();
+        HashSet<int> originalKeySet = new(tet12Keys);
+        for (int fundamental = 0; fundamental < 12; fundamental++)
+        {
+            tonalCoveragePerFundamental[fundamental] = new();
+            foreach (var cardinalSetA in originCardinalSets.Values)
+            {
+                foreach (var tonalSetA in cardinalSetA)
+                {
+                    foreach (var cardinalSetB in originCardinalSets.Values)
+                    {
+                        foreach (var tonalSetB in cardinalSetB)
+                        {
+                            //check if set union covers all keys
+                            HashSet<int> setA = new(tonalSetA);
+                            HashSet<int> setB = new(tonalSetB);
+                            if (originalKeySet.SetEquals(setA.Union(setB)))
+                            {
+                                //Only legal fractions for lcm
+                                var renormalizedTonalSetA = tonalSetA.Select(key => (key - fundamental + 12) % 12);
+                                var renormalizedTonalSetB = tonalSetB.Select(key => (key - fundamental + 12) % 12);
+                                if (renormalizedTonalSetA.Any(key => standardFractions[key] == 0))
+                                    continue;
+                                if (renormalizedTonalSetB.Any(key => standardFractions[key] == 0))
+                                    continue;
+
+
+                                int lcmA = (int)LCM(renormalizedTonalSetA.Select(key => (long)standardFractions[key].Denominator).ToArray());
+                                int lcmB = (int)LCM(renormalizedTonalSetB.Select(key => (long)standardFractions[key].Denominator).ToArray());
+                                //only legal lcm
+                                int[] legalLcm = new[] { 8, 10, 12, 15 };
+                                if (!legalLcm.Any(lcm => lcm % lcmA == 0))
+                                    continue;
+                                if (!legalLcm.Any(lcm => lcm % lcmB == 0))
+                                    continue;
+
+                                //check for common factors in lcm
+                                var lcmAFactors = Factorize(lcmA);
+                                var lcmBFactors = Factorize(lcmB);
+                                if (lcmBFactors.Any(bFactor => lcmAFactors.Contains(bFactor)))
+                                {
+                                    List<(int, List<int>)> tonalCoverage = [(lcmA, tonalSetA.ToList()), (lcmB, tonalSetB.ToList())];
+                                    tonalCoveragePerFundamental[fundamental].Add(tonalCoverage);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        //PrintData
+        for (int fundamental = 0; fundamental < 12; fundamental++)
+        {
+            Console.WriteLine($"{fundamental}:");
+            foreach (var tonalCoverage in tonalCoveragePerFundamental[fundamental])
+            {
+                foreach (var subset in tonalCoverage)
+                {
+                    Console.Write(" ");
+                    Console.Write($"({subset.Item1}, {string.Join(" ", subset.Item2)})");
+                }
+                Console.WriteLine();
+            }
+        }
+    }
+}
 static void QueryTonalSetsFundamentalOverlap()
 {
     Fraction[] standardFractions = [new(1), new(16, 15), new(9, 8), new(6, 5), new(5, 4), new(4, 3), new(0), new(3, 2), new(8, 5), new(5, 3), new(9, 5), new(15, 8)];
