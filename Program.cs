@@ -156,7 +156,7 @@ while (true)
 
     QueryChordPowerSetLCMs();
     QueryTonalCoverage();
-    //QueryTonalSetsFundamentalOverlap();
+    QueryTonalSetsFundamentalOverlap();
     //QueryLCMTonalSetsForFundamental();
 
     //QueryChordIntervalMultiplicity();
@@ -588,6 +588,8 @@ double[] ConstructTet12FractionFamily(int familyNumerator, int maxNumerator = 25
 //BeatBox beatBox = new BeatBox();
 //WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, "melodroid testing");
 
+
+//Tonal coverage is two subsets of sounding tones which share a prime number at a fundamental and contain all tones of the original set
 static void QueryTonalCoverage()
 {
 
@@ -608,11 +610,19 @@ static void QueryTonalCoverage()
         string[] splitInput = input.Split(' ');
 
         List<string> options = splitInput.Where(chars => !int.TryParse(chars, out _)).ToList();
+        bool mixedCoverageOnly = false; //only show entries where the base differs for the same fundamental (non-trivial subsets)
+        bool noCollapse = false; //No base 15 may contain renormalized key 8 (collapses 15@0 to 8@1)
 
         foreach (string option in options)
         {
             switch (option)
             {
+                case "m":
+                    mixedCoverageOnly = true;
+                    break;
+                case "n":
+                    noCollapse = true;
+                    break;
                 default:
                     break;
             };
@@ -656,6 +666,18 @@ static void QueryTonalCoverage()
 
                                 int lcmA = (int)LCM(renormalizedTonalSetA.Select(key => (long)standardFractions[key].Denominator).ToArray());
                                 int lcmB = (int)LCM(renormalizedTonalSetB.Select(key => (long)standardFractions[key].Denominator).ToArray());
+                                if (mixedCoverageOnly && lcmA == lcmB) //only show differing lcms with mixed coverage
+                                    continue;
+                                if (noCollapse)
+                                {
+                                    if (lcmA == 15)
+                                        if (renormalizedTonalSetA.Contains(8))
+                                            continue;
+                                    if (lcmB == 15)
+                                        if (renormalizedTonalSetB.Contains(8))
+                                            continue;
+                                }
+
                                 //only legal lcm
                                 int[] legalLcm = new[] { 8, 10, 12, 15 };
                                 if (!legalLcm.Any(lcm => lcm % lcmA == 0))
@@ -693,6 +715,8 @@ static void QueryTonalCoverage()
         }
     }
 }
+
+//Computes 
 static void QueryTonalSetsFundamentalOverlap()
 {
     Fraction[] standardFractions = [new(1), new(16, 15), new(9, 8), new(6, 5), new(5, 4), new(4, 3), new(0), new(3, 2), new(8, 5), new(5, 3), new(9, 5), new(15, 8)];
@@ -712,9 +736,10 @@ static void QueryTonalSetsFundamentalOverlap()
 
         string[] splitInput = input.Split(' ');
         List<string> originOptions = splitInput.Where(chars => !int.TryParse(chars, out _)).ToList();
-        bool lcmMatchOnly = false;
-        bool lcmPartialMatch = false;
-        bool originNoCollapse = false;
+        bool lcmMatchOnly = false; //Only show perfect lcm matches instead of all fundamentals with any coinciding bases.
+        bool lcmPartialMatch = false; //Require at least one matching prime factor of the lcms
+        bool originNoCollapse = false; //do not use base 15@0 containing key 8, which collapses to base 8@1
+        bool upscaleLCM = false; //upscale 3 to 12, since else e.g. 0 4 7 to 2 6 9 is not found as 0 4 7 is strictly 3@7
         foreach (string option in originOptions)
         {
             switch (option)
@@ -727,6 +752,9 @@ static void QueryTonalSetsFundamentalOverlap()
                     break;
                 case "p":
                     lcmPartialMatch = true;
+                    break;
+                case "u":
+                    upscaleLCM = true;
                     break;
                 default:
                     break;
@@ -871,6 +899,13 @@ static void QueryTonalSetsFundamentalOverlap()
                                 }
                                 else if (lcmPartialMatch)
                                 {
+                                    if (upscaleLCM)
+                                    {
+                                        if (targetBase == 3)
+                                            targetBase = 12;
+                                        if (originBase == 3)
+                                            originBase = 12;
+                                    }
                                     List<int> targetFactors = Factorize(targetBase);
                                     if (Factorize(originBase).Any(originFactor => targetFactors.Contains(originFactor)))
                                         Console.WriteLine($"{originBase,-2} {targetBase,-2} ({string.Join(" ", originSubset)})({string.Join(" ", targetSubset)})");
