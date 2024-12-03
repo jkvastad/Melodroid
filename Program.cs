@@ -590,10 +590,12 @@ double[] ConstructTet12FractionFamily(int familyNumerator, int maxNumerator = 25
 
 
 //Tonal coverage is two subsets of sounding tones which share a prime number at a fundamental and contain all tones of the original set
+//TODO implement lcm upscaling - e.g. does not detect 0 4 7 6 9, even though there is 0 4 7:12@7 + 6 7 9: 8@7
 static void QueryTonalCoverage()
 {
 
     Fraction[] standardFractions = [new(1), new(16, 15), new(9, 8), new(6, 5), new(5, 4), new(4, 3), new(0), new(3, 2), new(8, 5), new(5, 3), new(9, 5), new(15, 8)];
+    List<int> lcmMaxBases = [8, 10, 12, 15]; //used with upscaling, the 4 largest bases which cover all possible legal lcm combinations
 
     while (true)
     {
@@ -612,6 +614,7 @@ static void QueryTonalCoverage()
         List<string> options = splitInput.Where(chars => !int.TryParse(chars, out _)).ToList();
         bool mixedCoverageOnly = false; //only show entries where the base differs for the same fundamental (non-trivial subsets)
         bool noCollapse = false; //No base 15 may contain renormalized key 8 (collapses 15@0 to 8@1)
+        bool upscaleLCM = false; //upscale e.g. 3 to 12 and 15 or 2 to 12 and 10 - else might miss overlap
 
         foreach (string option in options)
         {
@@ -622,6 +625,9 @@ static void QueryTonalCoverage()
                     break;
                 case "n":
                     noCollapse = true;
+                    break;
+                case "u":
+                    upscaleLCM = true;
                     break;
                 default:
                     break;
@@ -664,34 +670,63 @@ static void QueryTonalCoverage()
                                     continue;
 
 
-                                int lcmA = (int)LCM(renormalizedTonalSetA.Select(key => (long)standardFractions[key].Denominator).ToArray());
-                                int lcmB = (int)LCM(renormalizedTonalSetB.Select(key => (long)standardFractions[key].Denominator).ToArray());
-                                if (mixedCoverageOnly && lcmA == lcmB) //only show differing lcms with mixed coverage
-                                    continue;
-                                if (noCollapse)
+                                //Calculate lcm, possibly adding upscaling - multiple possibilities e.g. 
+                                // 0 4 7: 3@7 -> 12@7 -> 8@7
+                                // 0 4 7: 3@7 -> 15@7 -> 10@7
+                                // 0 4 7: 4@0 -> 2@0 -> 10@0
+                                // Generally 2 -> 8, 10, 12 and 3 -> 12, 15                                
+                                int lcmAOriginal = (int)LCM(renormalizedTonalSetA.Select(key => (long)standardFractions[key].Denominator).ToArray());
+                                int lcmBOriginal = (int)LCM(renormalizedTonalSetB.Select(key => (long)standardFractions[key].Denominator).ToArray());
+                                List<int> lcmAPossibilities = new(); //used with upscaling
+                                List<int> lcmBPossibilities = new(); //used with upscaling
+                                if (upscaleLCM)
                                 {
-                                    if (lcmA == 15)
-                                        if (renormalizedTonalSetA.Contains(8))
-                                            continue;
-                                    if (lcmB == 15)
-                                        if (renormalizedTonalSetB.Contains(8))
-                                            continue;
+                                    foreach (var bigLCM in lcmMaxBases)
+                                    {
+                                        if (bigLCM % lcmAOriginal == 0)
+                                            lcmAPossibilities.Add(bigLCM);
+                                        if (bigLCM % lcmBOriginal == 0)
+                                            lcmBPossibilities.Add(bigLCM);
+                                    }
                                 }
-
-                                //only legal lcm
-                                int[] legalLcm = new[] { 8, 10, 12, 15 };
-                                if (!legalLcm.Any(lcm => lcm % lcmA == 0))
-                                    continue;
-                                if (!legalLcm.Any(lcm => lcm % lcmB == 0))
-                                    continue;
-
-                                //check for common factors in lcm
-                                var lcmAFactors = Factorize(lcmA);
-                                var lcmBFactors = Factorize(lcmB);
-                                if (lcmBFactors.Any(bFactor => lcmAFactors.Contains(bFactor)))
+                                else
                                 {
-                                    List<(int, List<int>)> tonalCoverage = [(lcmA, tonalSetA.ToList()), (lcmB, tonalSetB.ToList())];
-                                    tonalCoveragePerFundamental[fundamental].Add(tonalCoverage);
+                                    lcmAPossibilities.Add(lcmAOriginal);
+                                    lcmBPossibilities.Add(lcmBOriginal);
+                                }
+                                //Go through all possible upscaled combinations for the current tonal sets
+                                foreach (var lcmA in lcmAPossibilities)
+                                {
+                                    foreach (var lcmB in lcmBPossibilities)
+                                    {
+                                        if (mixedCoverageOnly && lcmA == lcmB) //only show differing lcms with mixed coverage
+                                            continue;
+                                        if (noCollapse)
+                                        {
+                                            if (lcmA == 15)
+                                                if (renormalizedTonalSetA.Contains(8))
+                                                    continue;
+                                            if (lcmB == 15)
+                                                if (renormalizedTonalSetB.Contains(8))
+                                                    continue;
+                                        }
+
+                                        //only legal lcm
+                                        int[] legalLcm = new[] { 8, 10, 12, 15 };
+                                        if (!legalLcm.Any(lcm => lcm % lcmA == 0))
+                                            continue;
+                                        if (!legalLcm.Any(lcm => lcm % lcmB == 0))
+                                            continue;
+
+                                        //check for common factors in lcm                                
+                                        var lcmAFactors = Factorize(lcmA);
+                                        var lcmBFactors = Factorize(lcmB);
+                                        if (lcmBFactors.Any(bFactor => lcmAFactors.Contains(bFactor)))
+                                        {
+                                            List<(int, List<int>)> tonalCoverage = [(lcmA, tonalSetA.ToList()), (lcmB, tonalSetB.ToList())];
+                                            tonalCoveragePerFundamental[fundamental].Add(tonalCoverage);
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -716,7 +751,7 @@ static void QueryTonalCoverage()
     }
 }
 
-//Computes 
+
 static void QueryTonalSetsFundamentalOverlap()
 {
     Fraction[] standardFractions = [new(1), new(16, 15), new(9, 8), new(6, 5), new(5, 4), new(4, 3), new(0), new(3, 2), new(8, 5), new(5, 3), new(9, 5), new(15, 8)];
