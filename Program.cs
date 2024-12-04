@@ -776,10 +776,14 @@ static void QueryTonalSetsFundamentalOverlap()
         bool lcmPartialMatch = false; //Require at least one matching prime factor of the lcms
         bool originNoCollapse = false; //do not use base 15@0 containing key 8, which collapses to base 8@1
         bool upscaleLCM = false; //upscale 3 to 12, since else e.g. 0 4 7 to 2 6 9 is not found as 0 4 7 is strictly 3@7
+        bool originFullMatch = false; //only show matches where the origin fully matches
         foreach (string option in originOptions)
         {
             switch (option)
             {
+                case "f":
+                    originFullMatch = true;
+                    break;
                 case "m":
                     lcmMatchOnly = true;
                     break;
@@ -846,10 +850,14 @@ static void QueryTonalSetsFundamentalOverlap()
 
         List<string> targetOptions = splitInput.Where(chars => !int.TryParse(chars, out _)).ToList();
         bool targetNoCollapse = false;
+        bool targetFullMatch = false; //only show matches where the target fully matches
         foreach (string option in originOptions)
         {
             switch (option)
             {
+                case "f":
+                    targetFullMatch = true;
+                    break;
                 case "n":
                     targetNoCollapse = true;
                     break;
@@ -915,8 +923,15 @@ static void QueryTonalSetsFundamentalOverlap()
                             List<int> originSubset = originCardinalSets[originCardinality][originSubsetIndex];
                             List<int> targetSubset = targetCardinalSets[targetCardinality][targetSubsetIndex];
 
+                            HashSet<int> originInputKeys = originCardinalSets[originCardinalSets.Keys.Max()].First().ToHashSet();
+                            if (originFullMatch && !originInputKeys.SetEquals(originSubset.ToHashSet()))
+                                continue;
+                            HashSet<int> targetInputKeys = targetCardinalSets[targetCardinalSets.Keys.Max()].First().ToHashSet();
+                            if (targetFullMatch && !targetInputKeys.SetEquals(targetSubset.ToHashSet()))
+                                continue;
+
                             if (originBase > 0 && targetBase > 0) //check if lcm is valid
-                            {
+                            {                                
                                 //possibly upscale into all possible lcms
                                 List<int> originBasePossibilities = new();
                                 List<int> targetBasePossibilities = new();
@@ -939,7 +954,7 @@ static void QueryTonalSetsFundamentalOverlap()
                                 foreach (var originBasePossibility in originBasePossibilities)
                                 {
                                     foreach (var targetBasePossibility in targetBasePossibilities)
-                                    {                                      
+                                    {
                                         //possibly respect base 15 collapse
                                         if (originNoCollapse && originBasePossibility == 15 && originSubset.Contains((fundamental + 8) % 12))
                                             continue;
