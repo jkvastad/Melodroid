@@ -756,6 +756,7 @@ static void QueryTonalSetsFundamentalOverlap()
 {
     Fraction[] standardFractions = [new(1), new(16, 15), new(9, 8), new(6, 5), new(5, 4), new(4, 3), new(0), new(3, 2), new(8, 5), new(5, 3), new(9, 5), new(15, 8)];
     long[] allowedLCMs = [8, 10, 12, 15];
+    List<int> lcmMaxBases = [8, 10, 12, 15]; //used with upscaling, the 4 largest bases which cover all possible legal lcm combinations
 
     while (true)
     {
@@ -827,13 +828,7 @@ static void QueryTonalSetsFundamentalOverlap()
                     {
                         long lcm = LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray());
                         if (allowedLCMs.Any(allowedLCM => allowedLCM % lcm == 0))
-                        {
-                            if (originNoCollapse && cardinalSet[i].Contains((fundamental + 8) % 12))
-                                LcmPerSet.Add(0); //0 to indicate collapsing base 15 - note that collapse might not exist in this way, related to 0 4 7 1 sounding bad unless used as 15@7
-                            else
-                                LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
-                        }
-
+                            LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
                         else
                             LcmPerSet.Add(0);
                     }
@@ -893,12 +888,7 @@ static void QueryTonalSetsFundamentalOverlap()
                     {
                         long lcm = LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray());
                         if (allowedLCMs.Any(allowedLCM => allowedLCM % lcm == 0))
-                        {
-                            if (targetNoCollapse && cardinalSet[i].Contains((fundamental + 8) % 12))
-                                LcmPerSet.Add(0); //0 to indicate collapsing base 15 - note that collapse might not exist in this way, related to 0 4 7 1 sounding bad unless used as 15@7
-                            else
-                                LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
-                        }
+                            LcmPerSet.Add(LCM(set.Select(key => (long)standardFractions[key].Denominator).ToArray()));
                         else
                             LcmPerSet.Add(0);
                     }
@@ -925,28 +915,51 @@ static void QueryTonalSetsFundamentalOverlap()
                             List<int> originSubset = originCardinalSets[originCardinality][originSubsetIndex];
                             List<int> targetSubset = targetCardinalSets[targetCardinality][targetSubsetIndex];
 
-                            if (originBase > 0 && targetBase > 0)
+                            if (originBase > 0 && targetBase > 0) //check if lcm is valid
                             {
-                                if (lcmMatchOnly)
+                                //possibly upscale into all possible lcms
+                                List<int> originBasePossibilities = new();
+                                List<int> targetBasePossibilities = new();
+                                if (upscaleLCM)
                                 {
-                                    if (originBase == targetBase)
-                                        Console.WriteLine($"{originBase,-2} {targetBase,-2} ({string.Join(" ", originSubset)})({string.Join(" ", targetSubset)})");
-                                }
-                                else if (lcmPartialMatch)
-                                {
-                                    if (upscaleLCM)
+                                    foreach (var bigLCM in lcmMaxBases)
                                     {
-                                        if (targetBase == 3)
-                                            targetBase = 12;
-                                        if (originBase == 3)
-                                            originBase = 12;
+                                        if (bigLCM % originBase == 0)
+                                            originBasePossibilities.Add(bigLCM);
+                                        if (bigLCM % targetBase == 0)
+                                            targetBasePossibilities.Add(bigLCM);
                                     }
-                                    List<int> targetFactors = Factorize(targetBase);
-                                    if (Factorize(originBase).Any(originFactor => targetFactors.Contains(originFactor)))
-                                        Console.WriteLine($"{originBase,-2} {targetBase,-2} ({string.Join(" ", originSubset)})({string.Join(" ", targetSubset)})");
                                 }
                                 else
-                                    Console.WriteLine($"{originBase,-2} {targetBase,-2} ({string.Join(" ", originSubset)})({string.Join(" ", targetSubset)})");
+                                {
+                                    originBasePossibilities.Add(originBase);
+                                    targetBasePossibilities.Add(targetBase);
+                                }
+
+                                foreach (var originBasePossibility in originBasePossibilities)
+                                {
+                                    foreach (var targetBasePossibility in targetBasePossibilities)
+                                    {                                      
+                                        //possibly respect base 15 collapse
+                                        if (originNoCollapse && originBasePossibility == 15 && originSubset.Contains((fundamental + 8) % 12))
+                                            continue;
+                                        if (targetNoCollapse && targetBasePossibility == 15 && targetSubset.Contains((fundamental + 8) % 12))
+                                            continue;
+                                        if (lcmMatchOnly)
+                                        {
+                                            if (originBasePossibility == targetBasePossibility)
+                                                Console.WriteLine($"{originBasePossibility,-2} {targetBasePossibility,-2} ({string.Join(" ", originSubset)})({string.Join(" ", targetSubset)})");
+                                        }
+                                        else if (lcmPartialMatch)
+                                        {
+                                            List<int> targetFactors = Factorize(targetBasePossibility);
+                                            if (Factorize(originBasePossibility).Any(originFactor => targetFactors.Contains(originFactor)))
+                                                Console.WriteLine($"{originBasePossibility,-2} {targetBasePossibility,-2} ({string.Join(" ", originSubset)})({string.Join(" ", targetSubset)})");
+                                        }
+                                        else
+                                            Console.WriteLine($"{originBasePossibility,-2} {targetBasePossibility,-2} ({string.Join(" ", originSubset)})({string.Join(" ", targetSubset)})");
+                                    }
+                                }
                             }
                         }
                     }
