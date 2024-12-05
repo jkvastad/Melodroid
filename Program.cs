@@ -851,7 +851,7 @@ static void QueryTonalSetsFundamentalOverlap()
         List<string> targetOptions = splitInput.Where(chars => !int.TryParse(chars, out _)).ToList();
         bool targetNoCollapse = false;
         bool targetFullMatch = false; //only show matches where the target fully matches
-        foreach (string option in originOptions)
+        foreach (string option in targetOptions)
         {
             switch (option)
             {
