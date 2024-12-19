@@ -152,8 +152,9 @@ while (true)
     //QueryMelodicSubsetLCMs();
 
     //QueryIntervalChordProgressions();
+    //QueryChordKeyMultiplicity(scaleCalculator);
 
-    QueryChordKeyMultiplicity(scaleCalculator);
+    QueryChordPrimeMelody();
 
     QueryChordPowerSetLCMs();
     QueryTonalCoverage();
@@ -591,20 +592,24 @@ double[] ConstructTet12FractionFamily(int familyNumerator, int maxNumerator = 25
 
 //A tonal set (chord) can be extended with another note, a melody.
 //Such melody may sound pleasing even if the tonal set played as a chord is not - e.g. 0 3 7 6
-//It is possible that the extended tonal set is parsed by the brain as a superposition of two (or more) sets sharing a prime number from their base lengths at a given fundamental
+//It is possible that the extended tonal set is parsed by the brain as a superposition of two (or more) sets sharing a prime number from their base lengths at a given fundamental (see tonal coverage)
 // e.g. 0 3 7 6 -> (0 3 6: 15@3), (0 3 7: 12@3) - sharing 3@3.
 // Possibly it matters whether 0 3 6 is played before 7 (0 3 6 7) or 0 3 7 before 6 (0 3 7 6):
 // - in the latter case base 12@3 is established and then extended to 15@3
 // - in the former case base 15@3 (the larger base length) is already established
 // This overlap of basis primes could be the mechanism for pleasing melody
 // - enumerating each overlaping prime for each melodic key and fundamental should produce a matrix explaining how melody works 
+// Possibly the mechanism is even more complex and subsets of a tonal set can map onto different parts of the same alias:
+// - e.g. 8@0 is the same physical keys as 10@4, 12@7 allowing different primes at different fundamentals for the same physical keys (alias)
 static void QueryChordPrimeMelody()
 {
-    Fraction[] standardFractions = [new(1), new(16, 15), new(9, 8), new(6, 5), new(5, 4), new(4, 3), new(0), new(3, 2), new(8, 5), new(5, 3), new(9, 5), new(15, 8)];    
+    //Templated from tonal coverage
+    Fraction[] standardFractions = [new(1), new(16, 15), new(9, 8), new(6, 5), new(5, 4), new(4, 3), new(0), new(3, 2), new(8, 5), new(5, 3), new(9, 5), new(15, 8)];
+    List<int> lcmMaxBases = [8, 10, 12, 15]; //used with upscaling, the 4 largest bases which cover all possible legal lcm combinations
 
     while (true)
     {
-        Console.WriteLine($"Input chord for prime melody matrix, empty input to exit");
+        Console.WriteLine($"Input chord for chord prime melody, empty input to exit");
         string input = Console.ReadLine();
 
         if (input.Length == 0) return;
@@ -615,24 +620,190 @@ static void QueryChordPrimeMelody()
         }
 
         string[] splitInput = input.Split(' ');
+
         List<string> options = splitInput.Where(chars => !int.TryParse(chars, out _)).ToList();
-        
+        bool mixedCoverageOnly = false; //only show entries where the base differs for the same fundamental (non-trivial subsets)
+        bool noCollapse = false; //No base 15 may contain renormalized key 8 (collapses 15@0 to 8@1)
+        bool upscaleLCM = false; //upscale e.g. 3 to 12 and 15 or 2 to 12 and 10 - else might miss overlap
 
         foreach (string option in options)
         {
             switch (option)
-            {                
+            {
+                case "n":
+                    noCollapse = true;
+                    break;
+                case "u":
+                    upscaleLCM = true;
+                    break;
                 default:
                     break;
             };
         }
 
         string[] keys = splitInput.Where(chars => int.TryParse(chars, out _)).ToArray();
-        int[] tet12Keys = Array.ConvertAll(keys, int.Parse);
+        int[] inputChord = Array.ConvertAll(keys, int.Parse);
+        List<Dictionary<int, List<List<(int, List<int>)>>>> tonalCoveragePerFundamentalPerKey = new();
+        for (int key = 0; key < 12; key++)
+        {
+            HashSet<int> keysAndMelody = new([.. inputChord, key]);
+            int[] tet12Keys = keysAndMelody.ToArray();
 
-        //calculate data
+            Dictionary<int, List<List<int>>> originCardinalSets = GetPowerSet(tet12Keys).Where(set => set.Count > 1).GroupBy(set => set.Count).ToDictionary(
+            group => group.Key,
+            group => group.ToList());
 
-        //print data
+
+            //CalculateData
+            //TODO expand to work with all melody sets
+            Dictionary<int, List<List<(int, List<int>)>>> tonalCoveragePerFundamental = new();
+            HashSet<int> originalKeySet = new(tet12Keys);
+            for (int fundamental = 0; fundamental < 12; fundamental++)
+            {
+                tonalCoveragePerFundamental[fundamental] = new();
+                foreach (var cardinalSetA in originCardinalSets.Values)
+                {
+                    foreach (var tonalSetA in cardinalSetA)
+                    {
+                        foreach (var cardinalSetB in originCardinalSets.Values)
+                        {
+                            foreach (var tonalSetB in cardinalSetB)
+                            {
+                                //check if set union covers all keys
+                                HashSet<int> setA = new(tonalSetA);
+                                HashSet<int> setB = new(tonalSetB);
+                                if (originalKeySet.SetEquals(setA.Union(setB)))
+                                {
+                                    //Only legal fractions for lcm
+                                    var renormalizedTonalSetA = tonalSetA.Select(key => (key - fundamental + 12) % 12);
+                                    var renormalizedTonalSetB = tonalSetB.Select(key => (key - fundamental + 12) % 12);
+                                    if (renormalizedTonalSetA.Any(key => standardFractions[key] == 0))
+                                        continue;
+                                    if (renormalizedTonalSetB.Any(key => standardFractions[key] == 0))
+                                        continue;
+
+
+                                    //Calculate lcm, possibly adding upscaling - multiple possibilities e.g. 
+                                    // 0 4 7: 3@7 -> 12@7 -> 8@7
+                                    // 0 4 7: 3@7 -> 15@7 -> 10@7
+                                    // 0 4 7: 4@0 -> 2@0 -> 10@0
+                                    // Generally 2 -> 8, 10, 12 and 3 -> 12, 15                                
+                                    int lcmAOriginal = (int)LCM(renormalizedTonalSetA.Select(key => (long)standardFractions[key].Denominator).ToArray());
+                                    int lcmBOriginal = (int)LCM(renormalizedTonalSetB.Select(key => (long)standardFractions[key].Denominator).ToArray());
+                                    List<int> lcmAPossibilities = new(); //used with upscaling
+                                    List<int> lcmBPossibilities = new(); //used with upscaling
+                                    if (upscaleLCM)
+                                    {
+                                        foreach (var bigLCM in lcmMaxBases)
+                                        {
+                                            if (bigLCM % lcmAOriginal == 0)
+                                                lcmAPossibilities.Add(bigLCM);
+                                            if (bigLCM % lcmBOriginal == 0)
+                                                lcmBPossibilities.Add(bigLCM);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        lcmAPossibilities.Add(lcmAOriginal);
+                                        lcmBPossibilities.Add(lcmBOriginal);
+                                    }
+                                    //Go through all possible upscaled combinations for the current tonal sets
+                                    foreach (var lcmA in lcmAPossibilities)
+                                    {
+                                        foreach (var lcmB in lcmBPossibilities)
+                                        {
+                                            if (mixedCoverageOnly && lcmA == lcmB) //only show differing lcms with mixed coverage
+                                                continue;
+                                            if (noCollapse)
+                                            {
+                                                if (lcmA == 15)
+                                                    if (renormalizedTonalSetA.Contains(8))
+                                                        continue;
+                                                if (lcmB == 15)
+                                                    if (renormalizedTonalSetB.Contains(8))
+                                                        continue;
+                                            }
+
+                                            //only legal lcm
+                                            int[] legalLcm = new[] { 8, 10, 12, 15 };
+                                            if (!legalLcm.Any(lcm => lcm % lcmA == 0))
+                                                continue;
+                                            if (!legalLcm.Any(lcm => lcm % lcmB == 0))
+                                                continue;
+
+                                            //check for common factors in lcm                                
+                                            var lcmAFactors = Factorize(lcmA);
+                                            var lcmBFactors = Factorize(lcmB);
+                                            if (lcmBFactors.Any(bFactor => lcmAFactors.Contains(bFactor)))
+                                            {
+                                                List<(int, List<int>)> tonalCoverage = [(lcmA, tonalSetA.ToList()), (lcmB, tonalSetB.ToList())];
+                                                tonalCoveragePerFundamental[fundamental].Add(tonalCoverage);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            tonalCoveragePerFundamentalPerKey.Add(tonalCoveragePerFundamental);
+        }
+        //PrintData
+        Console.Write($"   ");
+        for (int key = 0; key < 12; key++)
+        {
+            Console.Write($"{key,-2} ");
+        }
+        Console.WriteLine();
+        for (int fundamental = 0; fundamental < 12; fundamental++)
+        {
+            Console.WriteLine($"{fundamental}:");
+            List<List<int>> columnsToPrint = new();
+            for (int key = 0; key < 12; key++)
+            {
+                HashSet<int> uniqueFactors = new();
+                foreach (var tonalCoverage in tonalCoveragePerFundamentalPerKey[key][fundamental])
+                {
+                    var lcmAFactors = Factorize(tonalCoverage[0].Item1);
+                    var lcmBFactors = Factorize(tonalCoverage[1].Item1);
+                    HashSet<int> commonFactors = new(lcmAFactors.Intersect(lcmBFactors));
+                    uniqueFactors = uniqueFactors.Union(commonFactors).ToHashSet();
+                }
+                columnsToPrint.Add(new([.. uniqueFactors]));
+            }
+            for (int row = 0; row < columnsToPrint.MaxBy(factors => factors.Count).Count; row++)
+            {
+                Console.Write($"   ");
+                for (int key = 0; key < 12; key++)
+                {
+                    var output = columnsToPrint[key];
+                    if (output.Count > row)
+                    {
+                        Console.Write($"{output[row],-2} ");
+                    }
+                    else
+                    {
+                        Console.Write($"   ");
+                    }
+                }
+                Console.WriteLine();
+            }
+        }
+
+        //for (int fundamental = 0; fundamental < 12; fundamental++)
+        //{
+        //    Console.WriteLine($"{fundamental}:");
+        //    foreach (var tonalCoverage in tonalCoveragePerFundamental[fundamental])
+        //    {                
+        //        foreach (var subset in tonalCoverage)
+        //        {
+        //            Console.Write(" ");
+        //            Console.Write($"({subset.Item1}, {string.Join(" ", subset.Item2)})");
+        //        }
+        //        Console.WriteLine();
+        //    }
+        //}
     }
 }
 
