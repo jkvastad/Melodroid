@@ -625,11 +625,15 @@ static void QueryChordPrimeMelody()
         bool mixedCoverageOnly = false; //only show entries where the base differs for the same fundamental (non-trivial subsets)
         bool noCollapse = false; //No base 15 may contain renormalized key 8 (collapses 15@0 to 8@1)
         bool upscaleLCM = false; //upscale e.g. 3 to 12 and 15 or 2 to 12 and 10 - else might miss overlap
+        bool bigMatch = false; //require at least one of the tonal coverage subsets to equal the original chord in cardinality
 
         foreach (string option in options)
         {
             switch (option)
             {
+                case "b":
+                    bigMatch = true;
+                    break;
                 case "n":
                     noCollapse = true;
                     break;
@@ -672,6 +676,10 @@ static void QueryChordPrimeMelody()
                                 //check if set union covers all keys
                                 HashSet<int> setA = new(tonalSetA);
                                 HashSet<int> setB = new(tonalSetB);
+                                if (bigMatch)
+                                    if (setA.Count != inputChord.Count() && setB.Count != inputChord.Count())
+                                        continue;
+
                                 if (originalKeySet.SetEquals(setA.Union(setB)))
                                 {
                                     //Only legal fractions for lcm
