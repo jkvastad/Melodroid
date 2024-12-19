@@ -152,12 +152,13 @@ while (true)
     //QueryMelodicSubsetLCMs();
 
     //QueryIntervalChordProgressions();
-    //QueryChordKeyMultiplicity(scaleCalculator);
+
+    QueryChordKeyMultiplicity(scaleCalculator);
 
     QueryChordPowerSetLCMs();
     QueryTonalCoverage();
     QueryTonalSetsFundamentalOverlap();
-    //QueryLCMTonalSetsForFundamental();
+    QueryLCMTonalSetsForFundamental();
 
     //QueryChordIntervalMultiplicity();
     //QueryRealChordIntervalMultiplicity();
@@ -588,6 +589,52 @@ double[] ConstructTet12FractionFamily(int familyNumerator, int maxNumerator = 25
 //BeatBox beatBox = new BeatBox();
 //WriteMeasuresToMidi(beatBox.TestPhrase().Measures, folderPath, "melodroid testing");
 
+//A tonal set (chord) can be extended with another note, a melody.
+//Such melody may sound pleasing even if the tonal set played as a chord is not - e.g. 0 3 7 6
+//It is possible that the extended tonal set is parsed by the brain as a superposition of two (or more) sets sharing a prime number from their base lengths at a given fundamental
+// e.g. 0 3 7 6 -> (0 3 6: 15@3), (0 3 7: 12@3) - sharing 3@3.
+// Possibly it matters whether 0 3 6 is played before 7 (0 3 6 7) or 0 3 7 before 6 (0 3 7 6):
+// - in the latter case base 12@3 is established and then extended to 15@3
+// - in the former case base 15@3 (the larger base length) is already established
+// This overlap of basis primes could be the mechanism for pleasing melody
+// - enumerating each overlaping prime for each melodic key and fundamental should produce a matrix explaining how melody works 
+static void QueryChordPrimeMelody()
+{
+    Fraction[] standardFractions = [new(1), new(16, 15), new(9, 8), new(6, 5), new(5, 4), new(4, 3), new(0), new(3, 2), new(8, 5), new(5, 3), new(9, 5), new(15, 8)];    
+
+    while (true)
+    {
+        Console.WriteLine($"Input chord for prime melody matrix, empty input to exit");
+        string input = Console.ReadLine();
+
+        if (input.Length == 0) return;
+        if (input == "clear")
+        {
+            Console.Clear();
+            continue;
+        }
+
+        string[] splitInput = input.Split(' ');
+        List<string> options = splitInput.Where(chars => !int.TryParse(chars, out _)).ToList();
+        
+
+        foreach (string option in options)
+        {
+            switch (option)
+            {                
+                default:
+                    break;
+            };
+        }
+
+        string[] keys = splitInput.Where(chars => int.TryParse(chars, out _)).ToArray();
+        int[] tet12Keys = Array.ConvertAll(keys, int.Parse);
+
+        //calculate data
+
+        //print data
+    }
+}
 
 //Tonal coverage is two subsets of sounding tones which share a prime number at a fundamental and contain all tones of the original set
 //TODO implement lcm upscaling - e.g. does not detect 0 4 7 6 9, even though there is 0 4 7:12@7 + 6 7 9: 8@7
@@ -931,7 +978,7 @@ static void QueryTonalSetsFundamentalOverlap()
                                 continue;
 
                             if (originBase > 0 && targetBase > 0) //check if lcm is valid
-                            {                                
+                            {
                                 //possibly upscale into all possible lcms
                                 List<int> originBasePossibilities = new();
                                 List<int> targetBasePossibilities = new();
@@ -984,6 +1031,8 @@ static void QueryTonalSetsFundamentalOverlap()
         }
     }
 }
+
+// E.g. query 12 15 3 for all tonal sets with 12 and 15 on 3
 static void QueryLCMTonalSetsForFundamental()
 {
     Fraction[] standardFractions = [new(1), new(16, 15), new(9, 8), new(6, 5), new(5, 4), new(4, 3), new(0), new(3, 2), new(8, 5), new(5, 3), new(9, 5), new(15, 8)];
@@ -1381,19 +1430,20 @@ void QueryChordKeyMultiplicity(ScaleCalculator scaleCalculator)
     List<Scale> scalesOfInterest = [
         //new([0, 7]), //base 2@0
         //new([0, 5, 9]), //base 3@0, 4@5
-        new([0, 4, 7]), //base 4@0, 3@7
-                        //new([0, 3, 8, 10]), //base 5@0, 6@3                
-                        //new([0, 5, 7, 9]), //base 6@0                
+        //new([0, 4, 7]), //base 4@0, 3@7
+        //new([0, 3, 8, 10]), //base 5@0, 6@3                
+        //new([0, 5, 7, 9]), //base 6@0                
         new([0, 2, 4, 7, 11]), //base 8@0, 10@4, 12@7
-                               //new([0, 3, 7, 8, 10]), //base 10@0
-                               //new([0, 4, 5, 7, 9]), //base 12@0
-        new([0, 1, 3, 5, 8, 9, 10]), //base 15@0
-                                     //new([0, 3, 4, 7, 8, 10]), //base 20@0
-                                     //new([0, 3, 4, 7, 8, 10]), //full base 20        
-                                     //new([0, 1, 3, 5, 9, 10]), //natural base 15 - no 8 as it collapses to 24 on 1, no 6 as 7 is bad numerator in 7/5
-                                     //new([0, 3, 4, 7, 8, 10]), //full base 20                                                                          
-                                     //new([0, 2, 4, 5, 7, 9, 11]),  //base 24@0 - 1, 9/8, 5/4, 5/4, 3/2, 5/3, 15/8
-                                     //new([0, 1, 3, 5, 7, 8, 9, 10]), //base 30@0
+        new([0, 3, 7, 8, 10]), //base 10@0
+        new([0, 4, 5, 7, 9]), //base 12@0
+        new([0, 1, 3, 5, 9, 10]), //base 15@0 no collapse
+                                  //new([0, 1, 3, 5, 8, 9, 10]), //base 15@0
+                                  //new([0, 3, 4, 7, 8, 10]), //base 20@0
+                                  //new([0, 3, 4, 7, 8, 10]), //full base 20        
+                                  //new([0, 1, 3, 5, 9, 10]), //natural base 15 - no 8 as it collapses to 24 on 1, no 6 as 7 is bad numerator in 7/5
+                                  //new([0, 3, 4, 7, 8, 10]), //full base 20                                                                          
+                                  //new([0, 2, 4, 5, 7, 9, 11]),  //base 24@0 - 1, 9/8, 5/4, 5/4, 3/2, 5/3, 15/8
+                                  //new([0, 1, 3, 5, 7, 8, 9, 10]), //base 30@0
     ];
 
     Console.WriteLine("Matching input against scales:");
